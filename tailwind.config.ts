@@ -52,6 +52,13 @@ const config = {
           DEFAULT: "var(--card)",
           foreground: "var(--card-foreground)",
         },
+        'brand-blue-start': '#80BDEA',
+        'brand-blue-end': '#4E8BE3',
+        'brand-orange-start': '#FF7D51',
+        'brand-orange-end': '#FF6C69',
+        'brand-dark-start': '#2B3D4F',
+        'brand-dark-end': '#203041',
+        'footer': '#111827',
       },
       borderRadius: {
         lg: "var(--radius)",
