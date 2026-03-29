@@ -1,0 +1,88 @@
+Project Name: Next.js Boilerplate Website (erianluwis-website)
+Description: A fully functional, production-ready Next.js 14 boilerplate project based on modern technology stack.
+
+Technology Stack Overview
+-------------------------
+- Framework: Next.js 14.2.35 (App Router)
+- Language: TypeScript (^5)
+- Library: React & React-DOM (^18)
+- Environment: Node.js (^20)
+
+Project Layout & Folder Structure
+---------------------------------
+erianluwis-website/
+├── src/                    # Primary source code directory
+│   ├── app/                # Next.js App Router (Routing, Layouts, Pages)
+│   │   ├── (agent)/        # Route group for Agent role
+│   │   ├── (private-landlord)/ # Route group for Private Landlord role
+│   │   ├── (tenant)/       # Route group for Tenant role
+│   │   ├── api/            # Serverless API routes
+│   │   ├── favicon.ico     # Site favicon
+│   │   ├── globals.css     # Global core CSS and Tailwind imports
+│   │   ├── layout.tsx      # Root application layout template
+│   │   └── page.tsx        # Application homepage component
+│   ├── components/         # Reusable React UI components
+│   │   ├── dashboard/      # Specific components for the User/Admin dashboard
+│   │   ├── providers/      # Global state/auth/query capability wrappers (Theme, Auth, Query)
+│   │   ├── shared/         # Common UI structural components (Modals, Navbars, etc.)
+│   │   └── ui/             # Pre-built base components (integrated via shadcn/ui)
+│   └── lib/                # Configs, utilities, global configurations
+│       ├── axios.ts        # Axios client instance configuration
+│       └── utils.ts        # Common utility helpers, class mergers (e.g. cn)
+│
+├── .next/                  # Cached build output directory (auto-generated)
+├── node_modules/           # Project dependencies mapping
+├── .env.example            # Environment variables placeholder and instructions
+├── .eslintrc.json          # ESLint code syntax consistency configuration
+├── .gitignore              # Defines intentionally untracked files for Git
+├── components.json         # Settings & paths configurations for `shadcn/ui` integration
+├── middleware.ts           # Next.js Edge Middleware for protected routes and interception
+├── next-env.d.ts           # Auto-generated TypeScript compiler definitions for Next.js
+├── next.config.mjs         # Core configuration object and plugins for the Next.js framework
+├── package-lock.json       # Exact lockfile for dependent Node module versions
+├── package.json            # Core instructions/scripts and project dependency manifesto
+├── postcss.config.mjs      # Configuration for PostCSS preprocessor
+├── tailwind.config.ts      # Framework configuration rules & variables for Tailwind CSS
+└── tsconfig.json           # Advanced TypeScript compiler options and configurations
+
+Packages & Dependencies Used
+----------------------------
+
+1. Core React/Next System:
+   - next (14.2.35)
+   - react (^18)
+   - react-dom (^18)
+   - typescript (^5)
+
+2. Authentication:
+   - next-auth (^4.24.13): Standard and robust Next.js authentication system.
+
+3. State Management & Data Fetching:
+   - @tanstack/react-query (^5.95.2): Asynchronous data caching and state fetching framework.
+   - zustand (^5.0.12): Fast and scalable lightweight state-management.
+   - axios (^1.14.0): Stable Promise-based HTTP client.
+
+4. Form Handling & Validation:
+   - react-hook-form (^7.72.0): Extendable performant form logic tracking.
+   - @hookform/resolvers (^5.2.2): Connects data schemas with forms.
+   - zod (^4.3.6): TypeScript-first, static type coercion and validation schema.
+
+5. Styling, Animations, and Visuals:
+   - tailwindcss (^3.4.1): Powerful utility-first CSS framework.
+   - next-themes (^0.4.6): Abstraction for fast implementations of light/dark modes.
+   - clsx (^2.1.1) & tailwind-merge (^3.5.0): Secure conditional CSS mapping and class collision resolution.
+   - class-variance-authority (^0.7.1): Helps to establish reusable component variants safely.
+   - motion (^12.38.0): Sophisticated animation utility library.
+   - tailwindcss-animate (^1.0.7) & tw-animate-css (^1.4.0): Extended animation configurations.
+   - lucide-react (^1.7.0): Extensible vector icon solution.
+
+6. Extensible UI Libraries (shadcn/ui & Radix/Primitives context):
+   - shadcn (^4.1.1): Component CLI and collection mechanism.
+   - @base-ui/react (^1.3.0): Unstyled foundations.
+   - @tanstack/react-table (^8.21.3): Headless advanced datagrid functionality.
+   - embla-carousel-react (^8.6.0): Slick, fluid item sliding mechanism.
+   - recharts (^3.8.0): Reusable data visualization components.
+   - react-day-picker (^9.14.0): Configurable calendar element.
+   - sonner (^2.0.7): Robust toast alerts and notifications mapping.
+   - @tiptap/react & @tiptap/starter-kit (^3.21.0): Composable rich-text headless editor integration.
+   - date-fns (^4.1.0): Easy management of timezone and relative dates processing.

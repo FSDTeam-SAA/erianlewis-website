@@ -48,6 +48,10 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+    --gradient-page-bg: linear-gradient(92.51deg, #B5DFF0 0%, #FEAF93 99.55%);
+    --gradient-card-blue: linear-gradient(102.89deg, #80BDEA 0%, #4E8BE3 100%);
+    --gradient-card-orange: linear-gradient(102.89deg, #FF7D51 0%, #FF6C69 100%);
+    --gradient-card-dark: linear-gradient(102.89deg, #2B3D4F 0%, #203041 100%);
   }
   .dark {
     --background: oklch(0.145 0 0);
