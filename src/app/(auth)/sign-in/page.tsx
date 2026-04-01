@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SignInPage() {
@@ -50,14 +50,6 @@ export default function SignInPage() {
 
     return (
         <div className="auth-card mx-auto my-auto w-full max-w-[520px] p-8 md:p-10">
-            <Link
-                href="/"
-                className="mb-8 inline-flex items-center gap-1 text-sm font-medium text-[#5f6368] transition-colors hover:text-[#202124]"
-            >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Home
-            </Link>
-
             <div className="mb-8 flex flex-col items-center">
                 <Image
                     src="/logo.png"

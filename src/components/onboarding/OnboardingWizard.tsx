@@ -29,6 +29,9 @@ export function OnboardingWizard({ allSteps }: OnboardingWizardProps) {
             if (step.visibleForRoles && step.visibleForRoles.length > 0 && !step.visibleForRoles.includes(role)) {
                 return false;
             }
+            if (step.key === "completion" && ["LANDLORD", "AGENT"].includes(role)) {
+                return false;
+            }
             if (step.key === "entity_type" && role === "AGENT") {
                 return false;
             }
