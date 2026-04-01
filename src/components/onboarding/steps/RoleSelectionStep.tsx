@@ -14,7 +14,13 @@ export function RoleSelectionStep({ stepConfig }: StepProps) {
     const subtitle = stepConfig.content.subtitle || "How do you plan to use Alora?";
 
     const handleRoleSelect = (roleKey: string) => {
-        setFormData({ role: roleKey as "USER" | "LANDLORD" | "AGENT" });
+        const nextRole = roleKey as "USER" | "LANDLORD" | "AGENT";
+        setFormData({
+            role: nextRole,
+            entityType: nextRole === "AGENT" ? "business" : undefined,
+            operatingLocations: nextRole === "USER" ? undefined : formData.operatingLocations,
+            numberOfProperties: nextRole === "USER" ? undefined : formData.numberOfProperties,
+        });
     };
 
     const onSubmit = () => {
@@ -22,10 +28,10 @@ export function RoleSelectionStep({ stepConfig }: StepProps) {
     };
 
     return (
-        <div className="bg-white rounded-3xl shadow-lg p-10 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="mb-8 pl-1">
-                <h2 className="text-2xl font-extrabold text-gray-900 mb-2">{title}</h2>
-                <p className="text-gray-500 text-sm font-medium">{subtitle}</p>
+        <div className="auth-card animate-in w-full p-8 duration-500 fade-in slide-in-from-bottom-4 md:p-10">
+            <div className="mb-8">
+                <h2 className="auth-title mb-3 text-left text-[34px]">{title}</h2>
+                <p className="text-left text-[16px] leading-[150%] text-[#5f6368]">{subtitle}</p>
             </div>
 
             <div className="space-y-4 mb-10">
@@ -35,17 +41,17 @@ export function RoleSelectionStep({ stepConfig }: StepProps) {
                         <div
                             key={role.key}
                             onClick={() => handleRoleSelect(role.key)}
-                            className={`p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200
+                            className={`rounded-[20px] border cursor-pointer p-5 transition-all duration-200
                 ${isSelected
-                                    ? 'border-[#C1E2ED] bg-[#F7FBFD]'
-                                    : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
+                                    ? 'border-[#95d4e9] bg-[#f7fbfd] shadow-[0_12px_32px_rgba(139,204,230,0.14)]'
+                                    : 'border-[#e4e8f0] bg-white hover:border-[#c7d2e1] hover:bg-[#fafcff]'
                                 }
               `}
                         >
-                            <h3 className="font-bold text-[15px] text-gray-900 mb-1 tracking-wide">
+                            <h3 className="mb-1 text-[20px] font-semibold text-[#202124]">
                                 {role.label}
                             </h3>
-                            <p className="text-sm font-medium text-gray-500">
+                            <p className="text-sm leading-[150%] text-[#5f6368]">
                                 {role.description}
                             </p>
                         </div>
@@ -56,14 +62,13 @@ export function RoleSelectionStep({ stepConfig }: StepProps) {
             <div className="flex justify-between items-center mt-4">
                 <button
                     onClick={goBack}
-                    className="h-10 px-6 rounded-lg border border-gray-200 bg-white font-bold text-sm text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                    className="auth-button-secondary h-10 px-6"
                 >
                     Back
                 </button>
                 <button
                     onClick={onSubmit}
-                    className="h-10 px-6 rounded-lg text-white font-bold text-sm shadow-sm hover:opacity-90 transition-opacity"
-                    style={{ background: 'linear-gradient(90.99deg, #8BCCE6 2.49%, #F6855C 99.73%)' }}
+                    className="auth-button-primary h-10 px-6"
                 >
                     {(formData.role || "USER") === "USER" ? "Complete" : "Continue"}
                 </button>
