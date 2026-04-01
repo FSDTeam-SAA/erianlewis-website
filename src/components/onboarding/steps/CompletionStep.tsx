@@ -1,15 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { CreditCard, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import api from "@/lib/axios";
 import { useOnboardingStore, OnboardingStep } from "@/lib/stores/onboardingStore";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 
 interface StepProps {
     stepConfig: OnboardingStep;
+}
+
+interface Plan {
+    _id: string;
+    name: string;
+    title: string;
+    price: number;
+    billingCycle: string;
+    maxProperties: number | null;
 }
 
 export function CompletionStep({ stepConfig }: StepProps) {
@@ -18,13 +27,38 @@ export function CompletionStep({ stepConfig }: StepProps) {
     const [loading, setLoading] = useState(false);
     const { title, subtitle } = stepConfig.content;
 
+    const isPaidRole = formData.role === "LANDLORD" || formData.role === "AGENT";
+
+    const { data: plans = [] } = useQuery({
+        queryKey: ["plans", formData.role, "completion"],
+        queryFn: async () => {
+            const res = await api.get("/plans", {
+                params: {
+                    status: "active",
+                    role: formData.role,
+                },
+            });
+            return (res.data?.data?.items || []) as Plan[];
+        },
+        enabled: Boolean(formData.role && isPaidRole),
+    });
+
+    const selectedPlan = useMemo(
+        () => plans.find((plan) => plan._id === formData.planId),
+        [formData.planId, plans]
+    );
+
     const buildPayload = () => {
+        const phone = formData.phone
+            ? `${formData.countryCode || "+1"} ${formData.phone}`.trim()
+            : "";
+
         if (formData.role === "LANDLORD" || formData.role === "AGENT") {
             if (formData.entityType === "individual") {
                 return {
                     firstName: formData.firstName,
                     lastName: formData.lastName,
-                    phone: formData.phone,
+                    phone,
                     email: formData.email,
                     password: formData.password,
                     confirmPassword: formData.confirmPassword,
@@ -41,7 +75,7 @@ export function CompletionStep({ stepConfig }: StepProps) {
             return {
                 firstName: formData.firstName,
                 lastName: formData.lastName,
-                phone: formData.phone,
+                phone,
                 email: formData.email,
                 password: formData.password,
                 confirmPassword: formData.confirmPassword,
@@ -60,7 +94,7 @@ export function CompletionStep({ stepConfig }: StepProps) {
         return {
             firstName: formData.firstName,
             lastName: formData.lastName,
-            phone: formData.phone,
+            phone,
             email: formData.email,
             password: formData.password,
             confirmPassword: formData.confirmPassword,
@@ -85,14 +119,14 @@ export function CompletionStep({ stepConfig }: StepProps) {
         } catch (error: unknown) {
             const message =
                 typeof error === "object" &&
-                error !== null &&
-                "response" in error &&
-                typeof error.response === "object" &&
-                error.response !== null &&
-                "data" in error.response &&
-                typeof error.response.data === "object" &&
-                error.response.data !== null &&
-                "message" in error.response.data
+                    error !== null &&
+                    "response" in error &&
+                    typeof error.response === "object" &&
+                    error.response !== null &&
+                    "data" in error.response &&
+                    typeof error.response.data === "object" &&
+                    error.response.data !== null &&
+                    "message" in error.response.data
                     ? String(error.response.data.message)
                     : "Registration failed. Please try again.";
 
@@ -103,65 +137,96 @@ export function CompletionStep({ stepConfig }: StepProps) {
     };
 
     return (
-        <div className="bg-white rounded-2xl shadow-md p-8 md:p-12 w-full animate-in fade-in slide-in-from-bottom-4 duration-500 text-center">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg className="w-10 h-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
-            </div>
+        <div className="mx-auto w-full max-w-[640px] animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="auth-card p-6 md:p-8">
+                <div className="mb-6">
+                    <h2 className="mb-2 text-[28px] font-semibold leading-[120%] text-[#202124]">{title}</h2>
+                    <p className="text-[14px] leading-[150%] text-[#5f6368]">{subtitle}</p>
+                </div>
 
-            <h2 className="text-3xl font-extrabold text-gray-900 mb-4">{title}</h2>
-            <p className="text-gray-500 text-sm max-w-sm mx-auto leading-relaxed mb-10">
-                {subtitle}
-            </p>
+                <div className="mb-4 rounded-[16px] border border-[#e8edf3] bg-[#f8fafc] p-4">
+                    <div className="mb-1 text-[14px] font-medium text-[#202124]">
+                        {selectedPlan?.name || "Selected plan"}
+                    </div>
+                    <div className="text-[12px] text-[#5f6368]">
+                        {selectedPlan
+                            ? `${selectedPlan.price === 0 ? "Free" : `$${selectedPlan.price}/${selectedPlan.billingCycle.toLowerCase()}`} • ${selectedPlan.maxProperties === null ? "Unlimited properties" : `Up to ${selectedPlan.maxProperties} properties`}`
+                            : "Your selected subscription will be applied after registration."}
+                    </div>
+                </div>
 
-            <div className="bg-gray-50 rounded-xl p-4 text-left max-w-sm mx-auto mb-10 border border-gray-100">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Review Details</h4>
-                <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Name:</span>
-                        <span className="font-semibold text-gray-900">{formData.firstName} {formData.lastName}</span>
+                {isPaidRole && (
+                    <div className="mb-5 rounded-[16px] border border-[#e8edf3] bg-white p-4">
+                        <div className="mb-1 text-[14px] font-medium text-[#202124]">Payment</div>
+                        <div className="mb-4 text-[11px] text-[#7b8595]">Stripe checkout is a new window.</div>
+                        <button
+                            type="button"
+                            onClick={handleSubmit}
+                            disabled={loading}
+                            className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#171717] text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+                        >
+                            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                            Pay with Stripe
+                        </button>
                     </div>
-                    <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Email:</span>
-                        <span className="font-semibold text-gray-900">{formData.email}</span>
+                )}
+
+                {isPaidRole && (
+                    <div className="mb-5 rounded-[10px] bg-[#fff7f2] px-4 py-3 text-center text-[11px] text-[#f6855c]">
+                        Please complete payment to continue
                     </div>
-                    <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Account Type:</span>
-                        <span className="font-semibold text-[#E8825A] capitalize">{formData.role?.toLowerCase()}</span>
+                )}
+
+                {!isPaidRole && (
+                    <div className="mb-5 rounded-[16px] border border-[#e8edf3] bg-[#f8fafc] p-4 text-sm text-[#5f6368]">
+                        We&apos;ll create your account and take you to email verification next.
                     </div>
-                    {formData.entityType && (
-                        <div className="flex justify-between text-sm">
-                            <span className="text-gray-500">Entity:</span>
-                            <span className="font-semibold text-gray-900 capitalize">{formData.entityType}</span>
-                        </div>
+                )}
+
+                <div className="flex items-center justify-between">
+                    <button
+                        type="button"
+                        onClick={goBack}
+                        disabled={loading}
+                        className="auth-button-secondary h-10 px-6"
+                    >
+                        Back
+                    </button>
+                    {!isPaidRole && (
+                        <button
+                            type="button"
+                            onClick={handleSubmit}
+                            disabled={loading}
+                            className="auth-button-primary h-10 px-6"
+                        >
+                            {loading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Completing...
+                                </>
+                            ) : (
+                                "Complete"
+                            )}
+                        </button>
+                    )}
+                    {isPaidRole && (
+                        <button
+                            type="button"
+                            onClick={handleSubmit}
+                            disabled={loading}
+                            className="auth-button-primary h-10 px-6"
+                        >
+                            {loading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Redirecting...
+                                </>
+                            ) : (
+                                "Complete"
+                            )}
+                        </button>
                     )}
                 </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-                <Button
-                    variant="outline"
-                    onClick={goBack}
-                    disabled={loading}
-                    className="w-full sm:w-auto rounded-full px-8 border-gray-300 text-gray-700 hover:bg-gray-50 h-12"
-                >
-                    Wait, go back
-                </Button>
-                <Button
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    className="w-full sm:w-auto bg-[#E8825A] text-white hover:bg-[#d6714a] rounded-full px-10 h-12 text-base font-semibold shadow-md"
-                >
-                    {loading ? (
-                        <>
-                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                            Processing...
-                        </>
-                    ) : (
-                        "Complete Registration"
-                    )}
-                </Button>
             </div>
         </div>
     );

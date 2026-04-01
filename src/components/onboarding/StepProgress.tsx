@@ -6,31 +6,57 @@ import { Check } from "lucide-react";
 interface StepProgressProps {
     activeSteps: OnboardingStep[];
     currentIndex: number;
+    currentStepKey?: string;
+    role?: "USER" | "LANDLORD" | "AGENT";
 }
 
-export function StepProgress({ activeSteps, currentIndex }: StepProgressProps) {
+export function StepProgress({ activeSteps, currentIndex, currentStepKey, role }: StepProgressProps) {
     if (!activeSteps || activeSteps.length === 0) return null;
 
-    return (
-        <div className="w-full flex items-center justify-center mb-6">
-            <div className="flex items-center gap-0 w-full max-w-[400px] justify-between relative px-4">
-                {/* Horizontal Background Line */}
-                <div className="absolute left-8 right-8 top-1/2 -translate-y-1/2 h-[3px] bg-white/40 z-0 rounded-full"></div>
+    const shouldCondense = ["LANDLORD", "AGENT"].includes(role || "") &&
+        ["entity_type", "business_profile", "plan_selection", "completion"].includes(currentStepKey || "");
 
-                {activeSteps.map((step, index) => {
-                    const isCompleted = index < currentIndex;
-                    const isCurrent = index === currentIndex;
+    const milestones = shouldCondense
+        ? [
+            { key: "profile", label: "Profile" },
+            { key: "details", label: "Business profile" },
+            { key: "subscription", label: "Subscription" },
+        ]
+        : activeSteps.map((step) => ({ key: step.key, label: step.name }));
+
+    const condensedCurrentIndex = (() => {
+        if (!shouldCondense) return currentIndex;
+        if (currentStepKey === "entity_type" || currentStepKey === "business_profile") return 1;
+        return 2;
+    })();
+
+    const progressIndex = shouldCondense ? condensedCurrentIndex : currentIndex;
+    const progressWidth = milestones.length > 1
+        ? `${(progressIndex / (milestones.length - 1)) * 100}%`
+        : "0%";
+
+    return (
+        <div className="mb-8 flex w-full items-center justify-center">
+            <div className="relative flex w-full max-w-[630px] items-center justify-between px-7">
+                <div className="absolute left-8 right-8 top-1/2 h-1 -translate-y-1/2 rounded-full bg-white/55" />
+                <div
+                    className="absolute left-8 top-1/2 h-1 -translate-y-1/2 rounded-full bg-white transition-all duration-300"
+                    style={{ width: `calc((100% - 4rem) * ${parseFloat(progressWidth) / 100})` }}
+                />
+
+                {milestones.map((step, index) => {
+                    const isCompleted = index < progressIndex;
+                    const isCurrent = index === progressIndex;
 
                     return (
                         <div key={step.key} className="relative z-10 flex items-center justify-center">
                             <div
-                                className={`flex items-center justify-center w-10 h-10 rounded-full text-[15px] font-bold transition-all duration-300 shadow-sm
-                                    ${isCompleted || isCurrent
-                                        ? 'bg-white text-gray-800'
-                                        : 'bg-white/40 text-white backdrop-blur-sm'}
-                                `}
+                                className={`flex h-12 w-12 items-center justify-center rounded-full text-[15px] font-semibold transition-all duration-300 shadow-sm ${isCompleted || isCurrent
+                                    ? "bg-white text-[#202124]"
+                                    : "bg-white/30 text-white backdrop-blur-sm"
+                                    }`}
                             >
-                                {isCompleted ? <Check size={18} strokeWidth={3} className="text-[#E8825A]" /> : (index + 1)}
+                                {isCompleted ? <Check size={20} strokeWidth={2.5} className="text-[#202124]" /> : (index + 1)}
                             </div>
                         </div>
                     );

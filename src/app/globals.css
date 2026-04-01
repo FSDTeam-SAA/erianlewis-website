@@ -96,3 +96,47 @@
     @apply font-sans;
   }
 }
+
+@layer components {
+  .auth-shell {
+    @apply relative min-h-screen overflow-hidden;
+    background: linear-gradient(92.51deg, #b5dff0 0%, #feaf93 99.55%);
+    font-family: Inter, var(--font-sans), sans-serif;
+  }
+
+  .auth-card {
+    @apply w-full rounded-[24px] bg-white shadow-[0_16px_48px_rgba(15,23,42,0.12)];
+  }
+
+  .auth-title {
+    @apply text-center text-[40px] font-semibold leading-[120%] tracking-normal text-[#202124];
+  }
+
+  .auth-subtitle {
+    @apply text-center text-[20px] font-normal leading-[120%] tracking-normal text-[#5f6368];
+  }
+
+  .auth-label {
+    @apply text-[16px] font-medium leading-[120%] tracking-normal text-[#202124];
+  }
+
+  .auth-input {
+    @apply h-12 w-full rounded-lg border border-[#d2d9e6] bg-[#E8F0FE] px-4 text-left text-[14px] font-normal leading-[120%] tracking-normal text-[#202124] outline-none transition-colors placeholder:text-[#6f7a8f] focus:border-[#8BCCE6];
+    font-family: Inter, var(--font-sans), sans-serif;
+  }
+
+  .auth-input-left {
+    @apply text-left;
+  }
+
+  .auth-button-primary {
+    @apply inline-flex h-12 items-center justify-center rounded-lg px-6 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60;
+    background: linear-gradient(90.99deg, #8bcce6 2.49%, #f6855c 99.73%);
+    font-family: Inter, var(--font-sans), sans-serif;
+  }
+
+  .auth-button-secondary {
+    @apply inline-flex h-12 items-center justify-center rounded-lg border border-[#d7dde7] bg-white px-6 text-sm font-semibold text-[#202124] shadow-sm transition-colors hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-60;
+    font-family: Inter, var(--font-sans), sans-serif;
+  }
+}

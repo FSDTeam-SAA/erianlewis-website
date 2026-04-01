@@ -1,208 +1,275 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useOnboardingStore, OnboardingStep } from "@/lib/stores/onboardingStore";
-import { toast } from "sonner";
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+import {
+  useOnboardingStore,
+  OnboardingStep,
+} from '@/lib/stores/onboardingStore'
+import { toast } from 'sonner'
+import { ChevronDown, Eye, EyeOff } from 'lucide-react'
 
 interface StepProps {
-    stepConfig: OnboardingStep;
+  stepConfig: OnboardingStep
 }
 
+const countryOptions = [
+  { label: 'United States / Canada (+1)', value: '+1' },
+  { label: 'Bahamas (+1-242)', value: '+1-242' },
+  { label: 'Barbados (+1-246)', value: '+1-246' },
+  { label: 'Jamaica (+1-876)', value: '+1-876' },
+  { label: 'Trinidad and Tobago (+1-868)', value: '+1-868' },
+]
+
 export function PersonalInfoStep({ stepConfig }: StepProps) {
-    const { formData, setFormData, goNext, goBack } = useOnboardingStore();
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const { title, subtitle } = stepConfig.content;
+  const { formData, setFormData, goNext, goBack } = useOnboardingStore()
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const { title, subtitle } = stepConfig.content
 
-    const schema = z.object({
-        firstName: z.string().min(1, "Please enter your first name"),
-        lastName: z.string().min(1, "Please enter your last name"),
-        countryCode: z.string().optional(),
-        phone: z.string().optional(),
-        email: z.string().email("Invalid email"),
-        password: z.string().min(6, "Password too short"),
-        confirmPassword: z.string(),
-        agreePolicy: z.boolean().refine(val => val === true, "You must agree to the Privacy Policy"),
-        agreeTerms: z.boolean().refine(val => val === true, "You must agree to the Terms of Service"),
-    }).refine((data) => data.password === data.confirmPassword, {
-        message: "Passwords don't match",
-        path: ["confirmPassword"]
-    });
+  const schema = z
+    .object({
+      firstName: z.string().min(1, 'Please enter your first name'),
+      lastName: z.string().min(1, 'Please enter your last name'),
+      countryCode: z.string().optional(),
+      phone: z.string().optional(),
+      email: z.string().email('Invalid email'),
+      password: z.string().min(6, 'Password too short'),
+      confirmPassword: z.string(),
+      agreePolicy: z
+        .boolean()
+        .refine(val => val === true, 'You must agree to the Privacy Policy'),
+      agreeTerms: z
+        .boolean()
+        .refine(val => val === true, 'You must agree to the Terms of Service'),
+    })
+    .refine(data => data.password === data.confirmPassword, {
+      message: "Passwords don't match",
+      path: ['confirmPassword'],
+    })
 
-    type FormDataSchema = z.infer<typeof schema>;
+  type FormDataSchema = z.infer<typeof schema>
 
-    const { register, handleSubmit, formState: { errors } } = useForm<FormDataSchema>({
-        resolver: zodResolver(schema),
-        defaultValues: {
-            firstName: formData.firstName || "",
-            lastName: formData.lastName || "",
-            email: formData.email || "",
-            phone: formData.phone || "",
-            agreePolicy: false,
-            agreeTerms: false,
-        }
-    });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormDataSchema>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      firstName: formData.firstName || '',
+      lastName: formData.lastName || '',
+      countryCode: formData.countryCode || '+1',
+      email: formData.email || '',
+      phone: formData.phone || '',
+      agreePolicy: false,
+      agreeTerms: false,
+    },
+  })
 
-    const onSubmit = (data: FormDataSchema) => {
-        setFormData(data);
-        goNext();
-    };
+  const onSubmit = (data: FormDataSchema) => {
+    setFormData({
+      ...data,
+      countryCode: data.countryCode || '+1',
+    })
+    goNext()
+  }
 
-    return (
-        <div className="bg-white rounded-3xl shadow-lg p-8 md:p-10 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="mb-6 text-center">
-                <h2 className="text-[26px] font-extrabold text-gray-900 mb-1">{title || "Create Your Account"}</h2>
-                <p className="text-sm font-medium text-gray-500">{subtitle || "Let's get started with your Alora account."}</p>
-            </div>
+  return (
+    <div className="auth-card animate-in w-full p-8 duration-500 fade-in slide-in-from-bottom-4 md:p-10">
+      <div className="mb-8 text-center">
+        <h2 className="auth-title mb-3">
+          {title || 'Create Your Account'}
+        </h2>
+        <p className="auth-subtitle text-[18px]">
+          {subtitle || "Let's get started with your Alora account."}
+        </p>
+      </div>
 
-            <div className="mb-6">
-                    <button
-                        type="button"
-                        onClick={() => toast.message("Google sign up is not configured yet. Please use email and password for now.")}
-                        className="w-full h-[46px] rounded-xl bg-white border border-gray-200 text-gray-800 font-bold text-sm tracking-wide hover:bg-gray-50 transition-colors shadow-sm"
-                    >
-                        Sign up with Google
-                </button>
-            </div>
+      <div className="mb-6">
+        <button
+          type="button"
+          onClick={() =>
+            toast.message(
+              'Google sign up is not configured yet. Please use email and password for now.',
+            )
+          }
+          className="auth-button-secondary w-full"
+        >
+          Sign up with Google
+        </button>
+      </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5 flex flex-col">
-                        <label className="text-xs font-bold text-gray-700 ml-1">First Name<span className="text-[#E8825A]">*</span></label>
-                        <input
-                            type="text"
-                            placeholder="Enter your name"
-                            {...register("firstName")}
-                            className="w-full h-[46px] border border-gray-200 rounded-xl px-4 text-sm outline-none focus:border-[#8BCCE6] transition-colors font-medium placeholder:text-gray-300 placeholder:font-normal"
-                        />
-                    </div>
-                    <div className="space-y-1.5 flex flex-col">
-                        <label className="text-xs font-bold text-gray-700 ml-1">Last Name<span className="text-[#E8825A]">*</span></label>
-                        <input
-                            type="text"
-                            placeholder="Enter your last name"
-                            {...register("lastName")}
-                            className="w-full h-[46px] border border-gray-200 rounded-xl px-4 text-sm outline-none focus:border-[#8BCCE6] transition-colors font-medium placeholder:text-gray-300 placeholder:font-normal"
-                        />
-                    </div>
-                </div>
-
-                <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-700 ml-1">Phone Number<span className="text-[#E8825A]">*</span></label>
-                    <div className="flex gap-2">
-                        <div className="relative w-[150px]">
-                            <select className="w-full h-[46px] border border-gray-200 rounded-xl px-3 text-xs font-bold text-gray-700 appearance-none bg-white outline-none focus:border-[#8BCCE6]">
-                                <option>United States / Canada (+1)</option>
-                            </select>
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-xs text-gray-500">▼</div>
-                        </div>
-                        <input
-                            type="tel"
-                            placeholder="Digits only"
-                            {...register("phone")}
-                            className="flex-1 h-[46px] border border-gray-200 rounded-xl px-4 text-sm outline-none focus:border-[#8BCCE6] transition-colors font-medium placeholder:text-gray-300 placeholder:font-normal"
-                        />
-                    </div>
-                    <div className="text-[10px] text-gray-400 font-medium pl-1">
-                        Select your island area code, then enter digits only
-                    </div>
-                </div>
-
-                <div className="space-y-1.5 pt-1">
-                    <label className="text-xs font-bold text-gray-700 ml-1">Email Address<span className="text-[#E8825A]">*</span></label>
-                    <input
-                        type="email"
-                        placeholder="you@gmail.com"
-                        {...register("email")}
-                        className="w-full h-[46px] bg-[#E6F0F4] border border-transparent focus:border-[#8BCCE6] rounded-xl px-4 text-sm outline-none transition-colors text-gray-800 font-medium placeholder:text-gray-500"
-                    />
-                </div>
-
-                <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-700 ml-1">Password<span className="text-[#E8825A]">*</span></label>
-                    <div className="relative">
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="••••••••"
-                            {...register("password")}
-                            className="w-full h-[46px] bg-[#E6F0F4] border border-transparent focus:border-[#8BCCE6] rounded-xl px-4 text-sm flex items-center tracking-widest outline-none transition-colors text-gray-800 font-medium placeholder:text-gray-500 pr-16"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500 hover:text-gray-900"
-                        >
-                            {showPassword ? "Hide" : "Show"}
-                        </button>
-                    </div>
-                </div>
-
-                <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-700 ml-1">Confirm Password<span className="text-[#E8825A]">*</span></label>
-                    <div className="relative">
-                        <input
-                            type={showConfirmPassword ? "text" : "password"}
-                            placeholder="Re-enter your password"
-                            {...register("confirmPassword")}
-                            className="w-full h-[46px] border border-gray-200 focus:border-[#8BCCE6] rounded-xl px-4 text-sm outline-none transition-colors text-gray-800 font-medium placeholder:text-gray-300 placeholder:font-normal pr-16"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500 hover:text-gray-900"
-                        >
-                            {showConfirmPassword ? "Hide" : "Show"}
-                        </button>
-                    </div>
-                </div>
-
-                <div className="space-y-3 pt-2 pb-2 pl-1">
-                    <label className="flex items-center gap-3 cursor-pointer group">
-                        <input
-                            type="checkbox"
-                            {...register("agreePolicy")}
-                            className="w-[18px] h-[18px] rounded border-gray-300 text-[#E8825A] focus:ring-[#E8825A] accent-[#E8825A] cursor-pointer"
-                        />
-                        <span className="text-xs font-bold text-gray-600 group-hover:text-gray-900">I agree to the Privacy Policy.</span>
-                    </label>
-
-                    <label className="flex items-center gap-3 cursor-pointer group">
-                        <input
-                            type="checkbox"
-                            {...register("agreeTerms")}
-                            className="w-[18px] h-[18px] rounded border-gray-300 text-[#E8825A] focus:ring-[#E8825A] accent-[#E8825A] cursor-pointer"
-                        />
-                        <span className="text-xs font-bold text-gray-600 group-hover:text-gray-900">I agree to the Terms of Service.</span>
-                    </label>
-                </div>
-
-                {Object.keys(errors).length > 0 && (
-                    <div className="w-full bg-[#FFF6F4] text-[#E8825A] text-xs font-bold py-2.5 rounded-lg text-center shadow-sm">
-                        {Object.values(errors)[0]?.message as React.ReactNode}
-                    </div>
-                )}
-
-                <div className="flex justify-between items-center pt-2">
-                    <button
-                        type="button"
-                        onClick={goBack}
-                        className="h-10 px-6 rounded-lg border border-gray-200 bg-white font-bold text-sm text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
-                    >
-                        Back
-                    </button>
-                    <button
-                        type="submit"
-                        className="h-10 px-6 rounded-lg text-white font-bold text-sm shadow-sm hover:opacity-90 transition-opacity"
-                        style={{ background: 'linear-gradient(90.99deg, #8BCCE6 2.49%, #F6855C 99.73%)' }}
-                    >
-                        Continue
-                    </button>
-                </div>
-            </form>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="flex flex-col space-y-1.5">
+            <label className="auth-label">
+              First Name<span className="text-[#E8825A]">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="Enter your name"
+              {...register('firstName')}
+              className="auth-input"
+            />
+          </div>
+          <div className="flex flex-col space-y-1.5">
+            <label className="auth-label">
+              Last Name<span className="text-[#E8825A]">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="Enter your last name"
+              {...register('lastName')}
+              className="auth-input"
+            />
+          </div>
         </div>
-    );
+
+        <div className="space-y-1.5">
+          <label className="auth-label">
+            Phone Number<span className="text-[#E8825A]">*</span>
+          </label>
+          <div className="flex gap-4">
+            <div className="relative w-[150px] shrink-0">
+              <select
+                {...register('countryCode')}
+                className="h-12 w-full appearance-none rounded-lg border border-[#d7dde7] bg-white px-3 pr-10 text-left text-[14px] font-normal leading-[120%] text-[#202124] outline-none transition-colors focus:border-[#8BCCE6]"
+              >
+                {countryOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#202124]" />
+            </div>
+            <input
+              type="tel"
+              placeholder="Digits only"
+              {...register('phone')}
+              className="auth-input auth-input-left flex-1 bg-white text-left"
+            />
+          </div>
+          <div className="text-[14px] font-normal leading-[120%] text-[#7b8595]">
+            Select your island/ area code, then enter digits only
+          </div>
+        </div>
+
+        <div className="space-y-1.5 pt-1">
+          <label className="auth-label">
+            Email Address<span className="text-[#E8825A]">*</span>
+          </label>
+          <input
+            type="email"
+            placeholder="you@gmail.com"
+            {...register('email')}
+            className="auth-input"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="auth-label">
+            Password<span className="text-[#E8825A]">*</span>
+          </label>
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder="••••••••"
+              {...register('password')}
+              className="auth-input pr-12"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5f6368] hover:text-[#202124]"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="auth-label">
+            Confirm Password<span className="text-[#E8825A]">*</span>
+          </label>
+          <div className="relative">
+            <input
+              type={showConfirmPassword ? 'text' : 'password'}
+              placeholder="Re-enter your password"
+              {...register('confirmPassword')}
+              className="auth-input pr-12"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5f6368] hover:text-[#202124]"
+              aria-label={
+                showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'
+              }
+            >
+              {showConfirmPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-3 px-1 py-2">
+          <label className="group flex cursor-pointer items-center gap-3">
+            <input
+              type="checkbox"
+              {...register('agreePolicy')}
+              className="h-[18px] w-[18px] cursor-pointer rounded border-gray-300 accent-[#E8825A]"
+            />
+            <span className="text-xs font-medium text-[#5f6368] group-hover:text-[#202124]">
+              I agree to the Privacy Policy.
+            </span>
+          </label>
+
+          <label className="group flex cursor-pointer items-center gap-3">
+            <input
+              type="checkbox"
+              {...register('agreeTerms')}
+              className="h-[18px] w-[18px] cursor-pointer rounded border-gray-300 accent-[#E8825A]"
+            />
+            <span className="text-xs font-medium text-[#5f6368] group-hover:text-[#202124]">
+              I agree to the Terms of Service.
+            </span>
+          </label>
+        </div>
+
+        {Object.keys(errors).length > 0 && (
+          <div className="rounded-lg bg-[#FFF6F4] py-2.5 text-center text-xs font-semibold text-[#E8825A] shadow-sm">
+            {Object.values(errors)[0]?.message as React.ReactNode}
+          </div>
+        )}
+
+        <div className="flex items-center justify-between pt-2">
+          <button
+            type="button"
+            onClick={goBack}
+            className="auth-button-secondary h-10 px-6"
+          >
+            Back
+          </button>
+          <button
+            type="submit"
+            className="auth-button-primary h-10 px-6"
+          >
+            Continue
+          </button>
+        </div>
+      </form>
+    </div>
+  )
 }

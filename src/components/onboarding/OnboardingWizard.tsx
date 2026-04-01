@@ -29,6 +29,9 @@ export function OnboardingWizard({ allSteps }: OnboardingWizardProps) {
             if (step.visibleForRoles && step.visibleForRoles.length > 0 && !step.visibleForRoles.includes(role)) {
                 return false;
             }
+            if (step.key === "entity_type" && role === "AGENT") {
+                return false;
+            }
             // logic specifically requested for business profile step exclusion
             if (step.key === "business_profile" && entityType !== "business") {
                 return false;
@@ -72,7 +75,12 @@ export function OnboardingWizard({ allSteps }: OnboardingWizardProps) {
 
     return (
         <div className="w-full">
-            <StepProgress activeSteps={activeSteps} currentIndex={currentStepIndex} />
+            <StepProgress
+                activeSteps={activeSteps}
+                currentIndex={currentStepIndex}
+                currentStepKey={currentStep?.key}
+                role={formData.role}
+            />
             <div className="mt-8 transition-all ease-in-out duration-300">
                 {renderStep()}
             </div>

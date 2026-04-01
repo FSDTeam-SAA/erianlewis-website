@@ -31,7 +31,7 @@ export default function VerifyOtpPage() {
 
         setLoading(true);
         try {
-            await api.post("/auth/verify-otp", { email, otp: code });
+            await api.post("/auth/verify-code", { email, otp: code });
             toast.success("Verified successfully!");
 
             if (formData.email === email && formData.password) {
@@ -61,7 +61,7 @@ export default function VerifyOtpPage() {
     const handleResend = async () => {
         setResending(true);
         try {
-            await api.post("/auth/resend-otp", { email });
+            await api.post("/auth/forget-password", { email });
             toast.success("New code sent.");
             setCode("");
         } catch {
@@ -72,74 +72,71 @@ export default function VerifyOtpPage() {
     };
 
     return (
-        <div className="w-full max-w-[480px] bg-white rounded-3xl p-8 md:p-10 shadow-lg relative mx-auto my-auto animate-in fade-in slide-in-from-bottom-4 duration-500 text-center">
-
-            <div className="flex justify-center mb-6">
+        <div className="auth-card mx-auto my-auto w-full max-w-[520px] p-8 text-center md:p-10">
+            <div className="mb-6 flex justify-center">
                 <Image src="/logo.png" alt="Alora Logo" width={80} height={80} className="object-contain" />
             </div>
 
-            <h1 className="text-3xl font-extrabold text-gray-900 mb-2 mt-4 flex justify-center w-full min-w-max mx-auto px-4 !whitespace-nowrap">Verify your email</h1>
-            <p className="text-sm font-medium text-gray-600 mb-8 max-w-[280px] mx-auto leading-relaxed">
+            <h1 className="auth-title mb-3 text-[34px]">Verify your email</h1>
+            <p className="mx-auto mb-8 max-w-[320px] text-[16px] font-normal leading-[140%] text-[#5f6368]">
                 Enter the 6 digit code to unlock your dashboard.
             </p>
 
             <div className="space-y-4 text-left">
-                {/* Mocking the two informational bands from the image */}
-                <div className="w-full bg-[#FAFAFA] text-gray-500 text-xs font-semibold px-4 py-3 rounded-xl">
+                <div className="rounded-xl bg-[#f7f9fc] px-4 py-3 text-xs font-medium text-[#8a93a3]">
                     We sent a 6 digit code to {email}
                 </div>
 
-                <div className="w-full bg-[#F0FDF4] text-green-600 text-xs font-semibold px-4 py-3 rounded-xl">
-                    We sent a 6 digit code to your email.
+                <div className="rounded-xl bg-[#eefbf2] px-4 py-3 text-xs font-medium text-[#46a964]">
+                    We sent a 6 digit code to your gmail.
                 </div>
 
-                <div className="space-y-2 mt-6">
-                    <label className="text-xs font-semibold text-gray-700 ml-1">Verification code</label>
+                <div className="space-y-2 pt-2">
+                    <label className="auth-label text-[14px]">Verification code</label>
                     <input
                         type="text"
-                        className="w-full h-[52px] border border-gray-200 rounded-xl px-4 text-base tracking-[0.3em] font-medium outline-none focus:border-[#8BCCE6] transition-colors"
+                        className="h-[48px] w-full rounded-lg border border-[#d7dde7] bg-white px-4 text-left text-[14px] tracking-[0.35em] text-[#202124] outline-none transition-colors placeholder:text-[#9aa3b2] focus:border-[#8BCCE6]"
                         placeholder="123456"
                         value={code}
-                        onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ''))}
+                        onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ""))}
                         maxLength={6}
                     />
                 </div>
 
-                <div className="flex items-center gap-3 pt-4">
+                <div className="flex items-center gap-3 pt-2">
                     <button
+                        type="button"
                         onClick={handleVerify}
                         disabled={loading || code.length !== 6}
-                        className="flex-1 h-11 rounded-xl text-white font-bold text-sm shadow-sm hover:opacity-90 transition-opacity disabled:opacity-70 flex justify-center items-center"
-                        style={{ background: 'linear-gradient(90.99deg, #8BCCE6 2.49%, #F6855C 99.73%)' }}
+                        className="auth-button-primary h-10 flex-1 text-[12px]"
                     >
-                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify & go to dashboard"}
+                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify & go to dashboard"}
                     </button>
                     <button
                         type="button"
                         onClick={handleResend}
                         disabled={resending}
-                        className="flex-1 h-11 rounded-xl bg-white border border-gray-200 text-gray-800 font-bold text-sm hover:bg-gray-50 transition-colors disabled:opacity-70"
+                        className="auth-button-secondary h-10 flex-1 text-[12px]"
                     >
                         {resending ? "Sending..." : "Resend code"}
                     </button>
                 </div>
 
-                <div className="pt-6 text-center">
+                <div className="pt-3 text-center">
                     <button
                         type="button"
                         onClick={() => {
                             reset();
                             router.push("/sign-in");
                         }}
-                        className="text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors underline-offset-4 hover:underline"
+                        className="text-sm font-medium text-[#7b8595] underline underline-offset-2 hover:text-[#202124]"
                     >
                         Sign out
                     </button>
-                    <p className="text-xs text-gray-400 font-medium mt-4">
+                    <p className="mt-4 text-xs text-[#8a93a3]">
                         After verification, you&apos;ll go straight to your dashboard.
                     </p>
                 </div>
-
             </div>
         </div>
     );
