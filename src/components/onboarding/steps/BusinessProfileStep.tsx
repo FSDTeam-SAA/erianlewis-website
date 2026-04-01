@@ -21,10 +21,11 @@ interface StepProps {
 const schema = z.object({
     businessName: z.string().min(1, "Business name is required"),
     aboutBusiness: z.string().min(1, "About your business is required"),
-    operatingLocations: z.array(z.string()).min(1, "Operating location is required"),
+    operatingLocations: z.array(z.string()).default([]),
 });
 
-type BusinessProfileValues = z.infer<typeof schema>;
+type BusinessProfileFormInput = z.input<typeof schema>;
+type BusinessProfileValues = z.output<typeof schema>;
 
 export function BusinessProfileStep({ stepConfig }: StepProps) {
     const { formData, setFormData, goNext, goBack } = useOnboardingStore();
@@ -53,7 +54,7 @@ export function BusinessProfileStep({ stepConfig }: StepProps) {
         setValue,
         watch,
         formState: { errors },
-    } = useForm<BusinessProfileValues>({
+    } = useForm<BusinessProfileFormInput, undefined, BusinessProfileValues>({
         resolver: zodResolver(schema),
         defaultValues: {
             businessName: formData.businessName || "",
@@ -106,14 +107,14 @@ export function BusinessProfileStep({ stepConfig }: StepProps) {
 
                     <div className="space-y-2">
                         <label className="auth-label">
-                            Operating Location(s)<span className="text-[#E8825A]">*</span>
+                            Operating Location(s)
                         </label>
                         <IslandMultiSelect
                             options={sortedIslands}
                             value={selectedLocations}
                             onChange={(next) => setValue("operatingLocations", next, { shouldValidate: true })}
                             placeholder="Select island"
-                            helperText={islandsFailed ? "Island list could not be loaded from the API right now." : "Select the islands you operate in."}
+                            helperText={islandsFailed ? "Island list could not be loaded from the API right now. You can skip this for now." : "Select the islands you operate in."}
                             error={errors.operatingLocations?.message}
                         />
                     </div>
@@ -128,7 +129,6 @@ export function BusinessProfileStep({ stepConfig }: StepProps) {
                         </button>
                         <button
                             type="submit"
-                            disabled={islandsFailed}
                             className="auth-button-primary h-10 px-6"
                         >
                             Continue

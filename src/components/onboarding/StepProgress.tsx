@@ -13,8 +13,10 @@ interface StepProgressProps {
 export function StepProgress({ activeSteps, currentIndex, currentStepKey, role }: StepProgressProps) {
     if (!activeSteps || activeSteps.length === 0) return null;
 
-    const shouldCondense = ["LANDLORD", "AGENT"].includes(role || "") &&
-        ["entity_type", "business_profile", "plan_selection", "completion"].includes(currentStepKey || "");
+    const isPaidRole = ["LANDLORD", "AGENT"].includes(role || "");
+    const useRoleFlow = isPaidRole && ["role_selection", "entity_type"].includes(currentStepKey || "");
+    const shouldCondense = isPaidRole &&
+        ["business_profile", "plan_selection", "completion"].includes(currentStepKey || "");
 
     const milestones = shouldCondense
         ? [
@@ -22,6 +24,10 @@ export function StepProgress({ activeSteps, currentIndex, currentStepKey, role }
             { key: "details", label: "Business profile" },
             { key: "subscription", label: "Subscription" },
         ]
+        : useRoleFlow
+            ? activeSteps
+                .filter((step) => step.key !== "personal_information")
+                .map((step) => ({ key: step.key, label: step.name }))
         : activeSteps.map((step) => ({ key: step.key, label: step.name }));
 
     const condensedCurrentIndex = (() => {
@@ -30,7 +36,8 @@ export function StepProgress({ activeSteps, currentIndex, currentStepKey, role }
         return 2;
     })();
 
-    const progressIndex = shouldCondense ? condensedCurrentIndex : currentIndex;
+    const roleFlowIndex = useRoleFlow ? Math.max(currentIndex - 1, 0) : currentIndex;
+    const progressIndex = shouldCondense ? condensedCurrentIndex : roleFlowIndex;
     const progressWidth = milestones.length > 1
         ? `${(progressIndex / (milestones.length - 1)) * 100}%`
         : "0%";

@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { CreditCard, Loader2, ServerCrash } from "lucide-react";
+import { toast } from "sonner";
 import api from "@/lib/axios";
 import { useOnboardingStore, OnboardingStep } from "@/lib/stores/onboardingStore";
-import { Loader2, ServerCrash } from "lucide-react";
 
 interface Plan {
     _id: string;
@@ -22,10 +24,26 @@ interface StepProps {
     stepConfig: OnboardingStep;
 }
 
+const formatPlanName = (plan: Plan) => {
+    const rawName = plan.title?.trim() || plan.name?.trim() || "Plan";
+    return rawName
+        .replace(/[_-]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
 export function PlanSelectionStep({ stepConfig }: StepProps) {
     const { formData, setFormData, goNext, goBack } = useOnboardingStore();
-    const { title, subtitle } = stepConfig.content;
+    const router = useRouter();
+    const { title } = stepConfig.content;
     const [propertyCount, setPropertyCount] = useState(formData.numberOfProperties || 1);
+    const [loading, setLoading] = useState(false);
+
+    const isPaidRole = formData.role === "LANDLORD" || formData.role === "AGENT";
+    const subtitle = isPaidRole
+        ? `Pick a plan for your ${formData.role === "LANDLORD" ? "landlord" : "agent"} account.`
+        : stepConfig.content.subtitle;
 
     const { data, isLoading, isError } = useQuery({
         queryKey: ["plans", formData.role],
@@ -61,6 +79,99 @@ export function PlanSelectionStep({ stepConfig }: StepProps) {
             setFormData({ planId: recommendedPlan._id });
         }
     }, [formData.planId, recommendedPlan, setFormData]);
+
+    const buildPayload = () => {
+        const phone = formData.phone
+            ? `${formData.countryCode || "+1"} ${formData.phone}`.trim()
+            : "";
+
+        if (formData.role === "LANDLORD" || formData.role === "AGENT") {
+            if (formData.entityType === "individual") {
+                return {
+                    firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    phone,
+                    email: formData.email,
+                    password: formData.password,
+                    confirmPassword: formData.confirmPassword,
+                    role: formData.role,
+                    entityType: formData.entityType,
+                    individual: {
+                        operatingLocations: formData.operatingLocations || [],
+                        numberOfProperties: propertyCount,
+                    },
+                    planId: formData.planId,
+                };
+            }
+
+            return {
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                phone,
+                email: formData.email,
+                password: formData.password,
+                confirmPassword: formData.confirmPassword,
+                role: formData.role,
+                entityType: formData.entityType,
+                business: {
+                    businessName: formData.businessName,
+                    aboutBusiness: formData.aboutBusiness,
+                    operatingLocations: formData.operatingLocations || [],
+                    numberOfProperties: propertyCount,
+                },
+                planId: formData.planId,
+            };
+        }
+
+        return {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            phone,
+            email: formData.email,
+            password: formData.password,
+            confirmPassword: formData.confirmPassword,
+            role: formData.role || "USER",
+        };
+    };
+
+    const handleContinue = async () => {
+        if (!isPaidRole) {
+            goNext();
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const res = await api.post("/auth/register", buildPayload());
+            const responseData = res.data?.data;
+
+            if (responseData?.requiresPayment && responseData?.stripeUrl) {
+                window.location.href = responseData.stripeUrl;
+                return;
+            }
+
+            toast.success("Account created successfully!");
+            const query = new URLSearchParams({ email: formData.email || "" });
+            router.push(`/verify-otp?${query.toString()}`);
+        } catch (error: unknown) {
+            const message =
+                typeof error === "object" &&
+                    error !== null &&
+                    "response" in error &&
+                    typeof error.response === "object" &&
+                    error.response !== null &&
+                    "data" in error.response &&
+                    typeof error.response.data === "object" &&
+                    error.response.data !== null &&
+                    "message" in error.response.data
+                    ? String(error.response.data.message)
+                    : "Registration failed. Please try again.";
+
+            toast.error(message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="mx-auto w-full max-w-[760px] animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -104,7 +215,7 @@ export function PlanSelectionStep({ stepConfig }: StepProps) {
                             </p>
                         </div>
 
-                        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-3">
                             {sortedPlans.map((plan) => {
                                 const isSelected = formData.planId === plan._id;
                                 const isRecommended = recommendedPlan?._id === plan._id;
@@ -123,7 +234,7 @@ export function PlanSelectionStep({ stepConfig }: StepProps) {
                                                 Recommended
                                             </span>
                                         )}
-                                        <div className="text-[24px] font-semibold text-[#202124]">{plan.name}</div>
+                                        <div className="text-[24px] font-semibold text-[#202124]">{formatPlanName(plan)}</div>
                                         <div className="mt-1 text-[15px] font-semibold text-[#F6855C]">
                                             {plan.price === 0 ? "Free" : `$${plan.price}/${plan.billingCycle.toLowerCase()}`}
                                         </div>
@@ -135,6 +246,28 @@ export function PlanSelectionStep({ stepConfig }: StepProps) {
                             })}
                         </div>
 
+                        {isPaidRole && (
+                            <>
+                                <div className="mb-4 rounded-[16px] border border-[#e8edf3] bg-white p-4">
+                                    <div className="mb-1 text-[14px] font-medium text-[#202124]">Payment</div>
+                                    <div className="mb-4 text-[11px] text-[#7b8595]">Stripe opens in a new window.</div>
+                                    <button
+                                        type="button"
+                                        onClick={handleContinue}
+                                        disabled={loading || !formData.planId}
+                                        className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#171717] text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+                                    >
+                                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                                        Pay with Stripe
+                                    </button>
+                                </div>
+
+                                <div className="mb-5 rounded-[10px] bg-[#fff7f2] px-4 py-3 text-center text-[11px] text-[#f6855c]">
+                                    Please complete payment to continue
+                                </div>
+                            </>
+                        )}
+
                         <div className="flex items-center justify-between">
                             <button
                                 type="button"
@@ -145,11 +278,20 @@ export function PlanSelectionStep({ stepConfig }: StepProps) {
                             </button>
                             <button
                                 type="button"
-                                onClick={goNext}
-                                disabled={!formData.planId}
+                                onClick={handleContinue}
+                                disabled={!formData.planId || loading}
                                 className="auth-button-primary h-10 px-6"
                             >
-                                Continue
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        {isPaidRole ? "Redirecting..." : "Continuing..."}
+                                    </>
+                                ) : isPaidRole ? (
+                                    "Complete"
+                                ) : (
+                                    "Continue"
+                                )}
                             </button>
                         </div>
                     </>
