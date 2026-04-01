@@ -1,0 +1,49 @@
+Project Overview & Technology Stack
+==================================
+
+### Core Architecture
+- **Framework:** Next.js 14.2.35 (App Router structure: `src/app`)
+- **Language:** TypeScript 5
+- **UI & Styling:** React 18, Tailwind CSS v3.4.1
+- **Component Library/System:** shadcn/ui components (Radix primitives implicitly used through standard shadcn components), @base-ui/react
+
+### Key Dependencies & Libraries
+- **State Management:** Zustand
+- **Data Fetching:** React Query (@tanstack/react-query)
+- **Forms & Validation:** React Hook Form, zod, @hookform/resolvers
+- **Authentication:** NextAuth (next-auth)
+- **Tables & Data Grids:** @tanstack/react-table
+- **Charts / Visualizations:** Recharts
+- **Rich Text Editor:** Tiptap (@tiptap/react, @tiptap/starter-kit)
+- **Icons:** Lucide React (lucide-react)
+- **Animations:** Motion (framer-motion updated package), tailwindcss-animate
+- **Utility / Other:** Date-fns (date manipulation), axios (HTTP requests), clsx / tailwind-merge (class merging), sonner (toast notifications), react-day-picker (calendar)
+
+---
+
+Directory Structure Overview
+============================
+
+The project is structured under the `src/` directory following a typical modern Next.js 14 setup:
+
+src/
+├── app/                  # Next.js App Router root
+│   ├── (tenant)/         # Route group for tenant-facing pages/views
+│   ├── api/              # API Route Handlers
+│   ├── globals.css       # Global styles and Tailwind directives
+│   └── layout.tsx        # Application root layout layout
+│
+├── components/           # React Components
+│   ├── dashboard/        # Dashboard specific views and logic
+│   ├── providers/        # Context Providers (e.g., Theme, React Query, Auth)
+│   ├── shared/           # Reusable shared blocks (Navigation, Cards, Hero sections, etc.)
+│   └── ui/               # Base UI primitive components (shadcn components: buttons, inputs, dialogs)
+│
+└── lib/                  # Utility functions, helpers, hooks, and configuration
+    └── (Contains commonly used helper functions like `cn` for className merging, and perhaps auth/db configs)
+
+Root level
+├── package.json          # Dependencies & project scripts
+├── tailwind.config.ts    # Tailwind CSS framework configuration (assumed by presence of Next.js setup)
+├── tsconfig.json         # TypeScript configuration
+└── (Other config files like next.config.js, eslintrc, globals, etc.)

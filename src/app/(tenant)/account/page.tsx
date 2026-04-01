@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { ListingNavbar } from "@/components/shared/ListingNavbar";
 import { Footer } from "@/components/shared/Footer";
 import { SettingsCard } from "@/components/shared/SettingsCard";
@@ -24,7 +24,9 @@ export default function TenantAccountPage() {
     const [newEmail, setNewEmail] = useState("");
     const [emailPassword, setEmailPassword] = useState("");
 
-    const handleSignOut = () => { /* Handle sign out */ };
+    const handleSignOut = () => {
+        signOut({ callbackUrl: "/sign-in" });
+    };
     const handleSaveChanges = () => { /* Handle profile save */ };
     const handleUpdatePassword = () => { /* Handle password update */ };
     const handleUpdateEmail = () => { /* Handle email update */ };
@@ -211,7 +213,7 @@ export default function TenantAccountPage() {
                                     {/* RIGHT: Change Email */}
                                     <div>
                                         <h3 className="text-base font-bold text-gray-800 mb-1.5">Change email</h3>
-                                        <p className="text-[13px] font-medium text-gray-400 mb-6">You'll need your password to confirm this change.</p>
+                                        <p className="text-[13px] font-medium text-gray-400 mb-6">You&apos;ll need your password to confirm this change.</p>
 
                                         <label className="text-[13px] font-bold text-gray-500 mb-2 block">New email</label>
                                         <input
@@ -297,7 +299,7 @@ export default function TenantAccountPage() {
                                 <Trash2 size={16} />
                                 Delete Account
                             </button>
-                            <p className="text-[13px] font-medium text-gray-400">You'll need to enter your password to confirm.</p>
+                            <p className="text-[13px] font-medium text-gray-400">You&apos;ll need to enter your password to confirm.</p>
                         </div>
                     </div>
                 </SettingsCard>

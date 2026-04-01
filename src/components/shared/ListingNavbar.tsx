@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { ChevronLeft } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -51,12 +51,21 @@ export function ListingNavbar() {
                             </button>
                             <Link href="/saved" className="text-gray-600 hover:text-black font-medium transition-colors">Saved Searches</Link>
                             <Link href="/account" className="text-gray-600 hover:text-black font-medium transition-colors">My Account</Link>
-                            <button className="text-gray-600 hover:text-black font-medium transition-colors">Sign out</button>
+                            <button
+                                type="button"
+                                onClick={() => signOut({ callbackUrl: "/sign-in" })}
+                                className="text-gray-600 hover:text-black font-medium transition-colors"
+                            >
+                                Sign out
+                            </button>
                         </div>
                     ) : (
-                        <button className="border border-gray-300 text-gray-700 rounded px-5 py-1.5 text-sm font-semibold hover:bg-gray-50 transition-colors shadow-sm">
+                        <Link
+                            href="/sign-in"
+                            className="border border-gray-300 text-gray-700 rounded px-5 py-1.5 text-sm font-semibold hover:bg-gray-50 transition-colors shadow-sm"
+                        >
                             Sign In
-                        </button>
+                        </Link>
                     )}
                 </div>
             </div>
