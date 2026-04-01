@@ -16,10 +16,10 @@ export function StatCard({ title, value, subtitle, icon: Icon, gradient }: StatC
         >
             <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
-                    <Icon size={15} className="opacity-80" />
-                    <span className="text-xs font-medium opacity-80">{title}</span>
+                    <Icon size={18} className="opacity-100" />
+                    <span className="text-xs font-medium opacity-90">{title}</span>
                 </div>
-                <Icon size={64} className="opacity-10 absolute -top-2 -right-2" />
+                <Icon size={36} className="opacity-20 absolute top-4 right-4" />
             </div>
             <div className="text-4xl font-bold mt-2">{value}</div>
             <div className="text-xs opacity-60 mt-1">{subtitle}</div>

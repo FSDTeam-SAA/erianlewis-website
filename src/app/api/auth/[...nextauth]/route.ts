@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const authOptions: NextAuthOptions = {
     providers: [
@@ -11,12 +12,36 @@ const authOptions: NextAuthOptions = {
                 password: { label: "Password", type: "password" },
             },
             async authorize(credentials) {
-                // Implement your own authentication logic here
-                // For example, calling your backend API to verify credentials
-                if (credentials?.email === "admin@example.com" && credentials.password === "password") {
-                    return { id: "1", name: "Admin", email: "admin@example.com", role: "admin" } as any;
+                if (!apiBaseUrl || !credentials?.email || !credentials.password) {
+                    return null;
                 }
-                return null;
+
+                const response = await fetch(`${apiBaseUrl}/auth/login`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        email: credentials.email,
+                        password: credentials.password,
+                    }),
+                });
+
+                const payload = await response.json();
+                if (!response.ok || !payload?.status || !payload?.data?.user) {
+                    throw new Error(payload?.message || "Unable to sign in");
+                }
+
+                const { user, accessToken, refreshToken } = payload.data;
+                return {
+                    id: user._id,
+                    name: [user.firstName, user.lastName].filter(Boolean).join(" "),
+                    email: user.email,
+                    role: user.role,
+                    profileImage: user.profileImage,
+                    accessToken,
+                    refreshToken,
+                };
             },
         }),
     ],
@@ -24,18 +49,24 @@ const authOptions: NextAuthOptions = {
         strategy: "jwt",
     },
     pages: {
-        signIn: "/login",
+        signIn: "/sign-in",
     },
     callbacks: {
         async jwt({ token, user }) {
             if (user) {
-                token.role = (user as any).role;
+                token.role = user.role;
+                token.accessToken = user.accessToken;
+                token.refreshToken = user.refreshToken;
+                token.picture = user.profileImage || null;
             }
             return token;
         },
         async session({ session, token }) {
-            if (session?.user) {
-                (session.user as any).role = token.role;
+            if (session.user) {
+                session.user.role = token.role as string;
+                session.user.accessToken = token.accessToken as string;
+                session.user.refreshToken = token.refreshToken as string;
+                session.user.image = typeof token.picture === "string" ? token.picture : null;
             }
             return session;
         },

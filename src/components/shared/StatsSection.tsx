@@ -1,9 +1,28 @@
+import { Building2, TrendingUp, Users } from "lucide-react";
 import { StatCard } from "./StatCard";
 
 const STATS = [
-    { title: "Total Site Visits", value: "4,015", subtitle: "All-time", variant: "blue" as const },
-    { title: "Registered User", value: "26", subtitle: "Tenants + Landlords + Agents", variant: "orange" as const },
-    { title: "Total Site Visits", value: "4,015", subtitle: "All-time", variant: "dark" as const },
+    {
+        title: "Total Site Visits",
+        value: "4,015",
+        subtitle: "All-time",
+        icon: TrendingUp,
+        gradient: "linear-gradient(135deg, #8BCCE6 0%, #5EAACB 100%)",
+    },
+    {
+        title: "Registered User",
+        value: "26",
+        subtitle: "Tenants + Landlords + Agents",
+        icon: Users,
+        gradient: "linear-gradient(135deg, #F6A27E 0%, #F6855C 100%)",
+    },
+    {
+        title: "Listed Properties",
+        value: "4,015",
+        subtitle: "Across all categories",
+        icon: Building2,
+        gradient: "linear-gradient(135deg, #3B4354 0%, #1F2937 100%)",
+    },
 ];
 
 export function StatsSection() {

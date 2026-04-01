@@ -24,29 +24,31 @@ export function BrowseByCategory() {
             className="w-full relative z-20 pt-1 pb-24 min-h-[500px] bg-white"
         >
             {/* Overlapping Stat Cards mapped according to exact specs */}
-            <div className="w-full -mt-16 md:-mt-24 mb-16 relative z-30">
-                <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-5 px-4">
-                    <StatCard
-                        title="Total Site Visits"
-                        value="4,015"
-                        subtitle="All-time"
-                        icon={BarChart2}
-                        gradient="linear-gradient(102.89deg, #80BDEA 0%, #4E8BE3 100%)"
-                    />
-                    <StatCard
-                        title="Registered User"
-                        value="26"
-                        subtitle="Tenants + Landlords + Agents"
-                        icon={Users}
-                        gradient="linear-gradient(102.89deg, #FF7D51 0%, #FF6C69 100%)"
-                    />
-                    <StatCard
-                        title="Total Site Visits"
-                        value="4,015"
-                        subtitle="All-time"
-                        icon={Building2}
-                        gradient="linear-gradient(102.89deg, #2B3D4F 0%, #203041 100%)"
-                    />
+            <div className="w-full -mt-16 md:-mt-24 mb-16 relative z-30 px-4">
+                <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg pt-[24px] px-6 pb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <StatCard
+                            title="Total Site Visits"
+                            value="4,015"
+                            subtitle="All-time"
+                            icon={BarChart2}
+                            gradient="linear-gradient(102.89deg, #80BDEA 0%, #4E8BE3 100%)"
+                        />
+                        <StatCard
+                            title="Registered User"
+                            value="26"
+                            subtitle="Tenants + Landlords + Agents"
+                            icon={Users}
+                            gradient="linear-gradient(102.89deg, #FF7D51 0%, #FF6C69 100%)"
+                        />
+                        <StatCard
+                            title="Total Site Visits"
+                            value="4,015"
+                            subtitle="All-time"
+                            icon={Building2}
+                            gradient="linear-gradient(102.89deg, #2B3D4F 0%, #203041 100%)"
+                        />
+                    </div>
                 </div>
             </div>
 

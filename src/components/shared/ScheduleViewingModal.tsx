@@ -55,7 +55,7 @@ export function ScheduleViewingModal({ isOpen, onClose }: ScheduleViewingModalPr
                     </select>
 
                     <p className="text-[11px] font-semibold text-gray-400 mb-6 leading-tight">
-                        We'll share this with your request so the owner knows what timezone you selected.
+                        We&apos;ll share this with your request so the owner knows what timezone you selected.
                     </p>
 
                     {/* Your Name */}

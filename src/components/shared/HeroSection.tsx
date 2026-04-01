@@ -50,7 +50,7 @@ export function HeroSection() {
                         </div>
 
                         {/* Input & Action */}
-                        <div className="flex items-center gap-2 px-2 pb-2 mt-1 border-none">
+                        <div className="flex items-center gap-2 px-2 pb-2 pt-2 mt-1 border border-gray-200 rounded-xl">
                             <MapPin className="text-gray-400 w-6 h-6 shrink-0 ml-1" />
                             <input
                                 type="text"

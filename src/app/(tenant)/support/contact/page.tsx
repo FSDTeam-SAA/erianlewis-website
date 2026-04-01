@@ -25,7 +25,7 @@ export default function ContactSupportPage() {
                     </a>
 
                     <p className="text-[13px] font-medium text-gray-500 leading-relaxed text-center">
-                        If your device doesn't open email automatic, Copy paste:{' '}
+                        If your device doesn&apos;t open email automatic, Copy paste:{' '}
                         <span className="text-gray-800 font-bold block mt-1.5 text-[14px]">info@alorarrealty.com</span>
                     </p>
                 </div>
