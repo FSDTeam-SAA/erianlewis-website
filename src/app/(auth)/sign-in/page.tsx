@@ -34,7 +34,7 @@ export default function SignInPage() {
             email,
             password,
             redirect: false,
-            callbackUrl: "/dashboard",
+            callbackUrl: "/",
         });
         setLoading(false);
 
@@ -43,7 +43,7 @@ export default function SignInPage() {
             return;
         }
 
-        router.push(result?.url || "/dashboard");
+        router.push(result?.url || "/");
         router.refresh();
     };
 

@@ -98,11 +98,11 @@ export default function NotFound() {
                 </p>
 
                 {/* 🧭 Buttons */}
-                <div className="flex flex-col gap-4 sm:flex-row w-full sm:w-auto">
+                <div className="flex w-full flex-col items-stretch gap-4 sm:w-auto sm:flex-row sm:items-center">
                     {/* Back to Home Button */}
                     <Link
                         href="/"
-                        className="group relative inline-flex w-full sm:w-auto items-center justify-center overflow-hidden rounded-full border-none px-8 py-6 text-base font-bold text-white shadow-md transition-all hover:shadow-lg"
+                        className="group relative inline-flex h-14 w-full shrink-0 items-center justify-center overflow-hidden rounded-full border-none px-8 text-base font-bold text-white shadow-md transition-all hover:shadow-lg sm:w-auto"
                         style={{
                             background: 'linear-gradient(90.99deg, #8BCCE6 2.49%, #F6855C 99.73%)',
                             transform: `
@@ -118,7 +118,7 @@ export default function NotFound() {
                     <Button
                         variant="outline"
                         onClick={() => router.back()}
-                        className="group relative overflow-hidden bg-white/80 border-gray-200 px-8 py-6 text-gray-800 transition-all hover:bg-gray-50 flex items-center justify-center rounded-full shadow-sm hover:shadow text-base font-bold w-full sm:w-auto"
+                        className="group relative flex h-14 w-full shrink-0 items-center justify-center overflow-hidden rounded-full border-gray-200 bg-white/80 px-8 text-base font-bold text-gray-800 shadow-sm transition-all hover:bg-gray-50 hover:shadow sm:w-auto"
                         style={{
                             transform: `
                 translate(${mousePosition.x * -5}px, ${mousePosition.y * -5}px)

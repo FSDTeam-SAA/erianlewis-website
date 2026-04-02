@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import {
   BookmarkPlus,
   ChevronLeft,
@@ -15,8 +16,9 @@ import {
   SlidersHorizontal,
   TriangleAlert,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Footer } from "@/components/shared/Footer";
-import { ListingNavbar } from "@/components/shared/ListingNavbar";
+import { Navbar } from "@/components/shared/Navbar";
 import { FilterPanel, type ListingFiltersState } from "@/components/shared/FilterPanel";
 import { PropertyCard, PropertyCardSkeleton, type PropertyCardProps } from "@/components/shared/PropertyCard";
 import { SortDropdown, type SortOption } from "@/components/shared/SortDropdown";
@@ -37,6 +39,23 @@ interface CategoryOption {
 interface IslandOption {
   _id: string;
   name: string;
+}
+
+interface SavedSearchItem {
+  _id: string;
+  name: string;
+  filters?: {
+    search?: string;
+    listingType?: ListingType | "";
+    island?: { _id?: string; name?: string } | string | null;
+    type?: { _id?: string; name?: string } | string | null;
+    minPrice?: number | null;
+    maxPrice?: number | null;
+    bedrooms?: number | null;
+    bathrooms?: number | null;
+    petFriendly?: boolean | null;
+    amenities?: string[];
+  };
 }
 
 interface RentalPropertyApiItem {
@@ -228,10 +247,13 @@ const sortProperties = (items: PropertyCardProps[], sort: SortOption) => {
 
 export function PropertyListingsPage({ listingType }: PropertyListingsPageProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchInput, setSearchInput] = useState(searchParams.get("search") || "");
   const [sort, setSort] = useState<SortOption>("Newest Listings");
+  const token = session?.user?.accessToken;
 
   useEffect(() => {
     setSearchInput(searchParams.get("search") || "");
@@ -278,6 +300,28 @@ export function PropertyListingsPage({ listingType }: PropertyListingsPageProps)
     queryFn: () => fetchJson<{ islands: IslandOption[]; paginationInfo: unknown }>("/islands?page=1&limit=100"),
   });
 
+  const savedSearchesQuery = useQuery({
+    queryKey: ["saved-searches", token],
+    queryFn: async () => {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/saved-searches`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      });
+
+      const payload = await response.json();
+      if (!response.ok || !payload?.status) {
+        throw new Error(payload?.message || "Failed to load saved searches");
+      }
+
+      return payload.data as SavedSearchItem[];
+    },
+    enabled: Boolean(token),
+  });
+
   const normalizedProperties = useMemo(() => {
     const mapped = (propertiesQuery.data?.properties || []).map((property) => {
       const normalized = normalizeProperty(property);
@@ -311,6 +355,137 @@ export function PropertyListingsPage({ listingType }: PropertyListingsPageProps)
 
   const clearFilters = () => {
     router.push(createNextUrl({ ...DEFAULT_FILTERS, search: searchInput, page: 1 }));
+  };
+
+  const currentSavedSearchFilters = useMemo(() => {
+    const normalizeNumber = (value: string) => {
+      if (!value) return null;
+      const parsed = Number(value);
+      return Number.isNaN(parsed) ? null : parsed;
+    };
+
+    return {
+      search: (searchParams.get("search") || "").trim(),
+      listingType,
+      island: currentFilters.island || null,
+      type: currentFilters.type || null,
+      minPrice: normalizeNumber(currentFilters.minPrice),
+      maxPrice: normalizeNumber(currentFilters.maxPrice),
+      bedrooms: normalizeNumber(currentFilters.bedrooms),
+      bathrooms: normalizeNumber(currentFilters.bathrooms),
+      petFriendly: currentFilters.petFriendly ? true : null,
+      amenities: [...currentFilters.amenities].sort(),
+    };
+  }, [currentFilters, listingType, searchParams]);
+
+  const matchingSavedSearch = useMemo(() => {
+    const savedSearches = savedSearchesQuery.data || [];
+
+    return (
+      savedSearches.find((item) => {
+        const filters = item.filters || {};
+        const savedAmenities = [...(filters.amenities || [])].sort();
+        const savedIsland =
+          typeof filters.island === "object" ? filters.island?._id || null : filters.island || null;
+        const savedType =
+          typeof filters.type === "object" ? filters.type?._id || null : filters.type || null;
+
+        return (
+          (filters.search || "").trim() === currentSavedSearchFilters.search &&
+          (filters.listingType || "") === currentSavedSearchFilters.listingType &&
+          savedIsland === currentSavedSearchFilters.island &&
+          savedType === currentSavedSearchFilters.type &&
+          (filters.minPrice ?? null) === currentSavedSearchFilters.minPrice &&
+          (filters.maxPrice ?? null) === currentSavedSearchFilters.maxPrice &&
+          (filters.bedrooms ?? null) === currentSavedSearchFilters.bedrooms &&
+          (filters.bathrooms ?? null) === currentSavedSearchFilters.bathrooms &&
+          (filters.petFriendly ?? null) === currentSavedSearchFilters.petFriendly &&
+          savedAmenities.join("|") === currentSavedSearchFilters.amenities.join("|")
+        );
+      }) || null
+    );
+  }, [currentSavedSearchFilters, savedSearchesQuery.data]);
+
+  const savedSearchMutation = useMutation({
+    mutationFn: async (mode: "save" | "remove") => {
+      if (!token) {
+        throw new Error("Please sign in to manage saved searches");
+      }
+
+      if (mode === "save") {
+        const defaultName = `${listingType === "rent" ? "Rental" : "Buy"} search${
+          currentSavedSearchFilters.search ? ` - ${currentSavedSearchFilters.search}` : ""
+        }`;
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/saved-searches`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: defaultName,
+            filters: currentSavedSearchFilters,
+          }),
+        });
+
+        const payload = await response.json();
+        if (!response.ok || !payload?.status) {
+          throw new Error(payload?.message || "Failed to save search");
+        }
+
+        return payload;
+      }
+
+      if (!matchingSavedSearch?._id) {
+        throw new Error("Saved search not found");
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/saved-searches/${matchingSavedSearch._id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const payload = await response.json();
+      if (!response.ok || !payload?.status) {
+        throw new Error(payload?.message || "Failed to remove saved search");
+      }
+
+      return payload;
+    },
+    onSuccess: async (payload, mode) => {
+      toast.success(
+        payload?.message || (mode === "save" ? "Search saved successfully" : "Saved search removed"),
+      );
+      await queryClient.invalidateQueries({ queryKey: ["saved-searches"] });
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to update saved search");
+    },
+  });
+
+  const handleMapViewClick = () => {
+    const baseRoute = listingType === "buy" ? "/buy/map" : "/rentals/map";
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("page");
+
+    const serialized = params.toString();
+    router.push(serialized ? `${baseRoute}?${serialized}` : baseRoute);
+  };
+
+  const handleSavedSearchToggle = () => {
+    if (!token) {
+      toast.error("Please sign in to save searches");
+      return;
+    }
+
+    savedSearchMutation.mutate(matchingSavedSearch ? "remove" : "save");
   };
 
   const isMetadataLoading = categoriesQuery.isLoading || islandsQuery.isLoading;
@@ -382,7 +557,7 @@ export function PropertyListingsPage({ listingType }: PropertyListingsPageProps)
 
   return (
     <main className="flex min-h-screen flex-col bg-[#f7f8fb]">
-      <ListingNavbar />
+      <Navbar variant="solid" />
 
       <div className="relative z-30 w-full border-b border-[#edf0f4] bg-white py-4 shadow-sm">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-6 md:flex-row md:items-center">
@@ -438,15 +613,31 @@ export function PropertyListingsPage({ listingType }: PropertyListingsPageProps)
           )}
 
           <div className="flex flex-wrap items-center gap-2.5">
-            <button className="inline-flex items-center gap-1.5 rounded-lg border border-[#e5e7eb] bg-white px-3.5 py-2 text-sm font-medium text-[#4b5563] shadow-sm transition-colors hover:bg-[#fafafa]">
-              <BookmarkPlus size={16} className="text-[#6b7280]" />
-              Saved this Search
+            <button
+              type="button"
+              onClick={handleSavedSearchToggle}
+              disabled={savedSearchMutation.isPending || savedSearchesQuery.isLoading}
+              className={`inline-flex items-center gap-1.5 rounded-lg border bg-white px-3.5 py-2 text-sm font-medium shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                matchingSavedSearch
+                  ? "border-[#f7c6b5] text-[#f6855c] hover:bg-[#fff5f4]"
+                  : "border-[#e5e7eb] text-[#4b5563] hover:bg-[#fafafa]"
+              }`}
+            >
+              <BookmarkPlus
+                size={16}
+                className={matchingSavedSearch ? "text-[#f6855c]" : "text-[#6b7280]"}
+              />
+              {matchingSavedSearch ? "Saved Search" : "Save this Search"}
             </button>
             <button className="inline-flex items-center gap-1 rounded-lg border border-[#e5e7eb] bg-white px-3.5 py-2 text-sm font-medium text-[#4b5563] shadow-sm transition-colors hover:bg-[#fafafa]">
               <Flag size={14} className="text-[#6b7280]" />
               USD($)
             </button>
-            <button className="inline-flex items-center gap-1.5 rounded-lg border border-[#e5e7eb] bg-white px-3.5 py-2 text-sm font-medium text-[#4b5563] shadow-sm transition-colors hover:bg-[#fafafa]">
+            <button
+              type="button"
+              onClick={handleMapViewClick}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#e5e7eb] bg-white px-3.5 py-2 text-sm font-medium text-[#4b5563] shadow-sm transition-colors hover:bg-[#fafafa]"
+            >
               <Map size={16} className="text-[#6b7280]" />
               Map View
             </button>

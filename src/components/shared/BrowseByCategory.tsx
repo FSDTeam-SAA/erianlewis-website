@@ -50,13 +50,16 @@ const formatStatValue = (value?: number) => {
 }
 
 const fetchDashboardStats = async () => {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/stats`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/stats`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
     },
-    cache: 'no-store',
-  })
+  )
 
   const payload = await response.json()
 
@@ -83,11 +86,11 @@ export function BrowseByCategory() {
   })
 
   const categories = useMemo(() => {
-    return (data?.categories || []).map((category) => ({
+    return (data?.categories || []).map(category => ({
       id: category._id,
       label: category.name,
       icon: CATEGORY_ICON_MAP[category.name.toLowerCase()] || Building,
-      href: `/${activeTab === "Rent" ? "rentals" : "buy"}?type=${encodeURIComponent(category._id)}`,
+      href: `/${activeTab === 'Rent' ? 'rentals' : 'buy'}?type=${encodeURIComponent(category._id)}`,
     }))
   }, [activeTab, data?.categories])
 
@@ -134,7 +137,7 @@ export function BrowseByCategory() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl bg-transparent px-6 py-0">
+      <div className="mx-auto max-w-7xl bg-transparent px-6 py-6 pt-12">
         <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-10 text-gray-900 tracking-tight drop-shadow-sm">
           Browse By Category
         </h2>
@@ -171,9 +174,13 @@ export function BrowseByCategory() {
         {isError ? (
           <div className="rounded-[28px] border border-[#f3c7ba] bg-white/70 px-6 py-10 text-center shadow-sm backdrop-blur-sm">
             <TriangleAlert className="mx-auto mb-4 h-10 w-10 text-[#f6855c]" />
-            <h3 className="text-xl font-semibold text-[#202124]">Something went wrong</h3>
+            <h3 className="text-xl font-semibold text-[#202124]">
+              Something went wrong
+            </h3>
             <p className="mx-auto mt-2 max-w-md text-sm text-[#5f6368]">
-              {error instanceof Error ? error.message : 'We could not load the latest stats and categories.'}
+              {error instanceof Error
+                ? error.message
+                : 'We could not load the latest stats and categories.'}
             </p>
             <button
               type="button"
@@ -192,15 +199,23 @@ export function BrowseByCategory() {
           </div>
         ) : categories.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6 lg:gap-8 justify-center">
-            {categories.map((cat) => (
-              <CategoryCard key={cat.id} label={cat.label} icon={cat.icon} href={cat.href} />
+            {categories.map(cat => (
+              <CategoryCard
+                key={cat.id}
+                label={cat.label}
+                icon={cat.icon}
+                href={cat.href}
+              />
             ))}
           </div>
         ) : (
           <div className="rounded-[28px] border border-white/50 bg-white/40 px-6 py-10 text-center shadow-sm backdrop-blur-sm">
-            <h3 className="text-xl font-semibold text-[#202124]">No categories found</h3>
+            <h3 className="text-xl font-semibold text-[#202124]">
+              No categories found
+            </h3>
             <p className="mt-2 text-sm text-[#5f6368]">
-              Categories are not available right now. Please check back again soon.
+              Categories are not available right now. Please check back again
+              soon.
             </p>
           </div>
         )}
