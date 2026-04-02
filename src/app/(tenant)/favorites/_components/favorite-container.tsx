@@ -156,7 +156,7 @@ const FavoritesContainer = () => {
                       className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#f04438] shadow-sm transition-colors hover:bg-[#fff1f0] disabled:cursor-not-allowed disabled:opacity-60 "
                       aria-label="Remove favorite"
                       disabled={isRemovingFavorite}
-                      onClick={() => removeFavorite(item?._id)}
+                      onClick={() => removeFavorite(item?.property?._id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
