@@ -2,8 +2,6 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useSession } from "next-auth/react"
-
-import { AccountShellCard } from "./account-shell-card"
 import { ChangeEmailSection } from "./change-email-section"
 import { ChangePasswordSection } from "./change-password-section"
 import { PersonalInfoSection } from "./personal-info-section"
@@ -37,11 +35,9 @@ export const ProfileSettingsCard = () => {
   const profile = data?.data
 
   return (
-    <AccountShellCard
-      title="Profile Settings"
-      description=""
-    >
-      <div className="space-y-4 p-4 sm:p-5">
+   <div>
+    <h3 className="text-[#1E1E1E] font-medium leading-normal text-xl md:text-2xl lg:text-3xl pt-4 pb-6">Profile Settings</h3>
+     <div className="space-y-6">
         <PersonalInfoSection
           profile={profile}
           token={token}
@@ -51,11 +47,11 @@ export const ProfileSettingsCard = () => {
           }}
         />
 
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2 bg-white rounded-[16px] shadow-[0px_1px_4px_0px_#00000040] px-6 py-4 ">
           <ChangePasswordSection token={token} />
           <ChangeEmailSection currentEmail={profile?.email ?? ""} />
         </div>
       </div>
-    </AccountShellCard>
+   </div>
   )
 }

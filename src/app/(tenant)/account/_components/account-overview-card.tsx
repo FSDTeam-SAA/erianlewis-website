@@ -13,7 +13,7 @@ export const AccountOverviewCard = () => {
   return (
 
     <div className="pt-4">
-       <div className="space-y-5 p-4 sm:p-5">
+       <div className="space-y-5">
         <div className="space-y-1">
           <h3 className="text-lg md:text-xl lg:text-2xl leading-normal font-bold text-black">Account</h3>
           <p className="text-sm md:text-base font-normal text-[#262626] leading-normal">Signed in as <span className="font-bold">{userEmail}</span></p>
@@ -31,11 +31,11 @@ export const AccountOverviewCard = () => {
         </div>
 
         <div className="space-y-1 text-sm text-[#6b7280]">
-          <div className="flex items-center gap-2 font-medium text-[#1f2937]">
-            <Shield className="size-4 text-[#6b7280]" />
+          <div className="flex items-center gap-2 text-lg md:text-xl lg:text-2xl font-medium text-black leading-normal">
+            <Shield className="size-6 text-black" />
             Security
           </div>
-          <p>Change password or email</p>
+          <p className="text-[#262626] font-normal leading-normal text-sm md:text-base">Change password or email</p>
         </div>
       </div>
     </div>

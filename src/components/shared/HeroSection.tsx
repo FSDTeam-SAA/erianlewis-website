@@ -21,7 +21,7 @@ export function HeroSection() {
             </div>
 
             <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4 w-full h-full border-none">
-                <div className="w-full max-w-4xl -mt-20 md:-mt-32 border-none">
+                <div className="w-full max-w-4xl -mt-20 md:-mt-16 border-none">
                     <h1 className="text-[36px] md:text-[48px] font-[700] text-[#2C3E50] mb-6 leading-[1.2] text-center font-sans tracking-tight">
                         Discover Your <br className="md:hidden" /> Caribbean Paradise
                     </h1>

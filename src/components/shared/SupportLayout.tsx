@@ -1,87 +1,133 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Mail, ScrollText, ShieldCheck } from "lucide-react";
-import { ListingNavbar } from "@/components/shared/ListingNavbar";
-import { Footer } from "@/components/shared/Footer";
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { ArrowLeft, Headphones, ScrollText, ShieldCheck } from "lucide-react"
+
+type SupportTab = "contact" | "terms" | "privacy"
 
 interface SupportLayoutProps {
-    children: React.ReactNode;
-    activeTab: 'contact' | 'terms' | 'privacy';
+  children: React.ReactNode
+  activeTab: SupportTab
+}
+
+const tabItems: Array<{
+  href: string
+  key: SupportTab
+  label: string
+  icon: typeof Headphones
+}> = [
+  {
+    href: "/support/contact",
+    key: "contact",
+    label: "Contact Support",
+    icon: Headphones,
+  },
+  {
+    href: "/support/terms",
+    key: "terms",
+    label: "Terms of Service",
+    icon: ScrollText,
+  },
+  {
+    href: "/support/privacy",
+    key: "privacy",
+    label: "Privacy Policy",
+    icon: ShieldCheck,
+  },
+]
+
+const pageMeta: Record<
+  SupportTab,
+  {
+    eyebrow: string
+    title: string
+    effectiveDate: string
+    desc: string
+  }
+> = {
+  contact: {
+    eyebrow: "Support Center",
+    title: "Contact Support",
+    effectiveDate: "As of July 17, 2024",
+    desc : "Need help? Email us and we’ll get back to you"
+  },
+  terms: {
+    eyebrow: "Legal & Policy",
+    title: "Terms of Service",
+    effectiveDate: "As of July 17, 2024",
+    desc : "Effective 1/8/2026"
+  },
+  privacy: {
+    eyebrow: "Legal & Policy",
+    title: "Privacy Policy",
+    effectiveDate: "As of July 17, 2024",
+    desc: "Effective 1/8/2026"
+  },
 }
 
 export function SupportLayout({ children, activeTab }: SupportLayoutProps) {
-    const router = useRouter();
+  const router = useRouter()
+  const meta = pageMeta[activeTab]
 
-    let title = "Contact Support";
-    if (activeTab === "terms") title = "Terms of Service";
-    if (activeTab === "privacy") title = "Privacy and Policy";
+  return (
+    <main className="min-h-screen bg-[#f3f4f6]">
+      <div className="w-full border-b border-[#e5e7eb] bg-white">
+        <div className="mx-auto max-w-[1280px] px-4 py-3 sm:px-6">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-1">
+                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold leading-normal text-black">
+                  {meta.title}
+                </h1>
+                <p className="mt-1 text-sm md:text-base font-normal leading-normal text-[#262626]">{meta.desc}</p>
+              </div>
 
-    return (
-        <main className="min-h-screen bg-gray-100 font-sans flex flex-col">
-            <ListingNavbar />
-
-            <div className="flex-1 w-full pb-16">
-                {/* Top breadcrumb */}
-                <div className="px-6 py-4 max-w-5xl mx-auto w-full">
-                    <span className="text-[13px] font-bold text-gray-500 tracking-wider uppercase">{title}</span>
-                </div>
-
-                {/* Main white card */}
-                <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm p-8 mt-2 mb-10 border border-gray-100">
-
-                    {/* Page title */}
-                    <div className="flex items-start justify-between mb-8">
-                        <div>
-                            <h1 className="text-[26px] font-extrabold text-gray-900 tracking-tight">{title}</h1>
-                            <p className="text-[13px] font-bold text-gray-400 mt-1">Effective 1/8/2026</p>
-                        </div>
-                        <button
-                            onClick={() => router.push('/account')}
-                            className="flex items-center gap-1.5 px-4 py-2 text-[14px] font-bold text-gray-600 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
-                        >
-                            <ArrowLeft size={16} /> Back Settings
-                        </button>
-                    </div>
-
-                    {/* Tab Navigation */}
-                    <div className="flex flex-wrap gap-2.5 mb-8 border-b border-gray-100 pb-5">
-                        <Link href="/support/contact">
-                            <button
-                                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-[14px] font-bold transition-all shadow-sm
-                  ${activeTab === 'contact' ? 'text-white' : 'text-gray-600 bg-white hover:bg-gray-50 border border-gray-200'}`}
-                                style={activeTab === 'contact' ? { background: 'linear-gradient(102.89deg, #80BDEA 0%, #FF7D51 100%)', border: 'none' } : {}}>
-                                <Mail size={16} /> Contact Support
-                            </button>
-                        </Link>
-
-                        <Link href="/support/terms">
-                            <button
-                                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-[14px] font-bold transition-all shadow-sm
-                  ${activeTab === 'terms' ? 'text-white' : 'text-gray-600 bg-white hover:bg-gray-50 border border-gray-200'}`}
-                                style={activeTab === 'terms' ? { background: 'linear-gradient(102.89deg, #80BDEA 0%, #FF7D51 100%)', border: 'none' } : {}}>
-                                <ScrollText size={16} /> Terms of Service
-                            </button>
-                        </Link>
-
-                        <Link href="/support/privacy">
-                            <button
-                                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-[14px] font-bold transition-all shadow-sm
-                  ${activeTab === 'privacy' ? 'text-white' : 'text-gray-600 bg-white hover:bg-gray-50 border border-gray-200'}`}
-                                style={activeTab === 'privacy' ? { background: 'linear-gradient(102.89deg, #80BDEA 0%, #FF7D51 100%)', border: 'none' } : {}}>
-                                <ShieldCheck size={16} /> Privacy and Policy
-                            </button>
-                        </Link>
-                    </div>
-
-                    {/* Page content renders here */}
-                    <div>{children}</div>
-
-                </div>
+              <div className="pt-6">
+                <button
+                type="button"
+                onClick={() => router.push("/account")}
+                className="inline-flex items-center gap-1.5 self-start text-xs md:text-sm font-normal leading-normal text-[#525252] transition-colors hover:text-[#111827]"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back Settings
+              </button>
+              </div>
             </div>
 
-            <Footer />
-        </main>
-    );
+            <div className="flex items-center justify-center gap-2 pb-2">
+              {tabItems.map(item => {
+                const isActive = item.key === activeTab
+                const Icon = item.icon
+
+                return (
+                  <Link
+                    key={item.key}
+                    href={item.href}
+                    className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm md:text-base font-medium leading-normal transition-all ${
+                      isActive
+                        ? "border-transparent text-white shadow-sm"
+                        : "border-[#e4e7ec] bg-white text-black hover:border-[#d7dce3] hover:bg-[#f8fafc]"
+                    }`}
+                    style={
+                      isActive
+                        ? { background: "linear-gradient(90deg, #8fd3e8 0%, #f28b64 100%)" }
+                        : undefined
+                    }
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="w-full bg-[#fbfbfc]">
+        <div className="mx-auto max-w-[1280px] px-4 py-5 sm:px-6">{children}</div>
+      </div>
+    </main>
+  )
 }

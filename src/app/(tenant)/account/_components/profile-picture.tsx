@@ -84,7 +84,7 @@ const  ProfilePicture = ({ profile, token, onProfileUpdated }: ProfilePicturePro
 
   return (
     <div className="flex items-center justify-center rounded-[8px] bg-white p-4 shadow-[0_4px_8px_rgba(0,0,0,0.12)]">
-      <div className="flex flex-col items-center gap-4">
+      <div className="flex flex-col items-center gap-3">
         <div className="relative w-fit rounded-full border-4 border-[#F7F8F8] bg-cover bg-center bg-no-repeat shadow-[0_4px_15px_rgba(0,0,0,0.10)]">
           <div className="relative">
             <div className="relative h-24 w-24 overflow-hidden rounded-full border">
@@ -125,6 +125,7 @@ const  ProfilePicture = ({ profile, token, onProfileUpdated }: ProfilePicturePro
             {profile?.firstName || "N/A"} {profile?.lastName || "N/A"}
           </h4>
           <p className="text-base font-normal leading-normal text-[#191919] text-center">{profile?.email || "N/A"}</p>
+          <p className="text-base font-normal leading-normal text-[#191919] text-center pt-1">{profile?.role === "USER" ? "TENANT" : "LANDLORD"}</p>
         </div>
       </div>
     </div>
