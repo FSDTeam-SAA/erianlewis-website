@@ -2,10 +2,25 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { MapPin, Search } from "lucide-react";
 
 export function HeroSection() {
     const [activeTab, setActiveTab] = useState<"Rent" | "Buy">("Rent");
+    const [searchInput, setSearchInput] = useState("");
+    const router = useRouter();
+
+    const handleSearch = () => {
+        const baseRoute = activeTab === "Buy" ? "/buy" : "/rentals";
+        const query = searchInput.trim();
+
+        if (!query) {
+            router.push(baseRoute);
+            return;
+        }
+
+        router.push(`${baseRoute}?search=${encodeURIComponent(query)}`);
+    };
 
     return (
         <section className="relative min-h-[600px] md:min-h-[700px] w-full flex flex-col bg-slate-50 border-none overflow-hidden">
@@ -55,9 +70,18 @@ export function HeroSection() {
                             <input
                                 type="text"
                                 placeholder="Location, City & Island"
+                                value={searchInput}
+                                onChange={(event) => setSearchInput(event.target.value)}
+                                onKeyDown={(event) => {
+                                    if (event.key === "Enter") {
+                                        handleSearch();
+                                    }
+                                }}
                                 className="flex-1 bg-transparent border-none outline-none text-gray-700 placeholder:text-gray-400 font-medium py-2 text-sm md:text-base tracking-normal"
                             />
                             <button
+                                type="button"
+                                onClick={handleSearch}
                                 className="flex items-center justify-center gap-2 text-white px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition-transform hover:-translate-y-0.5 shadow-md shrink-0 border-none"
                                 style={{ background: 'linear-gradient(90.99deg, #8BCCE6 2.49%, #F6855C 99.73%)' }}
                             >

@@ -4,7 +4,8 @@ import { useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useSession } from 'next-auth/react'
 import {
   ArrowLeft,
   ExternalLink,
@@ -13,6 +14,7 @@ import {
   Share2,
   TriangleAlert,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Footer } from '@/components/shared/Footer'
 import { PropertyGallery } from '@/components/shared/PropertyGallery'
 import { PropertySpecGrid } from '@/components/shared/PropertySpecGrid'
@@ -133,7 +135,10 @@ const getLeaseTerms = (leaseTerm?: LeaseTerm) => {
 export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
   const params = useParams<{ id: string }>()
   const router = useRouter()
+  const queryClient = useQueryClient()
+  const { data: session } = useSession()
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
+  const token = session?.user?.accessToken
 
   const propertyQuery = useQuery({
     queryKey: ['rental-property-single', params?.id],
@@ -160,6 +165,86 @@ export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
   })
 
   const property = propertyQuery.data
+
+  const favoriteQuery = useQuery({
+    queryKey: ['favorite-property', params?.id, token],
+    queryFn: async () => {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/favorites/${params?.id}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          cache: 'no-store',
+        },
+      )
+
+      if (response.status === 404) {
+        return null
+      }
+
+      const payload = await response.json()
+      if (!response.ok || !payload?.status) {
+        throw new Error(payload?.message || 'Failed to load favorite status')
+      }
+
+      return payload.data
+    },
+    enabled: Boolean(token && params?.id),
+  })
+
+  const favoriteMutation = useMutation({
+    mutationFn: async (mode: 'add' | 'remove') => {
+      if (!token) {
+        throw new Error('Please sign in to manage favorites')
+      }
+
+      const response = await fetch(
+        mode === 'add'
+          ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/favorites`
+          : `${process.env.NEXT_PUBLIC_API_BASE_URL}/favorites/${params?.id}`,
+        {
+          method: mode === 'add' ? 'POST' : 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body:
+            mode === 'add'
+              ? JSON.stringify({ propertyId: params?.id })
+              : undefined,
+        },
+      )
+
+      const payload = await response.json()
+      if (!response.ok || !payload?.status) {
+        throw new Error(payload?.message || 'Failed to update favorite')
+      }
+
+      return { mode, payload }
+    },
+    onSuccess: async ({ mode, payload }) => {
+      toast.success(
+        payload?.message ||
+          (mode === 'add'
+            ? 'Property added to favorites'
+            : 'Property removed from favorites'),
+      )
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['favorite-property'] }),
+        queryClient.invalidateQueries({ queryKey: ['favorites'] }),
+      ])
+    },
+    onError: error => {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to update favorite',
+      )
+    },
+  })
+
+  const isFavorite = Boolean(favoriteQuery.data)
 
   const images = useMemo(
     () =>
@@ -241,6 +326,15 @@ export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
       ? `https://www.google.com/maps/search/?api=1&query=${property.location.lat},${property.location.lng}`
       : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationLabel || 'Bahamas')}`
 
+  const handleFavoriteToggle = () => {
+    if (!token) {
+      toast.error('Please sign in to save favorites')
+      return
+    }
+
+    favoriteMutation.mutate(isFavorite ? 'remove' : 'add')
+  }
+
   if (propertyQuery.isLoading) {
     return (
       <main className="min-h-screen bg-gray-50 font-sans">
@@ -318,8 +412,21 @@ export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
               <button className="flex items-center justify-center gap-1.5 rounded-lg border border-[#e6e6eb] px-3.5 py-2 text-[13px] font-medium text-[#1f2937] shadow-sm transition-colors hover:bg-[#fafafa]">
                 <Share2 size={16} className="text-gray-500" /> Share
               </button>
-              <button className="flex items-center justify-center gap-1.5 rounded-lg border border-[#e6e6eb] px-3.5 py-2 text-[13px] font-medium text-[#1f2937] shadow-sm transition-colors hover:bg-[#fafafa]">
-                <Heart size={16} className="text-gray-500" /> Save
+              <button
+                type="button"
+                onClick={handleFavoriteToggle}
+                disabled={favoriteMutation.isPending || favoriteQuery.isLoading}
+                className={`flex items-center justify-center gap-1.5 rounded-lg border px-3.5 py-2 text-[13px] font-medium shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                  isFavorite
+                    ? 'border-[#f7c6b5] bg-[#fff5f4] text-[#f6855c]'
+                    : 'border-[#e6e6eb] text-[#1f2937] hover:bg-[#fafafa]'
+                }`}
+              >
+                <Heart
+                  size={16}
+                  className={isFavorite ? 'fill-[#f6855c] text-[#f6855c]' : 'text-gray-500'}
+                />{' '}
+                {isFavorite ? 'Saved' : 'Save'}
               </button>
             </div>
           </div>
@@ -624,6 +731,8 @@ export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
       <ScheduleViewingModal
         isOpen={scheduleModalOpen}
         onClose={() => setScheduleModalOpen(false)}
+        propertyId={property._id}
+        propertyTitle={property.basicInformation?.propertyTitle}
       />
     </main>
   )

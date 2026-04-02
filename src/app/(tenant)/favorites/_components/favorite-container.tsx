@@ -26,6 +26,10 @@ const getPropertyLocation = (cityTown: string, island: string | null, streetNumb
   return [streetNumber, cityTown, island].filter(Boolean).join(", ")
 }
 
+const getPropertyDetailsHref = (listingType: string, propertyId: string) => {
+  return listingType === "buy" ? `/buy/${propertyId}` : `/rentals/${propertyId}`
+}
+
 const FavoritesContainer = () => {
   const { data: session } = useSession()
   const queryClient = useQueryClient()
@@ -142,10 +146,15 @@ const FavoritesContainer = () => {
               return (
                 <article
                   key={item._id}
-                  className="overflow-hidden rounded-[18px] border border-[#eceef2] bg-white shadow-[0_6px_22px_rgba(15,23,42,0.05)] transition-transform hover:-translate-y-1"
+                  className="group relative overflow-hidden rounded-[18px] border border-[#eceef2] bg-white shadow-[0_6px_22px_rgba(15,23,42,0.05)] transition-transform hover:-translate-y-1"
                 >
                   <div className="relative h-48">
-                    <Image src={image} alt={title} fill className="object-cover" />
+                    <Image
+                      src={image}
+                      alt={title}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                    />
 
                     <div className="absolute left-3 top-3 rounded-full bg-[#d98d62] px-3 py-1 text-[11px] font-semibold text-white">
                       {badgeLabel}
@@ -153,10 +162,14 @@ const FavoritesContainer = () => {
 
                     <button
                       type="button"
-                      className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#f04438] shadow-sm transition-colors hover:bg-[#fff1f0] disabled:cursor-not-allowed disabled:opacity-60 "
+                      className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#f04438] shadow-sm transition-colors hover:bg-[#fff1f0] disabled:cursor-not-allowed disabled:opacity-60 "
                       aria-label="Remove favorite"
                       disabled={isRemovingFavorite}
-                      onClick={() => removeFavorite(item?.property?._id)}
+                      onClick={(event) => {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        removeFavorite(item?.property?._id)
+                      }}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -164,7 +177,7 @@ const FavoritesContainer = () => {
 
                   <div className="space-y-3 p-4">
                     <div>
-                      <h2 className="line-clamp-1 text-[15px] font-semibold text-[#111827]">
+                      <h2 className="line-clamp-1 text-[15px] font-semibold text-[#111827] transition-colors group-hover:text-[#d98d62]">
                         {title}
                       </h2>
 
@@ -178,6 +191,12 @@ const FavoritesContainer = () => {
 
                     <p className="text-[15px] font-semibold text-[#111827] sm:text-[18px]">{price}</p>
                   </div>
+
+                  <Link
+                    href={getPropertyDetailsHref(property.listingType, property._id)}
+                    className="absolute inset-0 rounded-[18px]"
+                    aria-label={`View details for ${title}`}
+                  />
                 </article>
               )
             })}

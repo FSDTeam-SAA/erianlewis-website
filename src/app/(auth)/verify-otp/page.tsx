@@ -46,13 +46,13 @@ export default function VerifyOtpPage() {
                     email,
                     password: formData.password,
                     redirect: false,
-                    callbackUrl: "/dashboard",
+                    callbackUrl: "/",
                 });
 
                 reset();
 
                 if (!result?.error) {
-                    router.push(result?.url || "/dashboard");
+                    router.push(result?.url || "/");
                     return;
                 }
             }
@@ -119,7 +119,7 @@ export default function VerifyOtpPage() {
                         disabled={loading || code.length !== 6}
                         className="auth-button-primary h-10 flex-1 text-[12px]"
                     >
-                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : mode === "reset" ? "Verify code" : "Verify & go to dashboard"}
+                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : mode === "reset" ? "Verify code" : "Verify & go home"}
                     </button>
                     <button
                         type="button"
