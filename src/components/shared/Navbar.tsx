@@ -34,6 +34,7 @@ const navLinks = [
 
 const signedInLinks = [
   { href: "/account", label: "My Account", icon: UserCircle2 },
+  { href: "/favorites", label: "My Favorites", icon: Bookmark },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
 ]
 
