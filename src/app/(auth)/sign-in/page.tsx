@@ -18,6 +18,9 @@ export default function SignInPage() {
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         setEmail(params.get("email") || "");
+        if (params.get("registered") === "1") {
+            toast.success("Account created successfully. Please sign in.");
+        }
     }, []);
 
     const handleCredentialSignIn = async () => {
@@ -112,6 +115,14 @@ export default function SignInPage() {
                 </div>
 
                 <div className="pt-1">
+                    <div className="mb-3 text-right">
+                        <Link
+                            href={`/forgot-password${email ? `?email=${encodeURIComponent(email)}` : ""}`}
+                            className="text-sm font-medium text-[#5f6368] underline underline-offset-2 hover:text-[#202124]"
+                        >
+                            Forgot password?
+                        </Link>
+                    </div>
                     <button
                         type="button"
                         onClick={handleGoogleClick}

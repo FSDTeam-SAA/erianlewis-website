@@ -114,8 +114,8 @@ export function CompletionStep({ stepConfig }: StepProps) {
             }
 
             toast.success("Account created successfully!");
-            const query = new URLSearchParams({ email: formData.email || "" });
-            router.push(`/verify-otp?${query.toString()}`);
+            const query = new URLSearchParams({ email: formData.email || "", registered: "1" });
+            router.push(`/sign-in?${query.toString()}`);
         } catch (error: unknown) {
             const message =
                 typeof error === "object" &&
@@ -179,7 +179,7 @@ export function CompletionStep({ stepConfig }: StepProps) {
 
                 {!isPaidRole && (
                     <div className="mb-5 rounded-[16px] border border-[#e8edf3] bg-[#f8fafc] p-4 text-sm text-[#5f6368]">
-                        We&apos;ll create your account and take you to email verification next.
+                        We&apos;ll create your account and take you straight to sign in next.
                     </div>
                 )}
 
