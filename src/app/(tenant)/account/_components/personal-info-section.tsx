@@ -15,7 +15,7 @@ import { AccountGradientButton } from "./account-gradient-button"
 import ProfilePicture from "./profile-picture"
 import { UserProfile, UserProfileApiResponse } from "./user-data-type"
 
-const inputClassName = "h-10 border-[#e5e7eb] bg-white text-sm"
+
 
 type PersonalInfoSectionProps = {
   profile?: UserProfile
@@ -99,28 +99,28 @@ export const PersonalInfoSection = ({
   }
 
   return (
-    <div className="rounded-lg border border-[#ececf1] p-4">
+    <div className="bg-white rounded-[16px] shadow-[0px_1px_4px_0px_#00000040] px-6 py-4">
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-base font-semibold text-[#111827]">Personal Information</h3>
+          <h3 className="text-lg md:text-xl lg:text-2xl font-medium leading-normal text-[#1E1E1E]">Personal Information</h3>
         </div>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <div className="md:col-span-2 space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
               control={form.control}
               name="firstName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>First Name</FormLabel>
+                  <FormLabel className="text-base md:text-lg font-medium leading-normal text-[#1E1E1E]">First Name</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       placeholder="Enter your first name"
-                      className={inputClassName}
+                      className="border-[0.5px] border-[#6D6D6D] rounded-[12px] h-[44px] w-full text-base leading-normal font-normal text-[#1E1E1E] px-4 focus:ring-2 focus:ring-[#6D6D6] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={isProfileLoading || isPending}
                     />
                   </FormControl>
@@ -134,12 +134,12 @@ export const PersonalInfoSection = ({
               name="lastName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Last Name</FormLabel>
+                  <FormLabel className="text-base md:text-lg font-medium leading-normal text-[#1E1E1E]">Last Name</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       placeholder="Enter your last name"
-                      className={inputClassName}
+                      className="border-[0.5px] border-[#6D6D6D] rounded-[12px] h-[44px] w-full text-base leading-normal font-normal text-[#1E1E1E] px-4 focus:ring-2 focus:ring-[#6D6D6] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={isProfileLoading || isPending}
                     />
                   </FormControl>
@@ -153,12 +153,12 @@ export const PersonalInfoSection = ({
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
+                  <FormLabel className="text-base md:text-lg font-medium leading-normal text-[#1E1E1E]">Phone Number</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       placeholder="Enter your phone number"
-                      className={inputClassName}
+                      className="border-[0.5px] border-[#6D6D6D] rounded-[12px] h-[44px] w-full text-base leading-normal font-normal text-[#1E1E1E] px-4 focus:ring-2 focus:ring-[#6D6D6] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={isProfileLoading || isPending}
                     />
                   </FormControl>
@@ -168,9 +168,9 @@ export const PersonalInfoSection = ({
             />
 
             <FormItem>
-              <FormLabel>Current Email</FormLabel>
+              <FormLabel className="text-base md:text-lg font-medium leading-normal text-[#1E1E1E]">Current Email</FormLabel>
               <FormControl>
-                <Input value={profile?.email ?? ""} className={inputClassName} disabled />
+                <Input value={profile?.email ?? ""} className="border-[0.5px] border-[#6D6D6D] rounded-[12px] h-[44px] w-full text-base leading-normal font-normal text-[#1E1E1E] px-4 focus:ring-2 focus:ring-[#6D6D6] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50" disabled />
               </FormControl>
             </FormItem>
             </div>

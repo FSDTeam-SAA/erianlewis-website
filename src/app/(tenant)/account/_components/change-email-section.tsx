@@ -35,15 +35,16 @@ export const ChangeEmailSection = ({ currentEmail }: ChangeEmailSectionProps) =>
   }
 
   return (
-    <div className="rounded-lg border border-[#ececf1] p-4">
-      <h3 className="text-sm font-semibold text-[#111827]">Change Email</h3>
+    <div className="">
+      <h3 className="text-lg md:text-xl lg:text-2xl font-medium leading-normal text-[#1E1E1E]">Change Email</h3>
+      <p className="text-[#262626] font-normal leading-normal text-sm md:text-base pb-4">You’ll need your password to confirm this change.</p>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3">
           <FormItem>
-            <FormLabel>Current email</FormLabel>
+            <FormLabel className="text-base text-[#2C3E50] font-semibold leading-normal">Current email</FormLabel>
             <FormControl>
-              <Input type="email" value={currentEmail} className="h-9 border-[#e5e7eb] bg-white text-sm" disabled />
+              <Input type="email" value={currentEmail} className="border-[0.5px] border-[#D9D9D9] rounded-[4px] h-[40px] w-full text-base leading-normal font-normal text-[#1E1E1E] px-4 focus:ring-2 focus:ring-[#6D6D6] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50" disabled />
             </FormControl>
             <FormDescription>You&apos;ll need your password to confirm this change.</FormDescription>
           </FormItem>
@@ -53,13 +54,13 @@ export const ChangeEmailSection = ({ currentEmail }: ChangeEmailSectionProps) =>
             name="newEmail"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>New email</FormLabel>
+                <FormLabel className="text-base text-[#2C3E50] font-semibold leading-normal">New email</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
                     type="email"
                     placeholder="new-email@gmail.com"
-                    className="h-9 border-[#e5e7eb] bg-white text-sm"
+                    className="border-[0.5px] border-[#D9D9D9] rounded-[4px] h-[40px] w-full text-base leading-normal font-normal text-[#1E1E1E] px-4 focus:ring-2 focus:ring-[#6D6D6] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </FormControl>
                 <FormMessage />
@@ -72,13 +73,13 @@ export const ChangeEmailSection = ({ currentEmail }: ChangeEmailSectionProps) =>
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel className="text-base text-[#2C3E50] font-semibold leading-normal">Password</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
                     type="password"
                     placeholder="Password"
-                    className="h-9 border-[#e5e7eb] bg-white text-sm"
+                    className="border-[0.5px] border-[#D9D9D9] rounded-[4px] h-[40px] w-full text-base leading-normal font-normal text-[#1E1E1E] px-4 focus:ring-2 focus:ring-[#6D6D6] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </FormControl>
                 <FormMessage />

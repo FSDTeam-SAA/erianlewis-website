@@ -16,7 +16,6 @@ import { AccountGradientButton } from "./account-gradient-button"
 import { ApiSuccessResponse } from "./user-data-type"
 
 const plainActionClassName = "text-xs font-medium text-[#374151] transition-colors hover:text-[#111827]"
-const passwordInputClassName = "h-9 border-[#e5e7eb] bg-white pr-10 text-sm"
 
 type PasswordField = "currentPassword" | "newPassword" | "confirmPassword"
 
@@ -99,7 +98,7 @@ export const ChangePasswordSection = ({ token }: ChangePasswordSectionProps) => 
       name={fieldName}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
+          <FormLabel className="text-base text-[#2C3E50] font-semibold leading-normal">{label}</FormLabel>
           {description ? <FormDescription>{description}</FormDescription> : null}
           <div className="relative">
             <FormControl>
@@ -107,7 +106,7 @@ export const ChangePasswordSection = ({ token }: ChangePasswordSectionProps) => 
                 {...field}
                 type={showField[fieldName] ? "text" : "password"}
                 placeholder={placeholder}
-                className={passwordInputClassName}
+                 className="border-[0.5px] border-[#D9D9D9] rounded-[4px] h-[40px] w-full text-base leading-normal font-normal text-[#1E1E1E] px-4 focus:ring-2 focus:ring-[#6D6D6] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={isPending}
               />
             </FormControl>
@@ -128,13 +127,14 @@ export const ChangePasswordSection = ({ token }: ChangePasswordSectionProps) => 
   )
 
   return (
-    <div className="rounded-lg border border-[#ececf1] p-4">
-      <h3 className="text-sm font-semibold text-[#111827]">Change Password</h3>
+    <div className="">
+      <h3 className="text-lg md:text-xl lg:text-2xl font-medium leading-normal text-[#1E1E1E]">Change Password</h3>
+      <p className="text-[#262626] font-normal leading-normal text-sm md:text-base pb-4">New password must be at least 8 characters.</p>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3">
           {renderPasswordInput("currentPassword", "Current password", "Current password")}
-          {renderPasswordInput("newPassword", "New password", "New password", "New password must be at least 8 characters.")}
+          {renderPasswordInput("newPassword", "New password", "New password")}
           {renderPasswordInput("confirmPassword", "Confirm new password", "Confirm new password")}
 
           <div className="flex flex-col gap-3 pt-1">

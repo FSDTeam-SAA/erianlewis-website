@@ -1,4 +1,4 @@
-import { SupportLayout } from "@/components/shared/SupportLayout";
+import { SupportLayout } from "@/components/shared/SupportLayout"
 
 const privacyContent = [
     {
@@ -89,25 +89,33 @@ const privacyContent = [
             'Platform support: info@alorarrealty.com'
         ]
     }
-];
+]
 
 export default function PrivacyPolicyPage() {
-    return (
-        <SupportLayout activeTab="privacy">
-            <div className="prose prose-sm max-w-none text-gray-700 text-[14px] leading-relaxed">
-                <p className="font-extrabold text-gray-900 mb-1 tracking-tight text-[15px]">PRIVACY POLICY</p>
-                <p className="mb-0.5 font-bold text-gray-800">Alora Platform</p>
-                <p className="mb-8 font-medium text-gray-500">Owned and Operated by Northgate Support Services LLC</p>
+  return (
+    <SupportLayout activeTab="privacy">
+      <div className="border border-[#eceef2] bg-white px-4 py-4 sm:px-5">
+        <div className="mb-4 border-b border-[#eff1f4] pb-3">
+          <p className="text-sm md:text-base font-semibold uppercase tracking-[0.12em] text-black leading-normal">Privacy Policy</p>
+          <p className="text-sm md:text-base font-semibold uppercase tracking-[0.12em] text-black leading-normal">Alora Platform</p>
+          <p className="text-sm md:text-base font-semibold uppercase tracking-[0.12em] text-black leading-normal">Owned and Operated by Northgate Support Services LLC</p>
+        </div>
 
-                {privacyContent.map((section) => (
-                    <div key={section.id} className="mb-8">
-                        <p className="font-extrabold text-gray-900 mb-3 text-[15px]">{section.title}</p>
-                        {section.paragraphs.map((p, i) => (
-                            <p key={i} className="text-gray-600 mb-3 whitespace-pre-line font-medium leading-[1.6]">{p}</p>
-                        ))}
-                    </div>
-                ))}
-            </div>
-        </SupportLayout>
-    );
+        <div className="space-y-4 text-[11px] leading-5 text-[#4b5563] sm:text-[12px]">
+          {privacyContent.map(section => (
+            <section key={section.id} className="space-y-1.5">
+              <h2 className="text-sm md:text-base font-semibold uppercase tracking-[0.12em] text-black leading-normal ">
+                {section.title}
+              </h2>
+              {section.paragraphs.map((paragraph, index) => (
+                <p key={index} className="whitespace-pre-line text-xs md:text-sm font-normal leading-normal text-black">
+                  {paragraph}
+                </p>
+              ))}
+            </section>
+          ))}
+        </div>
+      </div>
+    </SupportLayout>
+  )
 }
