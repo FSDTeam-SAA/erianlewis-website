@@ -21,11 +21,12 @@ export function BrowseByCategory() {
 
     return (
         <section
-            className="w-full relative z-20 pt-1 pb-24 min-h-[500px] bg-white"
+            className="w-full relative z-20 pt-1 pb-24 min-h-[500px] bg-[#F9FAFB]"
         >
             {/* Overlapping Stat Cards mapped according to exact specs */}
-            <div className="w-full -mt-16 md:-mt-24 mb-16 relative z-30 px-4">
-                <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg pt-[24px] px-6 pb-6">
+           <div className="bg-white border-b-[50px] border-[#E5E7EB]">
+             <div className="w-full mt-5 mb-16 relative z-30 px-4">
+                <div className="max-w-5xl mx-auto  pt-[24px] px-6 pb-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                         <StatCard
                             title="Total Site Visits"
@@ -51,14 +52,15 @@ export function BrowseByCategory() {
                     </div>
                 </div>
             </div>
+           </div>
 
-            <div className="px-6 max-w-7xl mx-auto">
+            <div className="px-6 max-w-7xl mx-auto bg-transparent">
                 <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-10 text-gray-900 tracking-tight drop-shadow-sm">
                     Browse By Category
                 </h2>
 
-                <div className="flex justify-center mb-16">
-                    <div className="flex bg-white/70 backdrop-blur-md shadow-sm border border-white/40 p-1.5 rounded-2xl max-w-xs w-full">
+                <div className="flex justify-center mb-16 ">
+                    <div className="flex backdrop-blur-md shadow-sm border border-white/40 p-1.5 rounded-2xl max-w-xs w-full">
                         <button
                             onClick={() => setActiveTab("Rent")}
                             className={`flex-1 py-3 rounded-xl font-semibold transition-all text-sm shadow-sm ${activeTab === "Rent" ? "text-white cursor-default" : "text-gray-600 hover:text-gray-900 hover:bg-white/50 bg-transparent"}`}
