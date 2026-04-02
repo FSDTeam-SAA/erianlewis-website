@@ -31,8 +31,9 @@ import {
 const navLinks = [
   { href: '/rentals', label: 'Rentals' },
   { href: '/buy', label: 'Buy' },
-  { href: '/list-property', label: 'List Your Property' },
 ]
+
+const ownerNavLink = { href: '/list-property', label: 'List Your Property' }
 
 const signedInLinks = [
   { href: '/account', label: 'My Account', icon: UserCircle2 },
@@ -47,6 +48,8 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
   const [menuOpen, setMenuOpen] = useState(false)
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
   const token = session?.user?.accessToken
+  const canListProperty =
+    session?.user?.role === 'LANDLORD' || session?.user?.role === 'AGENT'
 
   const { data: profile } = useQuery<UserProfileApiResponse>({
     queryKey: ['navbar-profile'],
@@ -139,6 +142,14 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
                 {link.label}
               </Link>
             ))}
+            {canListProperty ? (
+              <Link
+                href={ownerNavLink.href}
+                className={getNavLinkClassName(ownerNavLink.href)}
+              >
+                {ownerNavLink.label}
+              </Link>
+            ) : null}
           </div>
 
           {token ? (
@@ -227,17 +238,6 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
             </>
           ) : (
             <>
-              <div className="hidden items-center gap-7 xl:flex">
-                {navLinks.map(link => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={getNavLinkClassName(link.href)}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
               <Link
                 href="/sign-in"
                 className="rounded-xl px-6 py-3 font-semibold text-white shadow-md transition-transform hover:-translate-y-0.5 hover:opacity-90"
@@ -289,6 +289,15 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
                 {link.label}
               </Link>
             ))}
+            {canListProperty ? (
+              <Link
+                href={ownerNavLink.href}
+                className={getMobileNavLinkClassName(ownerNavLink.href)}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {ownerNavLink.label}
+              </Link>
+            ) : null}
           </div>
 
           <div className="my-4 h-px bg-[#eceef2]" />

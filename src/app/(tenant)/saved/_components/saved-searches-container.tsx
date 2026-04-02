@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { ArrowLeft, BookmarkPlus, Search, Trash2 } from "lucide-react";
@@ -136,7 +135,7 @@ export default function SavedSearchesContainer() {
   });
 
   const savedSearches = savedSearchesQuery.data || [];
-  const savedSearchCount = useMemo(() => savedSearches.length, [savedSearches]);
+  const savedSearchCount = savedSearches.length;
 
   return (
     <main className="min-h-screen bg-[#f6f7f9]">
@@ -224,14 +223,14 @@ export default function SavedSearchesContainer() {
             {savedSearches.map((item) => (
               <article
                 key={item._id}
-                className="rounded-[20px] border border-[#eceef2] bg-white p-5 shadow-[0_6px_22px_rgba(15,23,42,0.05)]"
+                className="group relative rounded-[20px] border border-[#eceef2] bg-white p-5 shadow-[0_6px_22px_rgba(15,23,42,0.05)] transition-transform hover:-translate-y-1"
               >
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
                     <p className="text-[12px] font-medium uppercase tracking-[0.1em] text-[#98a2b3]">
                       {item.filters?.listingType === "buy" ? "Buy" : "Rentals"}
                     </p>
-                    <h2 className="mt-1 text-[20px] font-semibold text-[#111827]">
+                    <h2 className="mt-1 text-[20px] font-semibold text-[#111827] transition-colors group-hover:text-[#f6855c]">
                       {item.name}
                     </h2>
                   </div>
@@ -240,7 +239,7 @@ export default function SavedSearchesContainer() {
                     type="button"
                     onClick={() => removeSavedSearchMutation.mutate(item._id)}
                     disabled={removeSavedSearchMutation.isPending}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#f1d2c7] text-[#f6855c] transition-colors hover:bg-[#fff5f4] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="relative z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#f1d2c7] text-[#f6855c] transition-colors hover:bg-[#fff5f4] disabled:cursor-not-allowed disabled:opacity-60"
                     aria-label="Delete saved search"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -257,7 +256,7 @@ export default function SavedSearchesContainer() {
                   </span>
                   <Link
                     href={getSavedSearchHref(item)}
-                    className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white shadow-sm"
+                    className="relative z-10 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white shadow-sm"
                     style={{
                       background:
                         "linear-gradient(90.99deg, #8BCCE6 2.49%, #F6855C 99.73%)",
@@ -267,6 +266,12 @@ export default function SavedSearchesContainer() {
                     Open Search
                   </Link>
                 </div>
+
+                <Link
+                  href={getSavedSearchHref(item)}
+                  className="absolute inset-0 rounded-[20px]"
+                  aria-label={`Open saved search ${item.name}`}
+                />
               </article>
             ))}
           </div>

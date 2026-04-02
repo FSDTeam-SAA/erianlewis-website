@@ -14,6 +14,8 @@ export function ListingNavbar() {
     const router = useRouter();
     const pathname = usePathname();
     const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+    const canListProperty =
+        session?.user?.role === "LANDLORD" || session?.user?.role === "AGENT";
 
     const isRentals = pathname?.includes("/rentals");
     const isBuy = pathname?.includes("/buy");
@@ -67,12 +69,14 @@ export function ListingNavbar() {
                             >
                                 Buy
                             </Link>
-                            <Link
-                                href="/list-property"
-                                className={getNavLinkClassName("/list-property")}
-                            >
-                                List Your Property
-                            </Link>
+                            {canListProperty ? (
+                                <Link
+                                    href="/list-property"
+                                    className={getNavLinkClassName("/list-property")}
+                                >
+                                    List Your Property
+                                </Link>
+                            ) : null}
                             <Link
                                 href="/saved"
                                 className={`inline-flex items-center gap-2 ${getNavLinkClassName("/saved")}`}
@@ -114,12 +118,6 @@ export function ListingNavbar() {
                                 className={`${getNavLinkClassName("/buy", isBuy)} tracking-wide`}
                             >
                                 Buy
-                            </Link>
-                            <Link
-                                href="/list-property"
-                                className={getNavLinkClassName("/list-property")}
-                            >
-                                List Your Property
                             </Link>
                         </div>
                     ) : null}
