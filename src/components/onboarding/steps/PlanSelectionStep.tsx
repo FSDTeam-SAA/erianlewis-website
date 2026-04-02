@@ -151,8 +151,8 @@ export function PlanSelectionStep({ stepConfig }: StepProps) {
             }
 
             toast.success("Account created successfully!");
-            const query = new URLSearchParams({ email: formData.email || "" });
-            router.push(`/verify-otp?${query.toString()}`);
+            const query = new URLSearchParams({ email: formData.email || "", registered: "1" });
+            router.push(`/sign-in?${query.toString()}`);
         } catch (error: unknown) {
             const message =
                 typeof error === "object" &&

@@ -14,6 +14,7 @@ export default function VerifyOtpPage() {
     const { formData, reset } = useOnboardingStore();
 
     const [email, setEmail] = useState("you@gmail.com");
+    const [mode, setMode] = useState<"verify" | "reset">("verify");
     const [code, setCode] = useState("");
     const [loading, setLoading] = useState(false);
     const [resending, setResending] = useState(false);
@@ -21,6 +22,7 @@ export default function VerifyOtpPage() {
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         setEmail(params.get("email") || "you@gmail.com");
+        setMode(params.get("mode") === "reset" ? "reset" : "verify");
     }, []);
 
     const handleVerify = async () => {
@@ -32,7 +34,12 @@ export default function VerifyOtpPage() {
         setLoading(true);
         try {
             await api.post("/auth/verify-code", { email, otp: code });
-            toast.success("Verified successfully!");
+            toast.success(mode === "reset" ? "Code verified successfully!" : "Verified successfully!");
+
+            if (mode === "reset") {
+                router.push(`/reset-password?email=${encodeURIComponent(email)}`);
+                return;
+            }
 
             if (formData.email === email && formData.password) {
                 const result = await signIn("credentials", {
@@ -79,7 +86,9 @@ export default function VerifyOtpPage() {
 
             <h1 className="auth-title mb-3 text-[34px]">Verify your email</h1>
             <p className="mx-auto mb-8 max-w-[320px] text-[16px] font-normal leading-[140%] text-[#5f6368]">
-                Enter the 6 digit code to unlock your dashboard.
+                {mode === "reset"
+                    ? "Enter the 6 digit code we sent to continue resetting your password."
+                    : "Enter the 6 digit code to unlock your dashboard."}
             </p>
 
             <div className="space-y-4 text-left">
@@ -110,7 +119,7 @@ export default function VerifyOtpPage() {
                         disabled={loading || code.length !== 6}
                         className="auth-button-primary h-10 flex-1 text-[12px]"
                     >
-                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify & go to dashboard"}
+                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : mode === "reset" ? "Verify code" : "Verify & go to dashboard"}
                     </button>
                     <button
                         type="button"
@@ -127,14 +136,16 @@ export default function VerifyOtpPage() {
                         type="button"
                         onClick={() => {
                             reset();
-                            router.push("/sign-in");
+                            router.push(mode === "reset" ? "/forgot-password" : "/sign-in");
                         }}
                         className="text-sm font-medium text-[#7b8595] underline underline-offset-2 hover:text-[#202124]"
                     >
-                        Sign out
+                        {mode === "reset" ? "Back" : "Sign out"}
                     </button>
                     <p className="mt-4 text-xs text-[#8a93a3]">
-                        After verification, you&apos;ll go straight to your dashboard.
+                        {mode === "reset"
+                            ? "After verification, you can set a new password."
+                            : "After verification, you&apos;ll go straight to your dashboard."}
                     </p>
                 </div>
             </div>
