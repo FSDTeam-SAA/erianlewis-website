@@ -2,9 +2,25 @@
 
 import { useState, useRef, useEffect } from "react";
 
-export function SortDropdown() {
+export type SortOption =
+    | "Newest Listings"
+    | "Price low to high"
+    | "Price high to low"
+    | "Bedrooms most to fewest";
+
+interface SortDropdownProps {
+    selected: SortOption;
+    onChange: (value: SortOption) => void;
+    options?: SortOption[];
+}
+
+export function SortDropdown({ selected, onChange, options = [
+    "Newest Listings",
+    "Price low to high",
+    "Price high to low",
+    "Bedrooms most to fewest"
+] }: SortDropdownProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const [selected, setSelected] = useState("Newest Listings");
     const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -16,13 +32,6 @@ export function SortDropdown() {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
-
-    const options = [
-        "Newest Listings",
-        "Price low to high",
-        "Price high to low",
-        "Bedrooms most to fewest"
-    ];
 
     return (
         <div className="relative" ref={ref}>
@@ -40,7 +49,7 @@ export function SortDropdown() {
                         <div
                             key={option}
                             onClick={() => {
-                                setSelected(option);
+                                onChange(option);
                                 setIsOpen(false);
                             }}
                             className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-gray-50 flex items-center transition-colors ${selected === option ? "font-bold text-gray-900" : "text-gray-600 font-medium"
