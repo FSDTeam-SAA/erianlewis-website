@@ -5,7 +5,7 @@ import { Footer } from "@/components/shared/Footer";
 
 export default function TenantHomepage() {
     return (
-        <main className="min-h-screen flex flex-col font-sans relative bg-white">
+        <main className="min-h-screen flex flex-col font-sans relative bg-[#F9FAFB]">
             <Navbar />
             <HeroSection />
             <BrowseByCategory />
