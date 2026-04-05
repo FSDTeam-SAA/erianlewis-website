@@ -20,6 +20,21 @@ type ProfilePictureProps = {
 const fallbackImage = "/assets/images/no-user.jpeg"
 const userMeQueryKey = ["user-me"] as const
 
+const getRoleLabel = (role?: string) => {
+  switch (role) {
+    case "USER":
+      return "TENANT"
+    case "AGENT":
+      return "AGENT"
+    case "ADMIN":
+      return "ADMIN"
+    case "LANDLORD":
+      return "LANDLORD"
+    default:
+      return role || "N/A"
+  }
+}
+
 const  ProfilePicture = ({ profile, token, onProfileUpdated }: ProfilePictureProps) => {
   const queryClient = useQueryClient()
   const [profileImage, setProfileImage] = useState(profile?.profileImage || fallbackImage)
@@ -125,7 +140,7 @@ const  ProfilePicture = ({ profile, token, onProfileUpdated }: ProfilePicturePro
             {profile?.firstName || "N/A"} {profile?.lastName || "N/A"}
           </h4>
           <p className="text-base font-normal leading-normal text-[#191919] text-center">{profile?.email || "N/A"}</p>
-          <p className="text-base font-normal leading-normal text-[#191919] text-center pt-1">{profile?.role === "USER" ? "TENANT" : "LANDLORD"}</p>
+          <p className="text-base font-normal leading-normal text-[#191919] text-center pt-1">{getRoleLabel(profile?.role)}</p>
         </div>
       </div>
     </div>

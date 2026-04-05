@@ -70,6 +70,11 @@ const formatPlanLimit = (plan?: Partial<SubscriptionPlan> | null) => {
   return `Up to ${plan.maxProperties} properties`
 }
 
+const getOwnerRoleLabel = (role?: string) => {
+  if (role === "AGENT") return "agent"
+  return "landlord"
+}
+
 export default function DashboardSettingsContent() {
   const { data: session } = useSession()
   const token = session?.user?.accessToken
@@ -347,7 +352,7 @@ export default function DashboardSettingsContent() {
                     Profile Overview
                   </p>
                   <h3 className="mt-3 text-2xl font-bold leading-tight text-[#111827]">
-                    Keep your landlord profile polished and ready for tenants.
+                    Keep your {getOwnerRoleLabel(profile?.role)} profile polished and client-ready.
                   </h3>
                   <p className="mt-3 max-w-2xl text-sm leading-6 text-[#667085]">
                     Update your profile photo, review your account details, and jump quickly to the places you use most often from one clean dashboard section.
@@ -409,7 +414,7 @@ export default function DashboardSettingsContent() {
                 <h2 className="text-xl font-bold leading-normal text-black">Subscription</h2>
               </div>
               <p className="text-sm font-normal leading-normal text-[#262626]">
-                Pick or upgrade a plan for your {profile?.role === "AGENT" ? "agent" : "landlord"} account.
+                Pick or upgrade a plan for your {getOwnerRoleLabel(profile?.role)} account.
               </p>
             </div>
 
