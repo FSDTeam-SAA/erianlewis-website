@@ -49,6 +49,7 @@ type InquiryItem = {
   _id: string
   property?: {
     _id?: string
+    listingType?: 'rent' | 'buy'
     basicInformation?: {
       propertyTitle?: string
     }
@@ -790,7 +791,9 @@ function DashboardInquiriesPageContent() {
                             <Link
                               href={
                                 inquiry.property?._id
-                                  ? `/rentals/${inquiry.property._id}`
+                                  ? inquiry.property.listingType === 'buy'
+                                    ? `/buy/${inquiry.property._id}`
+                                    : `/rentals/${inquiry.property._id}`
                                   : '#'
                               }
                               className="inline-flex h-11 items-center justify-center rounded-[8px] border border-[#D9DBE3] bg-white px-4 text-sm font-medium text-[#475467]"

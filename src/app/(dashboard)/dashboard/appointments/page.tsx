@@ -294,11 +294,11 @@ function DashboardAppointmentsPageContent() {
     enabled: Boolean(token) && status === 'authenticated',
   })
 
-  const rentalsQuery = useQuery({
-    queryKey: ['dashboard-rental-options', token],
+  const propertiesQuery = useQuery({
+    queryKey: ['dashboard-property-options', token],
     queryFn: () =>
       fetchJson<RentalsResponse>(
-        '/rental-properties?listingType=rent&page=1&limit=100',
+        '/rental-properties?page=1&limit=100',
         token,
       ),
     enabled: Boolean(token) && status === 'authenticated',
@@ -338,12 +338,12 @@ function DashboardAppointmentsPageContent() {
   const propertyOptions = useMemo(
     () => [
       { label: 'All Properties', value: 'all' },
-      ...((rentalsQuery.data?.data.properties || []).map(property => ({
+      ...((propertiesQuery.data?.data.properties || []).map(property => ({
         label: property.basicInformation?.propertyTitle || 'Untitled property',
         value: property._id,
       }))),
     ],
-    [rentalsQuery.data?.data.properties],
+    [propertiesQuery.data?.data.properties],
   )
 
   const filteredAppointments = useMemo(() => {
