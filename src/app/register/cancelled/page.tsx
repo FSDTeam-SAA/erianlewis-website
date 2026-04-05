@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { createMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = createMetadata({
+    title: "Registration Payment Cancelled",
+    description: "Your Alora registration payment was cancelled and can be resumed later.",
+    path: "/register/cancelled",
+    noIndex: true,
+});
 
 export default function RegisterCancelledPage() {
     return (

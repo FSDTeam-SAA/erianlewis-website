@@ -42,9 +42,19 @@ export interface UserProfile {
 }
 
 export interface Subscription {
-  planId: string | null
+  planId: string | SubscriptionPlan | null
   startDate: string | null
   endDate: string | null
+}
+
+export interface SubscriptionPlan {
+  _id: string
+  name: string
+  title?: string
+  price: number
+  billingCycle: string
+  maxProperties: number | null
+  displayFeatures?: string[]
 }
 
 export interface SearchUsage {

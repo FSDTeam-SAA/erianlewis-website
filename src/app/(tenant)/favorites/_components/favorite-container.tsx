@@ -30,6 +30,8 @@ const getPropertyDetailsHref = (listingType: string, propertyId: string) => {
   return listingType === "buy" ? `/buy/${propertyId}` : `/rentals/${propertyId}`
 }
 
+const FALLBACK_PROPERTY_IMAGE = "/assets/images/no-user.jpeg"
+
 const FavoritesContainer = () => {
   const { data: session } = useSession()
   const queryClient = useQueryClient()
@@ -130,18 +132,20 @@ const FavoritesContainer = () => {
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
             {favorites?.map(item => {
               const property = item.property
-              const image = property.photos[0]?.url || "/assets/images/no-user.jpeg"
-              const title = property.basicInformation.propertyTitle || "Property"
+              const image = property?.photos?.[0]?.url || FALLBACK_PROPERTY_IMAGE
+              const title = property?.basicInformation?.propertyTitle || "Property"
               const location = getPropertyLocation(
-                property.address.cityTown,
-                property.address.island,
-                property.address.streetNumber
+                property?.address?.cityTown || "",
+                property?.address?.island || null,
+                property?.address?.streetNumber || ""
               )
               const price = formatPrice(
-                property.basicInformation.monthlyRent,
-                property.basicInformation.preferredCurrency
+                property?.basicInformation?.monthlyRent || 0,
+                property?.basicInformation?.preferredCurrency || "USD"
               )
-              const badgeLabel = property.listingType === "rent" ? "For rent" : "For sale"
+              const badgeLabel = property?.listingType === "rent" ? "For rent" : "For sale"
+              const propertyId = property?._id || item._id
+              const propertyHref = getPropertyDetailsHref(property?.listingType || "rent", propertyId)
 
               return (
                 <article
@@ -193,7 +197,7 @@ const FavoritesContainer = () => {
                   </div>
 
                   <Link
-                    href={getPropertyDetailsHref(property.listingType, property._id)}
+                    href={propertyHref}
                     className="absolute inset-0 rounded-[18px]"
                     aria-label={`View details for ${title}`}
                   />

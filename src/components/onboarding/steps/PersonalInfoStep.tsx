@@ -55,6 +55,7 @@ export function PersonalInfoStep({ stepConfig }: StepProps) {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<FormDataSchema>({
     resolver: zodResolver(schema),
@@ -149,7 +150,13 @@ export function PersonalInfoStep({ stepConfig }: StepProps) {
             <input
               type="tel"
               placeholder="Digits only"
-              {...register('phone')}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              {...register('phone', {
+                onChange: event => {
+                  setValue('phone', event.target.value.replace(/\D/g, ''))
+                },
+              })}
               className="auth-input auth-input-left flex-1 bg-white text-left"
             />
           </div>

@@ -16,41 +16,41 @@ export interface Favorite {
 export interface Property {
   _id: string
   createdByRole: string | null
-  basicInformation: BasicInformation
-  address: Address
-  location: Location
-  propertyDetails: PropertyDetails
-  rentalTerms: RentalTerms
-  amenities: Amenities
-  propertyFeatures: PropertyFeatures
-  utilitiesInfrastructure: UtilitiesInfrastructure
-  propertyTaxAnnual: number
-  unitDetails: UnitDetail[]
-  photos: Photo[]
-  createdBy: CreatedBy
-  listingType: string
-  status: string
-  views: number
-  createdAt: string
-  updatedAt: string
-  __v: number
+  basicInformation?: BasicInformation
+  address?: Address
+  location?: Location
+  propertyDetails?: PropertyDetails
+  rentalTerms?: RentalTerms
+  amenities?: Amenities
+  propertyFeatures?: PropertyFeatures
+  utilitiesInfrastructure?: UtilitiesInfrastructure
+  propertyTaxAnnual?: number
+  unitDetails?: UnitDetail[]
+  photos?: Photo[]
+  createdBy?: CreatedBy
+  listingType?: string
+  status?: string
+  views?: number
+  createdAt?: string
+  updatedAt?: string
+  __v?: number
 }
 
 export interface BasicInformation {
-  propertyTitle: string
-  details: string
-  propertyType: {
+  propertyTitle?: string
+  details?: string
+  propertyType?: {
     _id: string
     name: string
   }
-  monthlyRent: number
-  preferredCurrency: string
+  monthlyRent?: number
+  preferredCurrency?: string
 }
 
 export interface Address {
-  streetNumber: string
-  cityTown: string
-  island: string | null
+  streetNumber?: string
+  cityTown?: string
+  island?: string | null
 }
 
 export interface Location {

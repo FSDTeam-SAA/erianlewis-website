@@ -2,12 +2,12 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { Navbar } from '@/components/shared/Navbar'
+import { ArrowLeft, LayoutDashboard } from 'lucide-react'
 
-export default function NotFound() {
+import { Button } from '@/components/ui/button'
+
+export default function DashboardNotFound() {
   const [isLoaded, setIsLoaded] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const router = useRouter()
@@ -32,8 +32,6 @@ export default function NotFound() {
 
   return (
     <div className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#f0d5c8] via-[#d9e8f0] to-[#c8dff0] px-4 font-sans">
-      <Navbar />
-
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         {Array.from({ length: 5 }).map((_, i) => (
           <div
@@ -65,9 +63,7 @@ export default function NotFound() {
         }`}
       >
         <div className="w-20 h-20 bg-white shadow-sm rounded-full flex items-center justify-center mb-6 border border-[#E8825A]/20">
-          <svg className="w-10 h-10 text-[#E8825A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <LayoutDashboard className="w-10 h-10 text-[#E8825A]" />
         </div>
 
         <div
@@ -86,16 +82,16 @@ export default function NotFound() {
         </div>
 
         <h2 className="mb-3 text-2xl font-bold text-gray-900 sm:text-3xl">
-          Page not found
+          Dashboard page not found
         </h2>
 
         <p className="mb-10 max-w-md text-gray-600 font-medium">
-          The page you&apos;re looking for doesn&apos;t exist, has been moved, or is temporarily unavailable.
+          The dashboard page you&apos;re looking for doesn&apos;t exist, has been moved, or is temporarily unavailable.
         </p>
 
         <div className="flex w-full flex-col items-stretch gap-4 sm:w-auto sm:flex-row sm:items-center">
           <Link
-            href="/"
+            href="/dashboard"
             className="group relative inline-flex h-14 w-full shrink-0 items-center justify-center overflow-hidden rounded-full border-none px-8 text-base font-bold text-white shadow-md transition-all hover:shadow-lg sm:w-auto"
             style={{
               background: 'linear-gradient(90.99deg, #8BCCE6 2.49%, #F6855C 99.73%)',
@@ -103,7 +99,7 @@ export default function NotFound() {
               transition: 'transform 0.3s ease-out, box-shadow 0.3s ease',
             }}
           >
-            Back to home
+            Back to dashboard
           </Link>
 
           <Button

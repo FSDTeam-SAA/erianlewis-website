@@ -16,7 +16,7 @@ export function Footer() {
             />
           </div>
           <p className="text-gray-400 text-sm max-w-[200px] leading-relaxed">
-            Luxury Caribbean real estate at your fingertips
+            Luxury real estate at your fingertips with Alora
           </p>
         </div>
 

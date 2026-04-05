@@ -1,5 +1,5 @@
-Project Name: Next.js Boilerplate Website (erianluwis-website)
-Description: A fully functional, production-ready Next.js 14 boilerplate project based on modern technology stack.
+Project Name: Alora
+Description: A real estate platform for Caribbean rentals, homes for sale, and property discovery.
 
 Technology Stack Overview
 -------------------------

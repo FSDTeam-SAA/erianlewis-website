@@ -157,6 +157,10 @@ export const PersonalInfoSection = ({
                   <FormControl>
                     <Input
                       {...field}
+                      type="tel"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      onChange={event => field.onChange(event.target.value.replace(/\D/g, ""))}
                       placeholder="Enter your phone number"
                       className="border-[0.5px] border-[#6D6D6D] rounded-[12px] h-[44px] w-full text-base leading-normal font-normal text-[#1E1E1E] px-4 focus:ring-2 focus:ring-[#6D6D6] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={isProfileLoading || isPending}

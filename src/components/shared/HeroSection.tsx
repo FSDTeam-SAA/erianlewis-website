@@ -27,7 +27,7 @@ export function HeroSection() {
             <div className="absolute inset-0 z-0 border-none">
                 <Image
                     src="/main-hero-banner.jpg"
-                    alt="Caribbean Paradise Background"
+                    alt="Alora hero background"
                     fill
                     priority
                     className="object-cover border-none"
