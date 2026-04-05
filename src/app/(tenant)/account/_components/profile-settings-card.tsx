@@ -49,7 +49,13 @@ export const ProfileSettingsCard = () => {
 
         <div className="grid gap-4 lg:grid-cols-2 bg-white rounded-[16px] shadow-[0px_1px_4px_0px_#00000040] px-6 py-4 ">
           <ChangePasswordSection token={token} />
-          <ChangeEmailSection currentEmail={profile?.email ?? ""} />
+          <ChangeEmailSection
+            currentEmail={profile?.email ?? ""}
+            token={token}
+            onEmailUpdated={async () => {
+              await queryClient.invalidateQueries({ queryKey: USER_ME_QUERY_KEY })
+            }}
+          />
         </div>
       </div>
    </div>

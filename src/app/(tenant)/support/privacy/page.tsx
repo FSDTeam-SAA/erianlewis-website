@@ -1,4 +1,13 @@
+import type { Metadata } from "next"
 import { SupportLayout } from "@/components/shared/SupportLayout"
+import { createMetadata } from "@/lib/seo"
+
+export const metadata: Metadata = createMetadata({
+  title: "Privacy Policy",
+  description:
+    "Review how Alora collects, uses, and protects platform and listing information.",
+  path: "/support/privacy",
+})
 
 const privacyContent = [
     {

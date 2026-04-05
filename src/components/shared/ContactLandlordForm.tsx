@@ -108,9 +108,11 @@ export function ContactLandlordForm({ onScheduleClick, propertyId, ownerEmail, o
                 <label className="text-[13px] font-bold text-gray-500 mb-1.5 block">Phone</label>
                 <input
                     type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={formData.phone}
-                    onChange={(event) => setFormData((prev) => ({ ...prev, phone: event.target.value }))}
-                    placeholder="(555) 123-4567"
+                    onChange={(event) => setFormData((prev) => ({ ...prev, phone: event.target.value.replace(/\D/g, "") }))}
+                    placeholder="5551234567"
                     className="w-full border border-gray-200 rounded-lg px-4 py-3 text-[14px] font-medium text-gray-800 mb-4 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all placeholder:font-normal"
                 />
 

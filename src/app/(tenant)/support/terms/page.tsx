@@ -1,4 +1,13 @@
+import type { Metadata } from "next"
 import { SupportLayout } from "@/components/shared/SupportLayout"
+import { createMetadata } from "@/lib/seo"
+
+export const metadata: Metadata = createMetadata({
+  title: "Terms of Service",
+  description:
+    "Read the Alora Terms of Service for platform access, listings, inquiries, and subscriptions.",
+  path: "/support/terms",
+})
 
 const termsContent = [
     {

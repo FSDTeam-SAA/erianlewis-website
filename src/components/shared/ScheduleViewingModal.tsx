@@ -331,11 +331,13 @@ export function ScheduleViewingModal({
           </label>
           <input
             type="tel"
+            inputMode="numeric"
+            pattern="[0-9]*"
             value={formData.phone}
             onChange={(event) =>
-              setFormData((prev) => ({ ...prev, phone: event.target.value }))
+              setFormData((prev) => ({ ...prev, phone: event.target.value.replace(/\D/g, "") }))
             }
-            placeholder="(555) 123-4567"
+            placeholder="5551234567"
             className="mb-4 w-full rounded-xl border border-[#dfe5ec] px-4 py-3 text-[14px] font-medium text-[#111827] outline-none transition-all placeholder:font-normal focus:border-[#8BCCE6] focus:ring-2 focus:ring-[#8BCCE6]/15"
           />
 

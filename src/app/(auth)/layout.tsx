@@ -1,5 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { createMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = createMetadata({
+    title: "Account Access",
+    description: "Sign in, create an account, or manage access to your Alora profile.",
+    path: "/sign-in",
+    noIndex: true,
+});
+export const dynamic = "force-dynamic";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
     return (

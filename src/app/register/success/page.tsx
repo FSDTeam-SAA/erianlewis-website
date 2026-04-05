@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { createMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = createMetadata({
+    title: "Registration Payment Received",
+    description: "Your Alora registration payment has been received.",
+    path: "/register/success",
+    noIndex: true,
+});
 
 export default function RegisterSuccessPage() {
     return (

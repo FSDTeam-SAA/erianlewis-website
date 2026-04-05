@@ -1,46 +1,16 @@
-import { Copy, Mail, Send } from "lucide-react"
+import type { Metadata } from "next"
 
-import { SupportLayout } from "@/components/shared/SupportLayout"
+import { createMetadata } from "@/lib/seo"
+import ContactSupportContent from "./contact-support-content"
+
+export const metadata: Metadata = createMetadata({
+  title: "Contact Support",
+  description:
+    "Get help with your Alora account, listings, and platform support.",
+  path: "/support/contact",
+  keywords: ["contact Alora", "property platform support"],
+})
 
 export default function ContactSupportPage() {
-  return (
-    <SupportLayout activeTab="contact">
-      <div className="container">
-        <div className="">
-          <div className=" px-4 py-3">
-            <h2 className="text-lg md:text-xl lg:text-2xl font-bold leading-normal text-black">Contact</h2>
-            <p className="mt-1 text-sm md:text-base font-normal leading-normal text-[#262626]">
-              We are here if you need help with your account, listings, or general platform support.
-            </p>
-          </div>
-
-          <div className="space-y-4 px-4 py-4">
-            <div className=" bg-white shadow-[1px_1px_4px_0px_#00000040] p-4 rounded-[12px]">
-              <p className="text-sm md:text-base font-normal leading-normal text-black">Email</p>
-
-              <a
-                href="mailto:info@alorarrealty.com"
-                className="mt-3 h-[44px] flex w-full items-center justify-between gap-3 rounded-md px-4 py-2.5 text-white shadow-sm transition-opacity hover:opacity-95"
-                style={{ background: "linear-gradient(90deg, #8fd3e8 0%, #f28b64 100%)" }}
-              >
-                <span className="flex min-w-0 items-center gap-3">
-                  <Mail className="h-4 w-4 shrink-0" />
-                  <span className="truncate text-sm md:text-base text-white leading-normal font-semibold">info@alorarrealty.com</span>
-                </span>
-                <Send className="h-3.5 w-3.5 shrink-0" />
-              </a>
-
-              <div className="pt-2 text-sm md:text-base text-black font-normal leading-normal">
-                <span>If email does not open automatically, manually copy this email address.</span>
-                <span className="mt-2 inline-flex items-center gap-2 text-sm md:text-base text-black font-medium leading-normal pl-3">
-                  <Copy className="h-3.5 w-3.5 text-[#8b95a7]" />
-                  info@alorarrealty.com
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </SupportLayout>
-  )
+  return <ContactSupportContent />
 }
