@@ -220,6 +220,12 @@ const getTodayDateValue = () => {
   return `${year}-${month}-${date}`
 }
 
+const isPastDateValue = (value?: string) => {
+  if (!value) return false
+
+  return value < getTodayDateValue()
+}
+
 const timeToMinutes = (value?: string) => {
   if (!value) return -1
 
@@ -473,6 +479,9 @@ function DashboardAppointmentsPageContent() {
     mutationFn: async () => {
       if (!token) throw new Error('You need to sign in again to continue.')
       if (!blockDateValue) throw new Error('Date is required')
+      if (isPastDateValue(blockDateValue)) {
+        throw new Error('You cannot block a past date')
+      }
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/appointments/blocked-dates`,
@@ -978,6 +987,7 @@ function DashboardAppointmentsPageContent() {
                   type="date"
                   value={blockDateValue}
                   onChange={event => setBlockDateValue(event.target.value)}
+                  min={getTodayDateValue()}
                   className="h-11 rounded-[8px] border-[#FECACA] bg-[#FFF5F5]"
                 />
                 <Input
