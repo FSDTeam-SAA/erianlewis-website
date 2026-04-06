@@ -19,6 +19,7 @@ import {
   Settings,
   Trash2,
   UserRound,
+  X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -210,6 +211,46 @@ const formatDate = (value?: string) => {
   }).format(new Date(value))
 }
 
+const getTodayDateValue = () => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const date = String(now.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${date}`
+}
+
+const timeToMinutes = (value?: string) => {
+  if (!value) return -1
+
+  const normalizedValue = value.trim().toUpperCase()
+  const match = normalizedValue.match(/^(\d{1,2}):(\d{2})(?:\s?(AM|PM))?$/)
+
+  if (!match) {
+    return -1
+  }
+
+  let hours = Number(match[1])
+  const minutes = Number(match[2])
+  const meridiem = match[3]
+
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+    return -1
+  }
+
+  if (meridiem) {
+    if (meridiem === 'AM' && hours === 12) {
+      hours = 0
+    } else if (meridiem === 'PM' && hours !== 12) {
+      hours += 12
+    }
+  }
+
+  return hours * 60 + minutes
+}
+
+const normalizeTimeValue = (value?: string) => value?.trim() || ''
+
 const renderPaginationNumbers = (currentPage: number, totalPages: number) => {
   const pages = new Set<number>([1, totalPages, currentPage, currentPage - 1, currentPage + 1])
 
@@ -371,6 +412,19 @@ function DashboardAppointmentsPageContent() {
     [appointments],
   )
 
+  const availableSlots = useMemo(() => {
+    const slots = availableSlotsQuery.data?.data.slots || []
+
+    if (newAppointment.date !== getTodayDateValue()) {
+      return slots
+    }
+
+    const now = new Date()
+    const currentMinutes = now.getHours() * 60 + now.getMinutes()
+
+    return slots.filter(slot => timeToMinutes(slot.start) >= currentMinutes)
+  }, [availableSlotsQuery.data?.data.slots, newAppointment.date])
+
   const handleLogout = async () => {
     try {
       setLogoutDialogOpen(false)
@@ -489,12 +543,24 @@ function DashboardAppointmentsPageContent() {
 
   const createAppointmentMutation = useMutation({
     mutationFn: async () => {
+      const selectedTime = normalizeTimeValue(newAppointment.time)
+      const matchedSlot = availableSlots.find(
+        slot => normalizeTimeValue(slot.start) === selectedTime,
+      )
+
+      if (!matchedSlot) {
+        throw new Error('Please select a valid available time slot.')
+      }
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/appointments/book`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newAppointment),
+        body: JSON.stringify({
+          ...newAppointment,
+          time: normalizeTimeValue(matchedSlot.start),
+        }),
       })
 
       const result = await response.json()
@@ -692,7 +758,6 @@ function DashboardAppointmentsPageContent() {
 
   const blockedDates = blockedDatesQuery.data?.data || []
   const paginationInfo = appointmentsQuery.data?.data.paginationInfo
-  const availableSlots = availableSlotsQuery.data?.data.slots || []
 
   return (
     <main className="min-h-screen bg-[#f3f5f7]">
@@ -1030,7 +1095,14 @@ function DashboardAppointmentsPageContent() {
 
                 <Button
                   type="button"
-                  onClick={() => setAppointmentDialogOpen(true)}
+                  onClick={() => {
+                    setNewAppointment(current => ({
+                      ...current,
+                      date: current.date || getTodayDateValue(),
+                      time: '',
+                    }))
+                    setAppointmentDialogOpen(true)
+                  }}
                   className="h-11 rounded-[8px] px-4 text-sm font-semibold text-white"
                   style={{
                     background: 'linear-gradient(90.99deg, #8BCCE6 2.49%, #F6855C 99.73%)',
@@ -1208,10 +1280,16 @@ function DashboardAppointmentsPageContent() {
       <Dialog open={appointmentDialogOpen} onOpenChange={setAppointmentDialogOpen}>
         <DialogContent className="max-w-[560px] rounded-[12px] border border-[#E5E7EB] bg-white p-0" showCloseButton={false}>
           <div className="p-5">
-            <DialogHeader>
-              <DialogTitle className="text-lg font-bold text-[#111827]">
-                Add Appointment
-              </DialogTitle>
+            <DialogHeader className="relative pr-10">
+              <button
+                type="button"
+                onClick={() => setAppointmentDialogOpen(false)}
+                className="absolute right-0 top-0 inline-flex h-9 w-9 items-center justify-center rounded-full text-[#6B7280] transition-colors hover:bg-[#F3F4F6] hover:text-[#111827]"
+                aria-label="Close add appointment modal"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <DialogTitle className="text-lg font-bold text-[#111827]">Add Appointment</DialogTitle>
               <DialogDescription className="text-sm text-[#4B5563]">
                 Create a new appointment using your available property slots.
               </DialogDescription>
@@ -1241,6 +1319,7 @@ function DashboardAppointmentsPageContent() {
                   <Input
                     type="date"
                     value={newAppointment.date}
+                    min={getTodayDateValue()}
                     onChange={event =>
                       setNewAppointment(current => ({
                         ...current,
@@ -1257,18 +1336,29 @@ function DashboardAppointmentsPageContent() {
                   <SearchableSelect
                     value={newAppointment.time}
                     onChange={value =>
-                      setNewAppointment(current => ({ ...current, time: value }))
+                      setNewAppointment(current => ({
+                        ...current,
+                        time: normalizeTimeValue(value),
+                      }))
                     }
                     options={availableSlots.map(slot => ({
                       label: `${slot.start} - ${slot.end}`,
-                      value: slot.start,
+                      value: normalizeTimeValue(slot.start),
                     }))}
                     placeholder={
                       availableSlotsQuery.data?.data.available === false
                         ? availableSlotsQuery.data.data.reason || 'No available slots'
+                        : newAppointment.date === getTodayDateValue() && availableSlots.length === 0
+                          ? 'No time slots available from current time'
                         : 'Select a time'
                     }
                     searchPlaceholder="Search available time..."
+                    emptyLabel={
+                      newAppointment.date === getTodayDateValue()
+                        ? 'No time slots available from current time'
+                        : 'No options found'
+                    }
+                    disabled={!newAppointment.propertyId || !newAppointment.date || availableSlots.length === 0}
                   />
                 </div>
               </div>
