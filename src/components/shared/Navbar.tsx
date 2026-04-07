@@ -48,8 +48,9 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
   const [menuOpen, setMenuOpen] = useState(false)
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
   const token = session?.user?.accessToken
-  const canListProperty =
-    session?.user?.role === 'LANDLORD' || session?.user?.role === 'AGENT'
+  const ownerCtaHref = token
+    ? ownerNavLink.href
+    : `/sign-in?callbackUrl=${encodeURIComponent(ownerNavLink.href)}`
 
   const { data: profile } = useQuery<UserProfileApiResponse>({
     queryKey: ['navbar-profile'],
@@ -142,14 +143,12 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
                 {link.label}
               </Link>
             ))}
-            {canListProperty ? (
-              <Link
-                href={ownerNavLink.href}
-                className={getNavLinkClassName(ownerNavLink.href)}
-              >
-                {ownerNavLink.label}
-              </Link>
-            ) : null}
+            <Link
+              href={ownerCtaHref}
+              className={getNavLinkClassName(ownerNavLink.href)}
+            >
+              {ownerNavLink.label}
+            </Link>
           </div>
 
           {token ? (
@@ -289,15 +288,13 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
                 {link.label}
               </Link>
             ))}
-            {canListProperty ? (
-              <Link
-                href={ownerNavLink.href}
-                className={getMobileNavLinkClassName(ownerNavLink.href)}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {ownerNavLink.label}
-              </Link>
-            ) : null}
+            <Link
+              href={ownerCtaHref}
+              className={getMobileNavLinkClassName(ownerNavLink.href)}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {ownerNavLink.label}
+            </Link>
           </div>
 
           <div className="my-4 h-px bg-[#eceef2]" />

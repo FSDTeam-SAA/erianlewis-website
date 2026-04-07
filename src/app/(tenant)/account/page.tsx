@@ -1,6 +1,10 @@
 import type { Metadata } from "next"
+import { redirect } from "next/navigation"
+import { getServerSession } from "next-auth"
+
 import AccountContainer from "./_components/account-container"
 import { createMetadata } from "@/lib/seo"
+import { authOptions } from "@/lib/auth-options"
 
 export const metadata: Metadata = createMetadata({
   title: "My Account",
@@ -10,7 +14,13 @@ export const metadata: Metadata = createMetadata({
 })
 export const dynamic = "force-dynamic"
 
-const AccountPage = () => {
+const AccountPage = async () => {
+  const session = await getServerSession(authOptions)
+
+  if (!session) {
+    redirect("/sign-in?callbackUrl=%2Faccount")
+  }
+
   return (
     <div>
       <AccountContainer />
@@ -19,6 +29,4 @@ const AccountPage = () => {
 }
 
 export default AccountPage
-
-
 

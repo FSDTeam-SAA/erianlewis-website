@@ -15,7 +15,6 @@ import {
   ClipboardList,
   Eye,
   Home,
-  Lock,
   Settings,
   UserRound,
 } from 'lucide-react'
@@ -23,12 +22,6 @@ import { toast } from 'sonner'
 
 import { LogoutConfirmDialog } from '@/components/shared/LogoutConfirmDialog'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 
 type DashboardRole = 'LANDLORD' | 'AGENT'
@@ -44,6 +37,7 @@ type DashboardStat = {
 type QuickAction = {
   title: string
   description: string
+  href: string
   icon: typeof Home
   iconClassName: string
 }
@@ -79,8 +73,6 @@ const dashboardContent: Record<
   {
     stats: DashboardStat[]
     quickActions: QuickAction[]
-    analyticsText: string
-    activities: string[]
   }
 > = {
   LANDLORD: {
@@ -115,27 +107,25 @@ const dashboardContent: Record<
       {
         title: 'Add Rental Property',
         description: 'List a new rental',
+        href: '/list-property?listingType=rent',
         icon: Home,
         iconClassName: 'bg-[#EAF7FD] text-[#79C5E7]',
       },
       {
         title: 'Add Sale Property',
         description: 'List a property for sale',
+        href: '/list-property?listingType=buy',
         icon: BriefcaseBusiness,
         iconClassName: 'bg-[#FFF1E8] text-[#F6855C]',
       },
       {
         title: 'View all Properties',
         description: 'Manage your listings',
+        href: '/dashboard/rentals',
         icon: Eye,
         iconClassName:
           'bg-[linear-gradient(135deg,#8BCCE6,#F6855C)] text-white',
       },
-    ],
-    analyticsText: 'More reporting and deeper insights.',
-    activities: [
-      'No recent activity',
-      'New inquiries and approvals will appear here once listings go live.',
     ],
   },
   AGENT: {
@@ -170,27 +160,25 @@ const dashboardContent: Record<
       {
         title: 'Add Client Listing',
         description: 'Publish a managed property',
+        href: '/list-property?listingType=rent',
         icon: Home,
         iconClassName: 'bg-[#EAF7FD] text-[#79C5E7]',
       },
       {
         title: 'Schedule Showing',
         description: 'Create a client appointment',
+        href: '/dashboard/appointments',
         icon: CalendarDays,
         iconClassName: 'bg-[#FFF1E8] text-[#F6855C]',
       },
       {
         title: 'View Pipeline',
         description: 'Follow open opportunities',
+        href: '/dashboard/inquiries',
         icon: BriefcaseBusiness,
         iconClassName:
           'bg-[linear-gradient(135deg,#8BCCE6,#F6855C)] text-white',
       },
-    ],
-    analyticsText: 'Pipeline reporting and client engagement metrics.',
-    activities: [
-      'No recent activity',
-      'Client interactions and report updates will appear here.',
     ],
   },
 }
@@ -229,7 +217,6 @@ export default function DashboardPage() {
   const router = useRouter()
   const { data: session, status } = useSession()
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
-  const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false)
 
   useEffect(() => {
     if (status !== 'authenticated') {
@@ -495,13 +482,15 @@ export default function DashboardPage() {
             <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
               <div className="flex items-center gap-1">
                 <div className="relative h-[128px] w-[122px] shrink-0">
-                  <Image
-                    src="/logo.png"
-                    alt="Alora"
-                    fill
-                    className="object-contain"
-                    priority
-                  />
+                  <Link href={'/'}>
+                    <Image
+                      src="/logo.png"
+                      alt="Alora"
+                      fill
+                      className="object-contain"
+                      priority
+                    />
+                  </Link>
                 </div>
                 <div>
                   <h1 className="text-[24px] font-bold leading-none text-[#111827]">
@@ -639,9 +628,9 @@ export default function DashboardPage() {
                   const Icon = action.icon
 
                   return (
-                    <button
+                    <Link
                       key={action.title}
-                      type="button"
+                      href={action.href}
                       className="flex items-center gap-4 rounded-[12px] border border-[#e5e7eb] bg-white px-5 py-5 text-left shadow-[0_4px_12px_rgba(16,24,40,0.08)] transition-transform hover:-translate-y-0.5"
                     >
                       <div
@@ -657,29 +646,9 @@ export default function DashboardPage() {
                           {action.description}
                         </p>
                       </div>
-                    </button>
+                    </Link>
                   )
                 })}
-              </div>
-            </section>
-
-            <section className="rounded-[12px] border border-[#e5e7eb] bg-white px-5 py-5 shadow-[0_4px_12px_rgba(16,24,40,0.08)]">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-sm font-bold text-[#111827]">
-                    Advanced analytics
-                  </h2>
-                  <p className="mt-1 text-xs text-[#667085]">
-                    {content.analyticsText}
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  className="h-9 rounded-xl bg-[#111111] px-4 text-xs font-semibold text-white hover:bg-[#222222]"
-                >
-                  <Lock className="mr-2 h-4 w-4" />
-                  Upgrade
-                </Button>
               </div>
             </section>
 
@@ -770,126 +739,9 @@ export default function DashboardPage() {
                 </div>
               )}
             </section>
-
-            <section>
-              <h2 className="mb-4 text-sm font-bold text-[#111827]">
-                Recent Activity
-              </h2>
-              <div className="rounded-[12px] border border-[#e5e7eb] bg-white px-5 py-6 text-center shadow-[0_4px_12px_rgba(16,24,40,0.08)]">
-                <p className="text-sm font-semibold text-[#111827]">
-                  {content.activities[0]}
-                </p>
-                <p className="mt-2 text-sm text-[#667085]">
-                  {content.activities[1]}
-                </p>
-              </div>
-            </section>
           </div>
         </section>
       </div>
-
-      <Dialog
-        open={appointmentDialogOpen}
-        onOpenChange={setAppointmentDialogOpen}
-      >
-        <DialogContent className="max-w-[480px] rounded-[24px] border border-[#e6e8ec] bg-white p-0">
-          <div className="px-6 pb-6 pt-5">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-bold text-[#111827]">
-                Add Appointment
-              </DialogTitle>
-            </DialogHeader>
-
-            <div className="mt-5 grid gap-4">
-              <label className="grid gap-1.5 text-sm font-medium text-[#344054]">
-                Property*
-                <select className="h-11 rounded-xl border border-[#d0d5dd] px-3 text-sm text-[#667085] outline-none">
-                  <option>Select a property</option>
-                </select>
-              </label>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <label className="grid gap-1.5 text-sm font-medium text-[#344054]">
-                  Date*
-                  <input
-                    type="text"
-                    placeholder="mm/dd/yyyy"
-                    className="h-11 rounded-xl border border-[#d0d5dd] px-3 text-sm text-[#667085] outline-none"
-                  />
-                </label>
-                <label className="grid gap-1.5 text-sm font-medium text-[#344054]">
-                  Time*
-                  <select className="h-11 rounded-xl border border-[#d0d5dd] px-3 text-sm text-[#667085] outline-none">
-                    <option>Select a time</option>
-                  </select>
-                </label>
-              </div>
-
-              <label className="grid gap-1.5 text-sm font-medium text-[#344054]">
-                Your Name*
-                <input
-                  type="text"
-                  placeholder="John Doe"
-                  className="h-11 rounded-xl border border-[#d0d5dd] px-3 text-sm text-[#667085] outline-none"
-                />
-              </label>
-
-              <label className="grid gap-1.5 text-sm font-medium text-[#344054]">
-                Email*
-                <input
-                  type="email"
-                  placeholder="john@example.com"
-                  className="h-11 rounded-xl border border-[#d0d5dd] px-3 text-sm text-[#667085] outline-none"
-                />
-              </label>
-
-              <label className="grid gap-1.5 text-sm font-medium text-[#344054]">
-                Phone*
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  onInput={event => {
-                    event.currentTarget.value =
-                      event.currentTarget.value.replace(/\D/g, '')
-                  }}
-                  placeholder="5551234567"
-                  className="h-11 rounded-xl border border-[#d0d5dd] px-3 text-sm text-[#667085] outline-none"
-                />
-              </label>
-
-              <label className="grid gap-1.5 text-sm font-medium text-[#344054]">
-                Notes (Optional)
-                <textarea
-                  placeholder="Any special requests or questions..."
-                  className="min-h-[92px] rounded-xl border border-[#d0d5dd] px-3 py-3 text-sm text-[#667085] outline-none"
-                />
-              </label>
-            </div>
-
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                className="h-11 rounded-xl border-[#d0d5dd] bg-white text-[#475467]"
-                onClick={() => setAppointmentDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                className="h-11 rounded-xl text-white"
-                style={{
-                  background:
-                    'linear-gradient(90.99deg, #8BCCE6 2.49%, #F6855C 99.73%)',
-                }}
-              >
-                Add Appointment
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <LogoutConfirmDialog
         open={logoutDialogOpen}
