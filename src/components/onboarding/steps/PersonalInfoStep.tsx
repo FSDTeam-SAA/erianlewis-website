@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -8,6 +9,7 @@ import {
   useOnboardingStore,
   OnboardingStep,
 } from '@/lib/stores/onboardingStore'
+import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import { ChevronDown, Eye, EyeOff } from 'lucide-react'
 
@@ -56,6 +58,7 @@ export function PersonalInfoStep({ stepConfig }: StepProps) {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<FormDataSchema>({
     resolver: zodResolver(schema),
@@ -77,6 +80,9 @@ export function PersonalInfoStep({ stepConfig }: StepProps) {
     })
     goNext()
   }
+
+  const agreePolicy = watch('agreePolicy')
+  const agreeTerms = watch('agreeTerms')
 
   return (
     <div className="auth-card animate-in w-full p-8 duration-500 fade-in slide-in-from-bottom-4 md:p-10">
@@ -232,25 +238,54 @@ export function PersonalInfoStep({ stepConfig }: StepProps) {
         </div>
 
         <div className="space-y-3 px-1 py-2">
+          <input type="hidden" {...register('agreePolicy')} />
+          <input type="hidden" {...register('agreeTerms')} />
+
           <label className="group flex cursor-pointer items-center gap-3">
-            <input
-              type="checkbox"
-              {...register('agreePolicy')}
-              className="h-[18px] w-[18px] cursor-pointer rounded border-gray-300 accent-[#E8825A]"
+            <Checkbox
+              checked={agreePolicy}
+              onCheckedChange={checked =>
+                setValue('agreePolicy', Boolean(checked), {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                  shouldTouch: true,
+                })
+              }
+              className="size-[18px] rounded border-[#E8825A] data-checked:border-[#E8825A] data-checked:bg-[#E8825A] data-checked:text-white"
             />
             <span className="text-xs font-medium text-[#5f6368] group-hover:text-[#202124]">
-              I agree to the Privacy Policy.
+              I agree to the{' '}
+              <Link
+                href="/support/privacy"
+                className="text-[#202124] underline underline-offset-2 hover:text-[#E8825A]"
+              >
+                Privacy Policy
+              </Link>
+              .
             </span>
           </label>
 
           <label className="group flex cursor-pointer items-center gap-3">
-            <input
-              type="checkbox"
-              {...register('agreeTerms')}
-              className="h-[18px] w-[18px] cursor-pointer rounded border-gray-300 accent-[#E8825A]"
+            <Checkbox
+              checked={agreeTerms}
+              onCheckedChange={checked =>
+                setValue('agreeTerms', Boolean(checked), {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                  shouldTouch: true,
+                })
+              }
+              className="size-[18px] rounded border-[#E8825A] data-checked:border-[#E8825A] data-checked:bg-[#E8825A] data-checked:text-white"
             />
             <span className="text-xs font-medium text-[#5f6368] group-hover:text-[#202124]">
-              I agree to the Terms of Service.
+              I agree to the{' '}
+              <Link
+                href="/support/terms"
+                className="text-[#202124] underline underline-offset-2 hover:text-[#E8825A]"
+              >
+                Terms of Service
+              </Link>
+              .
             </span>
           </label>
         </div>

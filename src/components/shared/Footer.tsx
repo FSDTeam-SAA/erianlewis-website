@@ -1,7 +1,16 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
+import { useSession } from 'next-auth/react'
 
 export function Footer() {
+  const { data: session } = useSession()
+  const currentYear = new Date().getFullYear()
+  const ownerCtaHref = session
+    ? '/list-property'
+    : `/sign-in?callbackUrl=${encodeURIComponent('/list-property')}`
+
   return (
     <footer className="bg-footer text-white pt-16 pb-8 px-6 relative">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8 mb-16">
@@ -30,10 +39,10 @@ export function Footer() {
               Rentals
             </Link>
             <Link
-              href="/sales"
+              href="/buy"
               className="text-gray-400 hover:text-white transition-colors text-sm"
             >
-              Sales
+              Buy
             </Link>
           </div>
         </div>
@@ -42,13 +51,13 @@ export function Footer() {
           <h4 className="font-semibold text-lg">For Landlords</h4>
           <div className="flex flex-col gap-3">
             <Link
-              href="/list-property"
+              href={ownerCtaHref}
               className="text-gray-400 hover:text-white transition-colors text-sm"
             >
               List Property
             </Link>
             <Link
-              href="/dashboard"
+              href={session ? '/dashboard' : '/sign-in?callbackUrl=%2Fdashboard'}
               className="text-gray-400 hover:text-white transition-colors text-sm"
             >
               Dashboard
@@ -60,20 +69,33 @@ export function Footer() {
           <h4 className="font-semibold text-lg">Company</h4>
           <div className="flex flex-col gap-3">
             <Link
-              href="/contact"
+              href="/support/contact"
               className="text-gray-400 hover:text-white transition-colors text-sm"
             >
               Contact
+            </Link>
+            <Link
+              href="/support/privacy"
+              className="text-gray-400 hover:text-white transition-colors text-sm"
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              href="/support/terms"
+              className="text-gray-400 hover:text-white transition-colors text-sm"
+            >
+              Terms of Service
             </Link>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto border-t border-gray-800 pt-8 text-center text-gray-500 text-sm">
-        © 2025 Alora. All rights reserved.
+        © {currentYear} Alora. All rights reserved.
       </div>
 
-      <button
+      <Link
+        href={ownerCtaHref}
         className="fixed bottom-6 right-6 text-white px-6 py-3.5 rounded-full font-semibold shadow-xl hover:opacity-90 transition-transform hover:-translate-y-1 z-50 text-sm"
         style={{
           background:
@@ -81,7 +103,7 @@ export function Footer() {
         }}
       >
         List Your Property
-      </button>
+      </Link>
     </footer>
   )
 }

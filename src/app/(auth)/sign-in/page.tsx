@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,16 +10,24 @@ import { toast } from "sonner";
 
 export default function SignInPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const callbackUrl = searchParams.get("callbackUrl") || "/";
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         setEmail(params.get("email") || "");
         if (params.get("registered") === "1") {
             toast.success("Account created successfully. Please sign in.");
+        }
+        if (params.get("emailUpdated") === "1") {
+            toast.success("Email updated successfully. Please sign in with your new email.");
+        }
+        if (params.get("deleted") === "1") {
+            toast.success("Your account has been deleted.");
         }
     }, []);
 
@@ -34,7 +42,7 @@ export default function SignInPage() {
             email,
             password,
             redirect: false,
-            callbackUrl: "/",
+            callbackUrl,
         });
         setLoading(false);
 
@@ -43,7 +51,7 @@ export default function SignInPage() {
             return;
         }
 
-        router.push(result?.url || "/");
+        router.push(result?.url || callbackUrl);
         router.refresh();
     };
 
