@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Loader2, Mail, Phone } from "lucide-react";
 import { toast } from "sonner";
@@ -15,6 +16,8 @@ interface ContactLandlordFormProps {
 
 export function ContactLandlordForm({ onScheduleClick, propertyId, ownerEmail, ownerPhone, propertyTitle }: ContactLandlordFormProps) {
     const { data: session } = useSession();
+    const router = useRouter();
+    const pathname = usePathname();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         fullName: "",
@@ -31,8 +34,19 @@ export function ContactLandlordForm({ onScheduleClick, propertyId, ownerEmail, o
         }));
     }, [session?.user?.email, session?.user?.name]);
 
+    const redirectToSignIn = () => {
+        toast.error("Please sign in to continue");
+        const callbackUrl = pathname || "/";
+        router.push(`/sign-in?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+    };
+
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+
+        if (!session?.user) {
+            redirectToSignIn();
+            return;
+        }
 
         if (!formData.fullName || !formData.email || !formData.message) {
             toast.error("Please complete the required fields");
@@ -71,6 +85,11 @@ export function ContactLandlordForm({ onScheduleClick, propertyId, ownerEmail, o
     };
 
     const handleWhatsApp = () => {
+        if (!session?.user) {
+            redirectToSignIn();
+            return;
+        }
+
         if (!ownerPhone) {
             toast.error("Owner phone number is not available");
             return;
@@ -78,6 +97,15 @@ export function ContactLandlordForm({ onScheduleClick, propertyId, ownerEmail, o
 
         const normalized = ownerPhone.replace(/[^\d+]/g, "");
         window.open(`https://wa.me/${normalized}`, "_blank", "noopener,noreferrer");
+    };
+
+    const handleScheduleViewing = () => {
+        if (!session?.user) {
+            redirectToSignIn();
+            return;
+        }
+
+        onScheduleClick();
     };
 
     return (
@@ -149,6 +177,11 @@ export function ContactLandlordForm({ onScheduleClick, propertyId, ownerEmail, o
                 <button
                     type="button"
                     onClick={() => {
+                        if (!session?.user) {
+                            redirectToSignIn();
+                            return;
+                        }
+
                         if (!ownerEmail) {
                             toast.error("Owner email is not available");
                             return;
@@ -163,7 +196,8 @@ export function ContactLandlordForm({ onScheduleClick, propertyId, ownerEmail, o
 
             {/* Schedule Viewing - orange gradient */}
             <button
-                onClick={onScheduleClick}
+                type="button"
+                onClick={handleScheduleViewing}
                 style={{ background: 'linear-gradient(90.99deg, #8BCCE6 2.49%, #F6855C 99.73%)' }}
                 className="w-full text-white py-3.5 rounded-xl text-[15px] font-bold shadow-md hover:opacity-90 transition-opacity tracking-wide"
             >

@@ -55,10 +55,6 @@ export default function SignInPage() {
         router.refresh();
     };
 
-    const handleGoogleClick = () => {
-        toast.message("Google sign-in is not configured yet.");
-    };
-
     return (
         <div className="auth-card mx-auto my-auto w-full max-w-[520px] p-8 md:p-10">
             <div className="mb-8 flex flex-col items-center">
@@ -131,13 +127,6 @@ export default function SignInPage() {
                             Forgot password?
                         </Link>
                     </div>
-                    <button
-                        type="button"
-                        onClick={handleGoogleClick}
-                        className="auth-button-secondary w-full"
-                    >
-                        Sign in with Google
-                    </button>
                 </div>
 
                 <div className="py-2 text-center">
