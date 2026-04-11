@@ -8,19 +8,9 @@ import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 
 import { ApiSuccessResponse } from "@/app/(tenant)/account/_components/user-data-type"
+import { formatConvertedPrice } from "@/lib/currency"
+import { useCurrencyPreference } from "@/lib/hooks/useCurrencyPreference"
 import { FavoritesApiResponse } from "./favorite-data-type"
-
-const currencySymbols: Record<string, string> = {
-  USD: "$",
-  AED: "AED ",
-  JMD: "JMD ",
-  BSD: "BSD ",
-}
-
-const formatPrice = (amount: number, currency: string) => {
-  const symbol = currencySymbols[currency] ?? `${currency} `
-  return `${symbol}${amount.toLocaleString()}`
-}
 
 const getPropertyLocation = (cityTown: string, island: string | null, streetNumber: string) => {
   return [streetNumber, cityTown, island].filter(Boolean).join(", ")
@@ -36,6 +26,7 @@ const FavoritesContainer = () => {
   const { data: session } = useSession()
   const queryClient = useQueryClient()
   const token = session?.user?.accessToken
+  const { selectedCurrency, rates } = useCurrencyPreference()
 
   const { data, isLoading } = useQuery<FavoritesApiResponse>({
     queryKey: ["favorites"],
@@ -139,11 +130,14 @@ const FavoritesContainer = () => {
                 property?.address?.island || null,
                 property?.address?.streetNumber || ""
               )
-              const price = formatPrice(
+              const price = formatConvertedPrice(
                 property?.basicInformation?.monthlyRent || 0,
-                property?.basicInformation?.preferredCurrency || "USD"
+                property?.basicInformation?.preferredCurrency,
+                selectedCurrency,
+                rates,
               )
               const badgeLabel = property?.listingType === "rent" ? "For rent" : "For sale"
+              const priceLabel = property?.listingType === "rent" ? `Starting from ${price}/month` : price
               const propertyId = property?._id || item._id
               const propertyHref = getPropertyDetailsHref(property?.listingType || "rent", propertyId)
 
@@ -193,7 +187,7 @@ const FavoritesContainer = () => {
                       </div>
                     </div>
 
-                    <p className="text-[15px] font-semibold text-[#111827] sm:text-[18px]">{price}</p>
+                    <p className="text-[15px] font-semibold text-[#111827] sm:text-[18px]">{priceLabel}</p>
                   </div>
 
                   <Link

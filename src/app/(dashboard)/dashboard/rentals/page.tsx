@@ -46,6 +46,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { formatConvertedPrice } from '@/lib/currency'
+import { useCurrencyPreference } from '@/lib/hooks/useCurrencyPreference'
 
 type DashboardRole = 'LANDLORD' | 'AGENT'
 
@@ -135,9 +137,6 @@ const fetchJson = async <T,>(path: string, token?: string) => {
   return payload as T
 }
 
-const formatMoney = (value?: number, currency?: string) =>
-  `${currency || 'USD'} ${new Intl.NumberFormat('en-US').format(value || 0)}`
-
 const getPropertyTypeName = (propertyType?: { _id?: string; name?: string } | string) =>
   typeof propertyType === 'string' ? propertyType : propertyType?.name || 'N/A'
 
@@ -210,6 +209,7 @@ function DashboardRentalsPageContent() {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '')
   const token = session?.user?.accessToken
+  const { selectedCurrency, rates } = useCurrencyPreference()
 
   useEffect(() => {
     if (status !== 'authenticated') return
@@ -714,9 +714,11 @@ function DashboardRentalsPageContent() {
                             {getLocationLabel(property)}
                           </TableCell>
                           <TableCell className="px-4 py-4 text-sm font-semibold text-[#111827]">
-                            {formatMoney(
+                            {formatConvertedPrice(
                               property.basicInformation?.monthlyRent,
                               property.basicInformation?.preferredCurrency,
+                              selectedCurrency,
+                              rates,
                             )}
                           </TableCell>
                           <TableCell className="px-4 py-4 text-sm text-[#475467]">

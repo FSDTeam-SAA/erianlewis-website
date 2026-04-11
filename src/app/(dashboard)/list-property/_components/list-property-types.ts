@@ -56,6 +56,18 @@ export type RentalPropertyResponse = {
       totalBuildingSizeSqFt?: number
       numberOfFloors?: number
       numberOfUnitsSuites?: number
+      landType?: string
+      totalLandSize?: number
+      landSizeUnit?: string
+      topography?: string
+    }
+    utilitiesInfrastructure?: {
+      roadAccess?: boolean
+      electricityAvailability?: boolean
+      waterAvailability?: boolean
+      sewerAvailable?: boolean
+      internetAvailability?: boolean
+      backupPower?: boolean
     }
     rentalTerms?: {
       leaseTerm?: {
@@ -71,6 +83,11 @@ export type RentalPropertyResponse = {
         petFriendly?: boolean
       }
     }
+    financials?: {
+      occupancyStatus?: string
+      rentalIncome?: number
+      operatingExpenses?: number
+    }
     amenities?: {
       amenities?: string[]
       parkingType?: string
@@ -78,6 +95,14 @@ export type RentalPropertyResponse = {
       propertyTaxAmount?: number
     }
     propertyTaxAnnual?: number
+    propertyFeatures?: {
+      parkingAvailability?: string
+      numberOfParkingSpaces?: number
+      elevator?: boolean
+      loadingDock?: boolean
+      accessibilityFeatures?: string[]
+      securityFeatures?: string[]
+    }
     unitDetails?: Array<{
       unitType?: string
       sqFt?: number
@@ -118,6 +143,25 @@ export type FormState = {
   totalBuildingSizeSqFt: string
   numberOfFloors: string
   numberOfUnitsSuites: string
+  landType: string
+  totalLandSize: string
+  landSizeUnit: string
+  topography: string
+  occupancyStatus: string
+  rentalIncome: string
+  operatingExpenses: string
+  parkingAvailability: string
+  numberOfParkingSpaces: string
+  elevator: boolean
+  loadingDock: boolean
+  accessibilityFeatures: string[]
+  securityFeatures: string[]
+  roadAccess: boolean
+  electricityAvailability: boolean
+  waterAvailability: boolean
+  sewerAvailable: boolean
+  internetAvailability: boolean
+  backupPower: boolean
   leaseMonthToMonth: boolean
   leaseSixMonths: boolean
   leaseTwelveMonths: boolean

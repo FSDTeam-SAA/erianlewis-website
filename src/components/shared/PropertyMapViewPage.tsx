@@ -22,6 +22,8 @@ import {
 import { Footer } from "@/components/shared/Footer";
 import { Navbar } from "@/components/shared/Navbar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DEFAULT_CURRENCY, formatConvertedPrice, normalizeCurrencyCode } from "@/lib/currency";
+import { useCurrencyPreference } from "@/lib/hooks/useCurrencyPreference";
 
 type ListingType = "rent" | "buy";
 
@@ -132,9 +134,6 @@ const fetchJson = async <T,>(path: string) => {
   return payload.data as T;
 };
 
-const formatCurrencyValue = (value?: number) =>
-  new Intl.NumberFormat("en-US").format(value || 0);
-
 const getListRoute = (listingType: ListingType) =>
   listingType === "buy" ? "/buy" : "/rentals";
 
@@ -237,7 +236,7 @@ const normalizeProperty = (
     lat,
     lng,
     price: property.price || 0,
-    currency: property.currency || "USD",
+    currency: normalizeCurrencyCode(property.currency || DEFAULT_CURRENCY),
     beds: property.bedrooms || 0,
     baths: property.bathrooms || 0,
     href: getDetailsRoute(listingType, property._id),
@@ -309,17 +308,28 @@ export function PropertyMapViewPage({
   const [mapError, setMapError] = useState<string | null>(null);
   const [autoUpdateOnMove, setAutoUpdateOnMove] = useState(true);
   const [visiblePropertyCount, setVisiblePropertyCount] = useState(0);
+  const { selectedCurrency, rates } = useCurrencyPreference();
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<InstanceType<GoogleMapsApi["maps"]["Map"]> | null>(null);
   const markersRef = useRef<Array<InstanceType<GoogleMapsApi["maps"]["Marker"]>>>([]);
   const listenersRef = useRef<Array<{ remove: () => void }>>([]);
 
   const propertiesQuery = useQuery({
-    queryKey: ["property-map-pins", listingType],
-    queryFn: () =>
-      fetchJson<MapPinsResponse | MapPinApiItem[]>(
-        `/rental-properties/map-pins?listingType=${listingType}`,
-      ),
+    queryKey: ["property-map-pins", listingType, searchParams.toString(), selectedCurrency],
+    queryFn: () => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("listingType", listingType);
+
+      if (params.get("minPrice") || params.get("maxPrice")) {
+        params.set("filterCurrency", params.get("filterCurrency") || selectedCurrency);
+      } else {
+        params.delete("filterCurrency");
+      }
+
+      return fetchJson<MapPinsResponse | MapPinApiItem[]>(
+        `/rental-properties/map-pins?${params.toString()}`,
+      );
+    },
   });
 
   const propertyPins = useMemo(() => {
@@ -712,8 +722,14 @@ export function PropertyMapViewPage({
                                 Price
                               </p>
                               <p className="mt-1 text-[20px] font-bold text-[#2f3640]">
-                                {selectedProperty.currency} {formatCurrencyValue(selectedProperty.price)}
-                                {listingType === "rent" ? "/mo" : ""}
+                                {listingType === "rent" ? "Starting from " : ""}
+                                {formatConvertedPrice(
+                                  selectedProperty.price,
+                                  selectedProperty.currency,
+                                  selectedCurrency,
+                                  rates,
+                                )}
+                                {listingType === "rent" ? "/month" : ""}
                               </p>
                             </div>
                             <Link
@@ -759,8 +775,14 @@ export function PropertyMapViewPage({
                               </span>
                             </div>
                             <p className="mt-3 text-[16px] font-bold text-[#2f3640]">
-                              {selectedProperty.currency} {formatCurrencyValue(selectedProperty.price)}
-                              {listingType === "rent" ? "/mo" : ""}
+                              {listingType === "rent" ? "Starting from " : ""}
+                              {formatConvertedPrice(
+                                selectedProperty.price,
+                                selectedProperty.currency,
+                                selectedCurrency,
+                                rates,
+                              )}
+                              {listingType === "rent" ? "/month" : ""}
                             </p>
                           </div>
                         </div>
@@ -831,8 +853,14 @@ export function PropertyMapViewPage({
                               {listingType === "buy" ? "For Sale" : "For Rent"}
                             </p>
                             <p className="mt-1 text-[18px] font-semibold text-white">
-                              {property.currency} {formatCurrencyValue(property.price)}
-                              {listingType === "rent" ? "/mo" : ""}
+                              {listingType === "rent" ? "Starting from " : ""}
+                              {formatConvertedPrice(
+                                property.price,
+                                property.currency,
+                                selectedCurrency,
+                                rates,
+                              )}
+                              {listingType === "rent" ? "/month" : ""}
                             </p>
                           </div>
                         </div>

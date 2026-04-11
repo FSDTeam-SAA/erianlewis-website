@@ -8,7 +8,6 @@ import {
   BookmarkPlus,
   ChevronLeft,
   Check,
-  Flag,
   Map,
   MapPin,
   RefreshCw,
@@ -19,10 +18,13 @@ import {
 import { toast } from "sonner";
 import { Footer } from "@/components/shared/Footer";
 import { Navbar } from "@/components/shared/Navbar";
+import { CurrencySelector } from "@/components/shared/CurrencySelector";
 import { FilterPanel, type ListingFiltersState } from "@/components/shared/FilterPanel";
 import { PropertyCard, PropertyCardSkeleton, type PropertyCardProps } from "@/components/shared/PropertyCard";
 import { SortDropdown, type SortOption } from "@/components/shared/SortDropdown";
 import { Skeleton } from "@/components/ui/skeleton";
+import { convertCurrencyAmount, DEFAULT_CURRENCY, formatNumberValue, normalizeCurrencyCode } from "@/lib/currency";
+import { useCurrencyPreference } from "@/lib/hooks/useCurrencyPreference";
 
 type ListingType = "rent" | "buy";
 
@@ -187,11 +189,6 @@ const getSearchState = (params: URLSearchParams): ListingFiltersState => ({
     : [],
 });
 
-const formatCurrencyValue = (value?: number) => {
-  if (typeof value !== "number") return "0";
-  return new Intl.NumberFormat("en-US").format(value);
-};
-
 const isVideoUrl = (url?: string) => Boolean(url && /\.(mp4|webm|ogg|mov)$/i.test(url));
 
 const buildLocationLabel = (property: RentalPropertyApiItem) => {
@@ -202,10 +199,27 @@ const buildLocationLabel = (property: RentalPropertyApiItem) => {
   return [street, city, island].filter(Boolean).join(", ") || "Location not available";
 };
 
-const normalizeProperty = (property: RentalPropertyApiItem): PropertyCardProps => {
+const normalizeProperty = (
+  property: RentalPropertyApiItem,
+  selectedCurrency: string,
+  rates: Record<string, number>,
+): PropertyCardProps => {
   const mediaUrl = property.photos?.[0]?.url || "/main-hero-banner.jpg";
-  const price = property.basicInformation?.monthlyRent || 0;
-  const currency = property.basicInformation?.preferredCurrency || "USD";
+  const originalPrice = property.basicInformation?.monthlyRent || 0;
+  const originalCurrency = normalizeCurrencyCode(
+    property.basicInformation?.preferredCurrency || DEFAULT_CURRENCY,
+  );
+  const convertedPrice = convertCurrencyAmount(
+    originalPrice,
+    originalCurrency,
+    selectedCurrency,
+    rates,
+  );
+  const displayPrice = convertedPrice ?? originalPrice;
+  const currency =
+    convertedPrice === null
+      ? originalCurrency
+      : normalizeCurrencyCode(selectedCurrency);
   const parking = property.amenities?.parkingType || "Parking not specified";
   const amenities = property.amenities?.amenities || [];
   const beds = property.propertyDetails?.bedrooms || 0;
@@ -221,13 +235,16 @@ const normalizeProperty = (property: RentalPropertyApiItem): PropertyCardProps =
     rating: 5.0,
     reviewCount: 1,
     amenities,
-    price: formatCurrencyValue(price),
+    price: formatNumberValue(displayPrice),
     currency,
     isVideo: isVideoUrl(mediaUrl),
     beds,
     baths,
     areaSqft: area,
     listingType: property.listingType || "rent",
+    rawPrice: displayPrice,
+    basePrice: originalPrice,
+    baseCurrency: originalCurrency,
   };
 };
 
@@ -254,6 +271,7 @@ export function PropertyListingsPage({ listingType }: PropertyListingsPageProps)
   const [searchInput, setSearchInput] = useState(searchParams.get("search") || "");
   const [sort, setSort] = useState<SortOption>("Newest Listings");
   const token = session?.user?.accessToken;
+  const { selectedCurrency, setSelectedCurrency, rates } = useCurrencyPreference();
 
   useEffect(() => {
     setSearchInput(searchParams.get("search") || "");
@@ -282,11 +300,16 @@ export function PropertyListingsPage({ listingType }: PropertyListingsPageProps)
     });
 
     params.set("listingType", listingType);
+    if (params.get("minPrice") || params.get("maxPrice")) {
+      params.set("filterCurrency", selectedCurrency);
+    } else {
+      params.delete("filterCurrency");
+    }
     return `?${params.toString()}`;
-  }, [listingType, searchParams]);
+  }, [listingType, searchParams, selectedCurrency]);
 
   const propertiesQuery = useQuery({
-    queryKey: ["rental-properties", listingType, searchParams.toString()],
+    queryKey: ["rental-properties", listingType, searchParams.toString(), selectedCurrency],
     queryFn: () => fetchJson<PropertiesResponse>(`/rental-properties${createNextUrl({ listingType, page, limit })}`),
   });
 
@@ -323,16 +346,12 @@ export function PropertyListingsPage({ listingType }: PropertyListingsPageProps)
   });
 
   const normalizedProperties = useMemo(() => {
-    const mapped = (propertiesQuery.data?.properties || []).map((property) => {
-      const normalized = normalizeProperty(property);
-      return {
-        ...normalized,
-        rawPrice: property.basicInformation?.monthlyRent || 0,
-      };
-    });
+    const mapped = (propertiesQuery.data?.properties || []).map(property =>
+      normalizeProperty(property, selectedCurrency, rates),
+    );
 
     return sortProperties(mapped, sort);
-  }, [propertiesQuery.data?.properties, sort]);
+  }, [propertiesQuery.data?.properties, rates, selectedCurrency, sort]);
 
   const resultsLabel = useMemo(() => {
     const count = propertiesQuery.data?.paginationInfo?.totalData || normalizedProperties.length;
@@ -519,8 +538,8 @@ export function PropertyListingsPage({ listingType }: PropertyListingsPageProps)
     if (currentFilters.minPrice || currentFilters.maxPrice) {
       chips.push({
         key: "price",
-        label: `Price: ${currentFilters.minPrice || "0"} - ${currentFilters.maxPrice || "Any"}`,
-        onRemove: () => router.push(createNextUrl({ minPrice: null, maxPrice: null, page: 1 })),
+        label: `Price (${selectedCurrency}): ${currentFilters.minPrice || "0"} - ${currentFilters.maxPrice || "Any"}`,
+        onRemove: () => router.push(createNextUrl({ minPrice: null, maxPrice: null, filterCurrency: null, page: 1 })),
       });
     }
     if (currentFilters.bedrooms) {
@@ -553,7 +572,7 @@ export function PropertyListingsPage({ listingType }: PropertyListingsPageProps)
     }
 
     return chips;
-  }, [categoriesQuery.data, createNextUrl, currentFilters, islandsQuery.data?.islands, router, searchParams]);
+  }, [categoriesQuery.data, createNextUrl, currentFilters, islandsQuery.data?.islands, router, searchParams, selectedCurrency]);
 
   return (
     <main className="flex min-h-screen flex-col bg-[#f7f8fb]">
@@ -629,10 +648,10 @@ export function PropertyListingsPage({ listingType }: PropertyListingsPageProps)
               />
               {matchingSavedSearch ? "Saved Search" : "Save this Search"}
             </button>
-            <button className="inline-flex items-center gap-1 rounded-lg border border-[#e5e7eb] bg-white px-3.5 py-2 text-sm font-medium text-[#4b5563] shadow-sm transition-colors hover:bg-[#fafafa]">
-              <Flag size={14} className="text-[#6b7280]" />
-              USD($)
-            </button>
+            <CurrencySelector
+              value={selectedCurrency}
+              onChange={setSelectedCurrency}
+            />
             <button
               type="button"
               onClick={handleMapViewClick}
@@ -755,6 +774,7 @@ export function PropertyListingsPage({ listingType }: PropertyListingsPageProps)
         categories={categoriesQuery.data || []}
         islands={islandsQuery.data?.islands || []}
         amenities={AMENITY_OPTIONS}
+        selectedCurrency={selectedCurrency}
         loading={isMetadataLoading}
         error={metadataError instanceof Error ? metadataError.message : null}
         onApply={applyFilters}

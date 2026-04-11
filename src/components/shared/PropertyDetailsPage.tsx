@@ -22,6 +22,11 @@ import { ContactLandlordForm } from '@/components/shared/ContactLandlordForm'
 import { ScheduleViewingModal } from '@/components/shared/ScheduleViewingModal'
 import { ReviewSection } from '@/components/shared/ReviewSection'
 import { AmenityTag } from '@/components/shared/AmenityTag'
+import {
+  formatConvertedPrice,
+  getCurrencyLabel,
+} from '@/lib/currency'
+import { useCurrencyPreference } from '@/lib/hooks/useCurrencyPreference'
 
 type ListingType = 'rent' | 'buy'
 
@@ -115,8 +120,6 @@ interface PropertyDetailsResponse {
   views?: number
 }
 
-const formatMoney = (value?: number) =>
-  new Intl.NumberFormat('en-US').format(value || 0)
 const formatBoolean = (value?: boolean) => (value ? 'Yes' : 'No')
 
 const getIslandName = (island?: { name?: string } | string | null) =>
@@ -139,6 +142,7 @@ export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
   const { data: session } = useSession()
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
   const token = session?.user?.accessToken
+  const { selectedCurrency, rates } = useCurrencyPreference()
 
   const propertyQuery = useQuery({
     queryKey: ['rental-property-single', params?.id],
@@ -301,7 +305,9 @@ export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
   const moreDetails = [
     {
       label: 'Currency Type',
-      value: property?.basicInformation?.preferredCurrency || 'N/A',
+      value: property?.basicInformation?.preferredCurrency
+        ? getCurrencyLabel(property.basicInformation.preferredCurrency)
+        : 'N/A',
     },
     { label: 'Views', value: property?.views ?? 0 },
     {
@@ -311,7 +317,12 @@ export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
     {
       label: 'Property Tax Annual',
       value: property?.propertyTaxAnnual
-        ? formatMoney(property.propertyTaxAnnual)
+        ? formatConvertedPrice(
+            property.propertyTaxAnnual,
+            property.basicInformation?.preferredCurrency,
+            selectedCurrency,
+            rates,
+          )
         : 'N/A',
     },
   ]
@@ -435,13 +446,18 @@ export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
 
           <div className="mt-10 flex flex-col gap-10 lg:flex-row">
             <div className="flex-1 pb-16">
-              <div className="mb-2 flex items-center gap-3">
+                  <div className="mb-2 flex items-center gap-3">
                 <span className="text-[28px] font-extrabold text-gray-900 tracking-tight">
-                  {property.basicInformation?.preferredCurrency}{' '}
-                  {formatMoney(property.basicInformation?.monthlyRent)}
+                  {listingType === 'rent' ? 'Starting from ' : ''}
+                  {formatConvertedPrice(
+                    property.basicInformation?.monthlyRent,
+                    property.basicInformation?.preferredCurrency,
+                    selectedCurrency,
+                    rates,
+                  )}
                   {listingType === 'rent' ? (
                     <span className="text-[17px] font-medium text-gray-500">
-                      /mo
+                      /month
                     </span>
                   ) : null}
                 </span>
@@ -678,8 +694,12 @@ export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
                               Base Rent
                             </p>
                             <p className="mt-1 text-[14px] font-semibold leading-normal text-black">
-                              {property.basicInformation?.preferredCurrency}{' '}
-                              {formatMoney(unit.baseRent)}
+                              {formatConvertedPrice(
+                                unit.baseRent,
+                                property.basicInformation?.preferredCurrency,
+                                selectedCurrency,
+                                rates,
+                              )}
                             </p>
                           </div>
                         </div>
