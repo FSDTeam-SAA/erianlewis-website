@@ -494,6 +494,13 @@ export function PropertyListingsPage({ listingType }: PropertyListingsPageProps)
     const baseRoute = listingType === "buy" ? "/buy/map" : "/rentals/map";
     const params = new URLSearchParams(searchParams.toString());
     params.delete("page");
+    params.set("listingType", listingType);
+
+    if (params.get("minPrice") || params.get("maxPrice")) {
+      params.set("filterCurrency", params.get("filterCurrency") || selectedCurrency);
+    } else {
+      params.delete("filterCurrency");
+    }
 
     const serialized = params.toString();
     router.push(serialized ? `${baseRoute}?${serialized}` : baseRoute);

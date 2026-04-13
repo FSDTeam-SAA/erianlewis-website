@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { SupportLayout } from "@/components/shared/SupportLayout"
+import { LegalDocumentPage } from "@/components/shared/LegalDocumentPage"
 import { createMetadata } from "@/lib/seo"
 
 export const metadata: Metadata = createMetadata({
@@ -102,29 +102,11 @@ const privacyContent = [
 
 export default function PrivacyPolicyPage() {
   return (
-    <SupportLayout activeTab="privacy">
-      <div className="border border-[#eceef2] bg-white px-4 py-4 sm:px-5">
-        <div className="mb-4 border-b border-[#eff1f4] pb-3">
-          <p className="text-sm md:text-base font-semibold uppercase tracking-[0.12em] text-black leading-normal">Privacy Policy</p>
-          <p className="text-sm md:text-base font-semibold uppercase tracking-[0.12em] text-black leading-normal">Alora Platform</p>
-          <p className="text-sm md:text-base font-semibold uppercase tracking-[0.12em] text-black leading-normal">Owned and Operated by Northgate Support Services LLC</p>
-        </div>
-
-        <div className="space-y-4 text-[11px] leading-5 text-[#4b5563] sm:text-[12px]">
-          {privacyContent.map(section => (
-            <section key={section.id} className="space-y-1.5">
-              <h2 className="text-sm md:text-base font-semibold uppercase tracking-[0.12em] text-black leading-normal ">
-                {section.title}
-              </h2>
-              {section.paragraphs.map((paragraph, index) => (
-                <p key={index} className="whitespace-pre-line text-xs md:text-sm font-normal leading-normal text-black">
-                  {paragraph}
-                </p>
-              ))}
-            </section>
-          ))}
-        </div>
-      </div>
-    </SupportLayout>
+    <LegalDocumentPage
+      activeTab="privacy"
+      section="privacyPolicy"
+      title="Privacy Policy"
+      fallbackContent={privacyContent}
+    />
   )
 }
