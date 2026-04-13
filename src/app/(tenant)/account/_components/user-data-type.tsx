@@ -24,6 +24,7 @@ export interface UserProfile {
 //   business: any | null;
   accountStatus: "active" | "inactive" | string
   stripeSessionId: string | null
+  stripeCheckoutUrl: string | null
   hasActiveSubscription: boolean
   subscriptionExpireDate: string | null
   bio: string
@@ -37,6 +38,7 @@ export interface UserProfile {
   updatedAt: string
 
   subscription: Subscription
+  pendingPlan: PendingSubscriptionPlan
   searchUsage: SearchUsage
   address: Address
 }
@@ -55,6 +57,12 @@ export interface SubscriptionPlan {
   billingCycle: string
   maxProperties: number | null
   displayFeatures?: string[]
+}
+
+export interface PendingSubscriptionPlan {
+  action: "downgrade" | "cancel" | null
+  planId: string | SubscriptionPlan | null
+  createdAt: string | null
 }
 
 export interface SearchUsage {

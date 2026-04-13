@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BedDouble, MapPin, Star, Video, Bath, Ruler } from "lucide-react";
+import { formatConvertedPrice } from "@/lib/currency";
+import { useCurrencyPreference } from "@/lib/hooks/useCurrencyPreference";
 
 export interface PropertyCardProps {
     id: string;
@@ -22,14 +24,21 @@ export interface PropertyCardProps {
     areaSqft?: number;
     listingType?: "rent" | "buy";
     rawPrice?: number;
+    basePrice?: number;
+    baseCurrency?: string;
 }
 
 export function PropertyCard({
-    id, image, title, location, parking, rating, reviewCount, amenities, price, currency, isVideo, beds, baths, areaSqft, listingType
+    id, image, title, location, parking, rating, reviewCount, amenities, price, currency, isVideo, beds, baths, areaSqft, listingType, basePrice, baseCurrency
 }: PropertyCardProps) {
     const pathname = usePathname();
+    const { selectedCurrency, rates } = useCurrencyPreference();
     const isBuy = listingType === "buy" || pathname?.includes("/buy");
     const href = isBuy ? `/buy/${id}` : `/rentals/${id}`;
+    const displayPrice = basePrice !== undefined || baseCurrency
+        ? formatConvertedPrice(basePrice, baseCurrency, selectedCurrency, rates)
+        : `${currency} ${price}`;
+    const priceLabel = isBuy ? displayPrice : `Starting from ${displayPrice}/month`;
 
     return (
         <Link href={href} className="block w-full overflow-hidden rounded-[24px] border border-[#e6e6eb] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group/card">
@@ -51,7 +60,7 @@ export function PropertyCard({
                     style={{ background: 'linear-gradient(102.89deg, #FF7D51 0%, #FF6C69 100%)' }}
                     className="absolute top-3 right-3 z-10 rounded-full px-3 py-1 text-xs font-semibold tracking-wide text-white shadow-md"
                 >
-                    {currency} {price}{isBuy ? "" : "/mo"}
+                    {priceLabel}
                 </span>
                 {isVideo ? (
                     <span className="absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">

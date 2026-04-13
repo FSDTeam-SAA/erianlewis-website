@@ -11,7 +11,6 @@ import {
   ExternalLink,
   Home,
   MapPinned,
-  Trash2,
   Upload,
   X,
 } from 'lucide-react'
@@ -26,16 +25,25 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
+import { DEFAULT_CURRENCY } from '@/lib/currency'
 import {
   AMENITY_OPTIONS,
+  ACCESSIBILITY_FEATURE_OPTIONS,
   buildGoogleMapsUrl,
   cardClassName,
+  COMMERCIAL_PROPERTY_TYPE_OPTIONS,
   CURRENCY_OPTIONS,
   defaultFormState,
   defaultUnitDetails,
+  LAND_SIZE_UNIT_OPTIONS,
+  LAND_TYPE_OPTIONS,
   normalizeLocationQuery,
+  OCCUPANCY_STATUS_OPTIONS,
   PARKING_OPTIONS,
+  PARKING_AVAILABILITY_OPTIONS,
+  SECURITY_FEATURE_OPTIONS,
   toNumber,
+  TOPOGRAPHY_OPTIONS,
   uniqueQueries,
   UNIT_TYPE_OPTIONS,
 } from './list-property-constants'
@@ -67,6 +75,21 @@ const fetchJson = async <T,>(path: string, token?: string) => {
 
   return payload as T
 }
+
+const RESIDENTIAL_PROPERTY_TYPE_KEYS = new Set([
+  'house',
+  'condo',
+  'townhouse',
+  'villa',
+])
+const APARTMENT_PROPERTY_TYPE_KEY = 'apartment'
+const LAND_PROPERTY_TYPE_KEY = 'land'
+const COMMERCIAL_PROPERTY_TYPE_KEY = 'commercial'
+
+const defaultApartmentUnitDetails = (): UnitDetail[] => [
+  { unitType: 'Studio', sqFt: '', baseRent: '' },
+  { unitType: 'Loft', sqFt: '', baseRent: '' },
+]
 
 export default function ListPropertyPageClient() {
   const router = useRouter()
@@ -173,7 +196,31 @@ export default function ListPropertyPageClient() {
   const priceFieldLabel = isSaleMode ? 'Sale Price*' : 'Monthly Rent*'
   const priceFieldPlaceholder = isSaleMode ? '00000' : '0000'
 
-  const isCommercial = /commercial/i.test(selectedPropertyTypeLabel)
+  const selectedPropertyTypeKey = selectedPropertyTypeLabel
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z]/g, '')
+  const isResidentialPropertyType =
+    RESIDENTIAL_PROPERTY_TYPE_KEYS.has(selectedPropertyTypeKey)
+  const isApartmentPropertyType =
+    selectedPropertyTypeKey === APARTMENT_PROPERTY_TYPE_KEY
+  const isLandPropertyType = selectedPropertyTypeKey === LAND_PROPERTY_TYPE_KEY
+  const isCommercialPropertyType =
+    selectedPropertyTypeKey === COMMERCIAL_PROPERTY_TYPE_KEY
+  const shouldShowResidentialFields =
+    isResidentialPropertyType ||
+    isApartmentPropertyType ||
+    isLandPropertyType ||
+    isCommercialPropertyType
+  const apartmentSelectedUnitType = form.unitDetails[0]?.unitType || 'Studio'
+
+  const apartmentBaseRent = useMemo(() => {
+    const unitRents = form.unitDetails
+      .map(item => toNumber(item.baseRent))
+      .filter(value => value > 0)
+
+    return unitRents.length ? Math.min(...unitRents) : 0
+  }, [form.unitDetails])
 
   const mapQuery = [form.streetAddress, form.cityTown, selectedIslandLabel]
     .filter(Boolean)
@@ -207,7 +254,7 @@ export default function ListPropertyPageClient() {
       propertyType: propertyTypeValue,
       monthlyRent: property.basicInformation?.monthlyRent?.toString() || '',
       preferredCurrency:
-        property.basicInformation?.preferredCurrency || 'AED',
+        property.basicInformation?.preferredCurrency || DEFAULT_CURRENCY,
       hideExactLocation: false,
       streetAddress: property.address?.streetNumber || '',
       cityTown: property.address?.cityTown || '',
@@ -239,6 +286,32 @@ export default function ListPropertyPageClient() {
       numberOfFloors: property.propertyDetails?.numberOfFloors?.toString() || '',
       numberOfUnitsSuites:
         property.propertyDetails?.numberOfUnitsSuites?.toString() || '',
+      landType: property.propertyDetails?.landType || '',
+      totalLandSize: property.propertyDetails?.totalLandSize?.toString() || '',
+      landSizeUnit: property.propertyDetails?.landSizeUnit || '',
+      topography: property.propertyDetails?.topography || '',
+      roadAccess: property.utilitiesInfrastructure?.roadAccess || false,
+      electricityAvailability:
+        property.utilitiesInfrastructure?.electricityAvailability || false,
+      waterAvailability:
+        property.utilitiesInfrastructure?.waterAvailability || false,
+      sewerAvailable: property.utilitiesInfrastructure?.sewerAvailable || false,
+      internetAvailability:
+        property.utilitiesInfrastructure?.internetAvailability || false,
+      backupPower: property.utilitiesInfrastructure?.backupPower || false,
+      occupancyStatus: property.financials?.occupancyStatus || '',
+      rentalIncome: property.financials?.rentalIncome?.toString() || '',
+      operatingExpenses:
+        property.financials?.operatingExpenses?.toString() || '',
+      parkingAvailability:
+        property.propertyFeatures?.parkingAvailability || '',
+      numberOfParkingSpaces:
+        property.propertyFeatures?.numberOfParkingSpaces?.toString() || '',
+      elevator: property.propertyFeatures?.elevator || false,
+      loadingDock: property.propertyFeatures?.loadingDock || false,
+      accessibilityFeatures:
+        property.propertyFeatures?.accessibilityFeatures || [],
+      securityFeatures: property.propertyFeatures?.securityFeatures || [],
       leaseMonthToMonth:
         property.rentalTerms?.leaseTerm?.monthToMonth || false,
       leaseSixMonths: property.rentalTerms?.leaseTerm?.sixMonths || false,
@@ -271,6 +344,27 @@ export default function ListPropertyPageClient() {
       (property.photos || []).map(item => item.url).filter(Boolean) as string[],
     )
   }, [isEditMode, propertyQuery.data])
+
+  useEffect(() => {
+    if (!isApartmentPropertyType || isEditMode) {
+      return
+    }
+
+    setForm(current => {
+      const hasApartmentRows =
+        current.unitDetails.some(item => item.unitType === 'Studio') &&
+        current.unitDetails.some(item => item.unitType === 'Loft')
+
+      if (hasApartmentRows) {
+        return current
+      }
+
+      return {
+        ...current,
+        unitDetails: defaultApartmentUnitDetails(),
+      }
+    })
+  }, [isApartmentPropertyType, isEditMode])
 
   const resolveCoordinates = async () => {
     const fullQuery = normalizeLocationQuery(
@@ -337,8 +431,11 @@ export default function ListPropertyPageClient() {
       if (!form.propertyTitle.trim())
         throw new Error('Property title is required.')
       if (!form.propertyType) throw new Error('Property type is required.')
-      if (!form.monthlyRent.trim()) {
+      if (!isApartmentPropertyType && !form.monthlyRent.trim()) {
         throw new Error(isSaleMode ? 'Sale price is required.' : 'Monthly rent is required.')
+      }
+      if (isApartmentPropertyType && !apartmentBaseRent) {
+        throw new Error('At least one apartment unit base rent is required.')
       }
       if (!form.preferredCurrency)
         throw new Error('Preferred currency is required.')
@@ -378,7 +475,9 @@ export default function ListPropertyPageClient() {
           propertyTitle: form.propertyTitle.trim(),
           details: form.details.trim(),
           propertyType: form.propertyType,
-          monthlyRent: toNumber(form.monthlyRent),
+          monthlyRent: isApartmentPropertyType
+            ? apartmentBaseRent
+            : toNumber(form.monthlyRent),
           preferredCurrency: form.preferredCurrency,
         }),
       )
@@ -395,6 +494,7 @@ export default function ListPropertyPageClient() {
       payload.append(
         'location',
         JSON.stringify({
+          address: normalizeLocationQuery(form.streetAddress, form.cityTown),
           lat: Number(nextLat),
           lng: Number(nextLng),
         }),
@@ -413,6 +513,44 @@ export default function ListPropertyPageClient() {
           totalBuildingSizeSqFt: toNumber(form.totalBuildingSizeSqFt),
           numberOfFloors: toNumber(form.numberOfFloors),
           numberOfUnitsSuites: toNumber(form.numberOfUnitsSuites),
+          landType: form.landType,
+          totalLandSize: toNumber(form.totalLandSize),
+          landSizeUnit: form.landSizeUnit,
+          topography: form.topography,
+        }),
+      )
+
+      payload.append(
+        'utilitiesInfrastructure',
+        JSON.stringify({
+          roadAccess: form.roadAccess,
+          electricityAvailability: form.electricityAvailability,
+          waterAvailability: form.waterAvailability,
+          sewerAvailable: form.sewerAvailable,
+          sewerOrSeptic: form.sewerAvailable,
+          internetAvailability: form.internetAvailability,
+          backupPower: form.backupPower,
+        }),
+      )
+
+      payload.append(
+        'financials',
+        JSON.stringify({
+          occupancyStatus: form.occupancyStatus,
+          rentalIncome: toNumber(form.rentalIncome),
+          operatingExpenses: toNumber(form.operatingExpenses),
+        }),
+      )
+
+      payload.append(
+        'propertyFeatures',
+        JSON.stringify({
+          parkingAvailability: form.parkingAvailability,
+          numberOfParkingSpaces: toNumber(form.numberOfParkingSpaces),
+          elevator: form.elevator,
+          loadingDock: form.loadingDock,
+          accessibilityFeatures: form.accessibilityFeatures,
+          securityFeatures: form.securityFeatures,
         }),
       )
 
@@ -451,13 +589,15 @@ export default function ListPropertyPageClient() {
       payload.append(
         'unitDetails',
         JSON.stringify(
-          form.unitDetails
-            .filter(item => item.unitType.trim())
-            .map(item => ({
-              unitType: item.unitType.trim(),
-              sqFt: toNumber(item.sqFt),
-              baseRent: toNumber(item.baseRent),
-            })),
+          isResidentialPropertyType && !isApartmentPropertyType
+            ? []
+            : form.unitDetails
+                .filter(item => item.unitType.trim())
+                .map(item => ({
+                  unitType: item.unitType.trim(),
+                  sqFt: toNumber(item.sqFt),
+                  baseRent: toNumber(item.baseRent),
+                })),
         ),
       )
       payload.append('listingType', currentListingType)
@@ -512,39 +652,6 @@ export default function ListPropertyPageClient() {
       amenities: checked
         ? [...current.amenities, amenity]
         : current.amenities.filter(item => item !== amenity),
-    }))
-  }
-
-  const updateUnitDetail = (
-    index: number,
-    field: keyof UnitDetail,
-    value: string,
-  ) => {
-    setForm(current => ({
-      ...current,
-      unitDetails: current.unitDetails.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, [field]: value } : item,
-      ),
-    }))
-  }
-
-  const addUnitRow = () => {
-    setForm(current => ({
-      ...current,
-      unitDetails: [
-        ...current.unitDetails,
-        { unitType: '', sqFt: '', baseRent: '' },
-      ],
-    }))
-  }
-
-  const removeUnitRow = (index: number) => {
-    setForm(current => ({
-      ...current,
-      unitDetails:
-        current.unitDetails.length === 1
-          ? current.unitDetails
-          : current.unitDetails.filter((_, itemIndex) => itemIndex !== index),
     }))
   }
 
@@ -805,24 +912,55 @@ export default function ListPropertyPageClient() {
                 />
               </div>
 
-              <div className="grid gap-2">
-                <label className="text-sm font-semibold text-[#344054]">
-                  {priceFieldLabel}
-                </label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={form.monthlyRent}
-                  onChange={event =>
-                    setForm(current => ({
-                      ...current,
-                      monthlyRent: event.target.value,
-                    }))
-                  }
-                  placeholder={priceFieldPlaceholder}
-                  className="h-11 rounded-[8px] border-[#D9DBE3]"
-                />
-              </div>
+              {isApartmentPropertyType ? (
+                <div className="grid gap-2">
+                  <label className="text-sm font-semibold text-[#344054]">
+                    Unit Types*
+                  </label>
+                  <SearchableSelect
+                    value={apartmentSelectedUnitType}
+                    onChange={value =>
+                      setForm(current => {
+                        const nextUnitDetails = current.unitDetails.length
+                          ? current.unitDetails
+                          : defaultApartmentUnitDetails()
+
+                        return {
+                          ...current,
+                          unitDetails: nextUnitDetails.map((item, index) =>
+                            index === 0 ? { ...item, unitType: value } : item,
+                          ),
+                        }
+                      })
+                    }
+                    options={UNIT_TYPE_OPTIONS.map(option => ({
+                      label: option,
+                      value: option,
+                    }))}
+                    placeholder="Select unit type"
+                    searchPlaceholder="Search unit type..."
+                  />
+                </div>
+              ) : (
+                <div className="grid gap-2">
+                  <label className="text-sm font-semibold text-[#344054]">
+                    {priceFieldLabel}
+                  </label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={form.monthlyRent}
+                    onChange={event =>
+                      setForm(current => ({
+                        ...current,
+                        monthlyRent: event.target.value,
+                      }))
+                    }
+                    placeholder={priceFieldPlaceholder}
+                    className="h-11 rounded-[8px] border-[#D9DBE3]"
+                  />
+                </div>
+              )}
 
               <div className="grid gap-2">
                 <label className="text-sm font-semibold text-[#344054]">
@@ -998,7 +1136,7 @@ export default function ListPropertyPageClient() {
                   <iframe
                     title="Property map preview"
                     src={mapEmbedUrl}
-                    className="h-[270px] w-full"
+                    className="h-[340px] w-full"
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
                   />
@@ -1038,212 +1176,517 @@ export default function ListPropertyPageClient() {
           </div>
         </section>
 
-        <section className={cardClassName}>
-          <h2 className="text-2xl font-bold text-[#111827]">
-            Property Details
-          </h2>
-          <div className="mt-5 grid gap-4 md:grid-cols-3">
-            {[
-              ['Bedrooms', 'bedrooms'],
-              ['Bathrooms', 'bathrooms'],
-              ['Square Feet', 'squareFeet'],
-              ['Lot Size (sq ft)', 'lotSizeSqFt'],
-              ['Year Built', 'yearBuilt'],
-              ['Parking Spaces', 'parkingSpaces'],
-            ].map(([label, key]) => (
-              <div key={key} className="grid gap-2">
-                <label className="text-sm font-semibold text-[#344054]">
-                  {label}
-                </label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={form[key as keyof FormState] as string}
-                  onChange={event =>
-                    setForm(current => ({
-                      ...current,
-                      [key]: event.target.value,
-                    }))
-                  }
-                  placeholder="0"
-                  className="h-11 rounded-[8px] border-[#D9DBE3]"
-                />
-              </div>
-            ))}
-          </div>
+        {shouldShowResidentialFields ? (
+          <>
+            {isCommercialPropertyType ? (
+              <>
+                <section className={cardClassName}>
+                  <h2 className="text-2xl font-bold text-[#111827]">
+                    Property Details
+                  </h2>
+                  <div className="mt-5 space-y-4">
+                    <div className="grid gap-2">
+                      <label className="text-sm font-semibold text-[#344054]">
+                        Commercial Property Type
+                      </label>
+                      <SearchableSelect
+                        value={form.commercialPropertyType}
+                        onChange={value =>
+                          setForm(current => ({
+                            ...current,
+                            commercialPropertyType: value,
+                          }))
+                        }
+                        options={COMMERCIAL_PROPERTY_TYPE_OPTIONS}
+                        placeholder="Select property type"
+                        searchPlaceholder="Search property type..."
+                      />
+                    </div>
 
-          {isCommercial ? (
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <div className="grid gap-2">
-                <label className="text-sm font-semibold text-[#344054]">
-                  Commercial Property Type
-                </label>
-                <Input
-                  value={form.commercialPropertyType}
-                  onChange={event =>
-                    setForm(current => ({
-                      ...current,
-                      commercialPropertyType: event.target.value,
-                    }))
-                  }
-                  placeholder="Office Building"
-                  className="h-11 rounded-[8px] border-[#D9DBE3]"
-                />
-              </div>
-              <div className="grid gap-2">
-                <label className="text-sm font-semibold text-[#344054]">
-                  Total Building Size (sq ft)
-                </label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={form.totalBuildingSizeSqFt}
-                  onChange={event =>
-                    setForm(current => ({
-                      ...current,
-                      totalBuildingSizeSqFt: event.target.value,
-                    }))
-                  }
-                  placeholder="0"
-                  className="h-11 rounded-[8px] border-[#D9DBE3]"
-                />
-              </div>
-              <div className="grid gap-2">
-                <label className="text-sm font-semibold text-[#344054]">
-                  Number of Floors
-                </label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={form.numberOfFloors}
-                  onChange={event =>
-                    setForm(current => ({
-                      ...current,
-                      numberOfFloors: event.target.value,
-                    }))
-                  }
-                  placeholder="0"
-                  className="h-11 rounded-[8px] border-[#D9DBE3]"
-                />
-              </div>
-              <div className="grid gap-2">
-                <label className="text-sm font-semibold text-[#344054]">
-                  Number of Units/Suites
-                </label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={form.numberOfUnitsSuites}
-                  onChange={event =>
-                    setForm(current => ({
-                      ...current,
-                      numberOfUnitsSuites: event.target.value,
-                    }))
-                  }
-                  placeholder="0"
-                  className="h-11 rounded-[8px] border-[#D9DBE3]"
-                />
-              </div>
-            </div>
-          ) : null}
-        </section>
+                    <div className="grid gap-2">
+                      <label className="text-sm font-semibold text-[#344054]">
+                        Total Building Size (sq ft)
+                      </label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={form.totalBuildingSizeSqFt}
+                        onChange={event =>
+                          setForm(current => ({
+                            ...current,
+                            totalBuildingSizeSqFt: event.target.value,
+                          }))
+                        }
+                        placeholder="Enter building size"
+                        className="h-11 rounded-[8px] border-[#D9DBE3]"
+                      />
+                    </div>
 
-        <section className={cardClassName}>
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="text-2xl font-bold text-[#111827]">Unit Details</h2>
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              onClick={addUnitRow}
-              className="h-10 rounded-[8px] border-[#D9DBE3] bg-white px-4 text-sm text-[#475467]"
-            >
-              Add Unit
-            </Button>
-          </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="grid gap-2">
+                        <label className="text-sm font-semibold text-[#344054]">
+                          Number of Floors
+                        </label>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={form.numberOfFloors}
+                          onChange={event =>
+                            setForm(current => ({
+                              ...current,
+                              numberOfFloors: event.target.value,
+                            }))
+                          }
+                          placeholder="0"
+                          className="h-11 rounded-[8px] border-[#D9DBE3]"
+                        />
+                      </div>
 
-          <div className="mt-5 space-y-3">
-            <div className="hidden grid-cols-[1.2fr_1fr_1fr_56px] gap-4 px-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#98A2B3] md:grid">
-              <span>Unit Type</span>
-              <span>Sq Ft</span>
-              <span>Base rent</span>
-              <span />
-            </div>
+                      <div className="grid gap-2">
+                        <label className="text-sm font-semibold text-[#344054]">
+                          Number of Units/Suites (if applicable)
+                        </label>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={form.numberOfUnitsSuites}
+                          onChange={event =>
+                            setForm(current => ({
+                              ...current,
+                              numberOfUnitsSuites: event.target.value,
+                            }))
+                          }
+                          placeholder="0"
+                          className="h-11 rounded-[8px] border-[#D9DBE3]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </section>
 
-            {form.unitDetails.map((item, index) => (
-              <div
-                key={`${index}-${item.unitType}`}
-                className="grid gap-3 rounded-[10px] border border-[#EEF2F6] p-3 md:grid-cols-[1.2fr_1fr_1fr_56px] md:items-end"
-              >
-                <div className="grid gap-2">
-                  <label className="text-sm font-semibold text-[#344054] md:hidden">
-                    Unit Type
-                  </label>
-                  <SearchableSelect
-                    value={item.unitType}
-                    onChange={value =>
-                      updateUnitDetail(index, 'unitType', value)
-                    }
-                    options={[
-                      { label: 'Select unit type', value: '' },
-                      ...UNIT_TYPE_OPTIONS.map(option => ({
-                        label: option,
-                        value: option,
-                      })),
-                    ]}
-                    placeholder="Select unit type"
-                    searchPlaceholder="Search unit type..."
-                  />
+                <section className={cardClassName}>
+                  <h2 className="text-2xl font-bold text-[#111827]">
+                    Financials
+                  </h2>
+                  <div className="mt-5 space-y-4">
+                    <div className="grid gap-2">
+                      <label className="text-sm font-semibold text-[#344054]">
+                        Current Occupancy Status
+                      </label>
+                      <SearchableSelect
+                        value={form.occupancyStatus}
+                        onChange={value =>
+                          setForm(current => ({
+                            ...current,
+                            occupancyStatus: value,
+                          }))
+                        }
+                        options={OCCUPANCY_STATUS_OPTIONS}
+                        placeholder="Select occupancy status"
+                        searchPlaceholder="Search occupancy..."
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <label className="text-sm font-semibold text-[#344054]">
+                        Rental Income (if occupied)
+                      </label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={form.rentalIncome}
+                        onChange={event =>
+                          setForm(current => ({
+                            ...current,
+                            rentalIncome: event.target.value,
+                          }))
+                        }
+                        placeholder="0.00"
+                        className="h-11 rounded-[8px] border-[#D9DBE3]"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <label className="text-sm font-semibold text-[#344054]">
+                        Operating Expenses
+                      </label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={form.operatingExpenses}
+                        onChange={event =>
+                          setForm(current => ({
+                            ...current,
+                            operatingExpenses: event.target.value,
+                          }))
+                        }
+                        placeholder="0.00"
+                        className="h-11 rounded-[8px] border-[#D9DBE3]"
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <section className={cardClassName}>
+                  <h2 className="text-2xl font-bold text-[#111827]">
+                    Property Features
+                  </h2>
+                  <div className="mt-5 space-y-5">
+                    <div className="grid gap-2">
+                      <label className="text-sm font-semibold text-[#344054]">
+                        Parking Availability
+                      </label>
+                      <SearchableSelect
+                        value={form.parkingAvailability}
+                        onChange={value =>
+                          setForm(current => ({
+                            ...current,
+                            parkingAvailability: value,
+                          }))
+                        }
+                        options={PARKING_AVAILABILITY_OPTIONS}
+                        placeholder="Select parking availability"
+                        searchPlaceholder="Search parking..."
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <label className="text-sm font-semibold text-[#344054]">
+                        Number of Parking Spaces
+                      </label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={form.numberOfParkingSpaces}
+                        onChange={event =>
+                          setForm(current => ({
+                            ...current,
+                            numberOfParkingSpaces: event.target.value,
+                          }))
+                        }
+                        placeholder="0"
+                        className="h-11 rounded-[8px] border-[#D9DBE3]"
+                      />
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {[
+                        ['Elevator', 'elevator'],
+                        ['Loading dock', 'loadingDock'],
+                      ].map(([label, key]) => (
+                        <label
+                          key={key}
+                          className="flex items-center gap-2 text-sm text-[#344054]"
+                        >
+                          <Checkbox
+                            checked={form[key as keyof FormState] as boolean}
+                            onCheckedChange={checked =>
+                              setForm(current => ({
+                                ...current,
+                                [key]: Boolean(checked),
+                              }))
+                            }
+                          />
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold text-[#344054]">
+                        Accessibility Features
+                      </p>
+                      <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        {ACCESSIBILITY_FEATURE_OPTIONS.map(option => (
+                          <label
+                            key={option}
+                            className="flex items-center gap-2 text-sm text-[#344054]"
+                          >
+                            <Checkbox
+                              checked={form.accessibilityFeatures.includes(option)}
+                              onCheckedChange={checked =>
+                                setForm(current => ({
+                                  ...current,
+                                  accessibilityFeatures: checked
+                                    ? [...current.accessibilityFeatures, option]
+                                    : current.accessibilityFeatures.filter(item => item !== option),
+                                }))
+                              }
+                            />
+                            {option}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold text-[#344054]">
+                        Security Features
+                      </p>
+                      <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        {SECURITY_FEATURE_OPTIONS.map(option => (
+                          <label
+                            key={option}
+                            className="flex items-center gap-2 text-sm text-[#344054]"
+                          >
+                            <Checkbox
+                              checked={form.securityFeatures.includes(option)}
+                              onCheckedChange={checked =>
+                                setForm(current => ({
+                                  ...current,
+                                  securityFeatures: checked
+                                    ? [...current.securityFeatures, option]
+                                    : current.securityFeatures.filter(item => item !== option),
+                                }))
+                              }
+                            />
+                            {option}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section className={cardClassName}>
+                  <h2 className="text-2xl font-bold text-[#111827]">
+                    Utilities and Infrastructure
+                  </h2>
+                  <div className="mt-5 grid gap-3">
+                    {[
+                      ['Electricity availability', 'electricityAvailability'],
+                      ['Water availability', 'waterAvailability'],
+                      ['Sewer or Septic', 'sewerAvailable'],
+                      ['Internet Availability', 'internetAvailability'],
+                      ['Backup Power', 'backupPower'],
+                    ].map(([label, key]) => (
+                      <label
+                        key={key}
+                        className="flex items-center gap-2 text-sm text-[#344054]"
+                      >
+                        <Checkbox
+                          checked={form[key as keyof FormState] as boolean}
+                          onCheckedChange={checked =>
+                            setForm(current => ({
+                              ...current,
+                              [key]: Boolean(checked),
+                            }))
+                          }
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </section>
+              </>
+            ) : isLandPropertyType ? (
+              <>
+                <section className={cardClassName}>
+                  <h2 className="text-2xl font-bold text-[#111827]">
+                    Property Details
+                  </h2>
+                  <div className="mt-5 space-y-4">
+                    <div className="grid gap-2">
+                      <label className="text-sm font-semibold text-[#344054]">
+                        Land Type
+                      </label>
+                      <SearchableSelect
+                        value={form.landType}
+                        onChange={value =>
+                          setForm(current => ({ ...current, landType: value }))
+                        }
+                        options={LAND_TYPE_OPTIONS}
+                        placeholder="Select land type"
+                        searchPlaceholder="Search land type..."
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <label className="text-sm font-semibold text-[#344054]">
+                        Total Land Size
+                      </label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={form.totalLandSize}
+                        onChange={event =>
+                          setForm(current => ({
+                            ...current,
+                            totalLandSize: event.target.value,
+                          }))
+                        }
+                        placeholder="0"
+                        className="h-11 rounded-[8px] border-[#D9DBE3]"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <label className="text-sm font-semibold text-[#344054]">
+                        Unit of Measurement
+                      </label>
+                      <SearchableSelect
+                        value={form.landSizeUnit}
+                        onChange={value =>
+                          setForm(current => ({
+                            ...current,
+                            landSizeUnit: value,
+                          }))
+                        }
+                        options={LAND_SIZE_UNIT_OPTIONS}
+                        placeholder="Select unit"
+                        searchPlaceholder="Search unit..."
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <label className="text-sm font-semibold text-[#344054]">
+                        Topography
+                      </label>
+                      <SearchableSelect
+                        value={form.topography}
+                        onChange={value =>
+                          setForm(current => ({ ...current, topography: value }))
+                        }
+                        options={TOPOGRAPHY_OPTIONS}
+                        placeholder="Select topography"
+                        searchPlaceholder="Search topography..."
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <section className={cardClassName}>
+                  <h2 className="text-2xl font-bold text-[#111827]">
+                    Utilities and Access
+                  </h2>
+                  <div className="mt-5 grid gap-3">
+                    {[
+                      ['Road Access', 'roadAccess'],
+                      ['Electricity available', 'electricityAvailability'],
+                      ['Water Available', 'waterAvailability'],
+                      ['Sewer Available', 'sewerAvailable'],
+                      ['Internet Availability', 'internetAvailability'],
+                    ].map(([label, key]) => (
+                      <label
+                        key={key}
+                        className="flex items-center gap-2 text-sm text-[#344054]"
+                      >
+                        <Checkbox
+                          checked={form[key as keyof FormState] as boolean}
+                          onCheckedChange={checked =>
+                            setForm(current => ({
+                              ...current,
+                              [key]: Boolean(checked),
+                            }))
+                          }
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </section>
+              </>
+            ) : isApartmentPropertyType ? (
+              <section className={cardClassName}>
+                <h2 className="text-2xl font-bold text-[#111827]">
+                  Unit Details
+                </h2>
+                <div className="mt-5 space-y-3">
+                  <div className="hidden grid-cols-[1fr_1fr_1fr] gap-4 px-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#98A2B3] md:grid">
+                    <span>Unit Type</span>
+                    <span>Sq Ft</span>
+                    <span>Base rent</span>
+                  </div>
+
+                  {form.unitDetails.map((item, index) => (
+                    <div
+                      key={`${index}-${item.unitType}`}
+                      className="grid gap-3 md:grid-cols-[1fr_1fr_1fr] md:items-center"
+                    >
+                      <div className="text-sm font-semibold text-[#344054]">
+                        {item.unitType || 'Unit'}
+                      </div>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={item.sqFt}
+                        onChange={event =>
+                          setForm(current => ({
+                            ...current,
+                            unitDetails: current.unitDetails.map((unit, unitIndex) =>
+                              unitIndex === index
+                                ? { ...unit, sqFt: event.target.value }
+                                : unit,
+                            ),
+                          }))
+                        }
+                        placeholder="0"
+                        className="h-11 rounded-[8px] border-[#D9DBE3]"
+                      />
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-semibold text-[#344054]">
+                          $
+                        </span>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={item.baseRent}
+                          onChange={event =>
+                            setForm(current => ({
+                              ...current,
+                              unitDetails: current.unitDetails.map((unit, unitIndex) =>
+                                unitIndex === index
+                                  ? { ...unit, baseRent: event.target.value }
+                                  : unit,
+                              ),
+                            }))
+                          }
+                          placeholder="0"
+                          className="h-11 rounded-[8px] border-[#D9DBE3]"
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-
-                <div className="grid gap-2">
-                  <label className="text-sm font-semibold text-[#344054] md:hidden">
-                    Sq Ft
-                  </label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={item.sqFt}
-                    onChange={event =>
-                      updateUnitDetail(index, 'sqFt', event.target.value)
-                    }
-                    placeholder="0"
-                    className="h-11 rounded-[8px] border-[#D9DBE3]"
-                  />
+              </section>
+            ) : (
+              <section className={cardClassName}>
+                <h2 className="text-2xl font-bold text-[#111827]">
+                  Property Details
+                </h2>
+                <div className="mt-5 grid gap-4 md:grid-cols-3">
+                  {[
+                    ['Bedrooms', 'bedrooms'],
+                    ['Bathrooms', 'bathrooms'],
+                    ['Square Feet', 'squareFeet'],
+                    ['Lot Size (sq ft)', 'lotSizeSqFt'],
+                    ['Year Built', 'yearBuilt'],
+                    ['Parking Spaces', 'parkingSpaces'],
+                  ].map(([label, key]) => (
+                    <div key={key} className="grid gap-2">
+                      <label className="text-sm font-semibold text-[#344054]">
+                        {label}
+                      </label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={form[key as keyof FormState] as string}
+                        onChange={event =>
+                          setForm(current => ({
+                            ...current,
+                            [key]: event.target.value,
+                          }))
+                        }
+                        placeholder="0"
+                        className="h-11 rounded-[8px] border-[#D9DBE3]"
+                      />
+                    </div>
+                  ))}
                 </div>
+              </section>
+            )}
 
-                <div className="grid gap-2">
-                  <label className="text-sm font-semibold text-[#344054] md:hidden">
-                    Base rent
-                  </label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={item.baseRent}
-                    onChange={event =>
-                      updateUnitDetail(index, 'baseRent', event.target.value)
-                    }
-                    placeholder="0"
-                    className="h-11 rounded-[8px] border-[#D9DBE3]"
-                  />
-                </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon-lg"
-                  onClick={() => removeUnitRow(index)}
-                  disabled={form.unitDetails.length === 1}
-                  className="h-11 w-11 rounded-[8px] border-[#F1D6D6] text-[#B42318]"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {!isSaleMode ? (
+        {!isLandPropertyType &&
+        !isCommercialPropertyType &&
+        (!isSaleMode || isApartmentPropertyType) ? (
           <section className={cardClassName}>
             <h2 className="text-2xl font-bold text-[#111827]">Rental Terms*</h2>
             <div className="mt-5 space-y-5">
@@ -1323,8 +1766,11 @@ export default function ListPropertyPageClient() {
           </section>
         ) : null}
 
-        <section className={cardClassName}>
-          <h2 className="text-2xl font-bold text-[#111827]">Amenities</h2>
+        {!isLandPropertyType && !isCommercialPropertyType ? (
+          <section className={cardClassName}>
+            <h2 className="text-2xl font-bold text-[#111827]">
+              {isApartmentPropertyType ? 'Additional Information' : 'Amenities'}
+            </h2>
           <div className="mt-5 grid gap-3 md:grid-cols-3">
             {AMENITY_OPTIONS.map(option => (
               <label
@@ -1396,7 +1842,31 @@ export default function ListPropertyPageClient() {
               />
             </div>
           </div>
-        </section>
+          </section>
+        ) : null}
+
+        {isCommercialPropertyType ? (
+          <section className={cardClassName}>
+            <div className="grid gap-2">
+              <label className="text-sm font-semibold text-[#344054]">
+                Property Tax (annual)
+              </label>
+              <Input
+                type="number"
+                min="0"
+                value={form.propertyTaxAnnual}
+                onChange={event =>
+                  setForm(current => ({
+                    ...current,
+                    propertyTaxAnnual: event.target.value,
+                  }))
+                }
+                placeholder="0.00"
+                className="h-11 rounded-[8px] border-[#D9DBE3]"
+              />
+            </div>
+          </section>
+        ) : null}
 
         <section className={cardClassName}>
           <h2 className="text-2xl font-bold text-[#111827]">Photos*</h2>
@@ -1496,6 +1966,8 @@ export default function ListPropertyPageClient() {
             </div>
           ) : null}
         </section>
+          </>
+        ) : null}
 
         <div className="flex flex-col-reverse gap-3 pb-6 sm:flex-row sm:justify-end">
           <Button

@@ -1,4 +1,5 @@
 import { type SearchableSelectOption } from '@/components/shared/SearchableSelect'
+import { DEFAULT_CURRENCY } from '@/lib/currency'
 
 import type { FormState, UnitDetail } from './list-property-types'
 
@@ -39,12 +40,7 @@ export const PARKING_OPTIONS: SearchableSelectOption[] = [
   { label: 'Other', value: 'Other' },
 ]
 
-export const CURRENCY_OPTIONS: SearchableSelectOption[] = [
-  { label: 'AED - United Arab Emirates Dirham', value: 'AED' },
-  { label: 'AFN - Afghanistan Afghani', value: 'AFN' },
-  { label: 'ALL - Albania Lek', value: 'ALL' },
-  { label: 'AMD - Armenian Dram', value: 'AMD' },
-]
+export { CURRENCY_OPTIONS } from '@/lib/currency'
 
 export const UNIT_TYPE_OPTIONS = [
   'Studio',
@@ -53,6 +49,73 @@ export const UNIT_TYPE_OPTIONS = [
   '2 Bedroom',
   '3 Bedroom',
   'Penthouse',
+]
+
+export const LAND_TYPE_OPTIONS: SearchableSelectOption[] = [
+  { label: 'Select land type', value: '' },
+  { label: 'Residential', value: 'Residential' },
+  { label: 'Commercial', value: 'Commercial' },
+  { label: 'Agricultural', value: 'Agricultural' },
+  { label: 'Mixed Use', value: 'Mixed Use' },
+]
+
+export const LAND_SIZE_UNIT_OPTIONS: SearchableSelectOption[] = [
+  { label: 'Select unit', value: '' },
+  { label: 'Acres', value: 'Acres' },
+  { label: 'Square Meters', value: 'Square Meters' },
+]
+
+export const TOPOGRAPHY_OPTIONS: SearchableSelectOption[] = [
+  { label: 'Select topography', value: '' },
+  { label: 'Flat', value: 'Flat' },
+  { label: 'Sloped', value: 'Sloped' },
+  { label: 'Mixed', value: 'Mixed' },
+]
+
+export const COMMERCIAL_PROPERTY_TYPE_OPTIONS: SearchableSelectOption[] = [
+  { label: 'Select property type', value: '' },
+  { label: 'Office Building', value: 'Office Building' },
+  { label: 'Retail Space', value: 'Retail Space' },
+  { label: 'Warehouse', value: 'Warehouse' },
+  { label: 'Mixed Use', value: 'Mixed Use' },
+  { label: 'Industrial', value: 'Industrial' },
+]
+
+export const OCCUPANCY_STATUS_OPTIONS: SearchableSelectOption[] = [
+  { label: 'Select occupancy status', value: '' },
+  { label: 'Occupied', value: 'Occupied' },
+  { label: 'Vacant', value: 'Vacant' },
+  { label: 'Partially Occupied', value: 'Partially Occupied' },
+]
+
+export const PARKING_AVAILABILITY_OPTIONS: SearchableSelectOption[] = [
+  { label: 'Select parking availability', value: '' },
+  { label: 'Available', value: 'Available' },
+  { label: 'Limited', value: 'Limited' },
+  { label: 'Not Available', value: 'Not Available' },
+]
+
+export const ACCESSIBILITY_FEATURE_OPTIONS = [
+  'Wheelchair accessible entrance',
+  'Wheelchair accessible parking',
+  'Elevator with braille',
+  'Accessible restrooms',
+  'Automatic doors',
+  'Ramps',
+  'Wide doorways',
+  'Accessible signage',
+]
+
+export const SECURITY_FEATURE_OPTIONS = [
+  '24/7 security personnel',
+  'CCTV surveillance',
+  'Access control system',
+  'Security alarm',
+  'Fire alarm system',
+  'Sprinkler system',
+  'Emergency exits',
+  'Secure entry',
+  'Gated access',
 ]
 
 export const cardClassName =
@@ -67,7 +130,7 @@ export const defaultFormState = (): FormState => ({
   details: '',
   propertyType: '',
   monthlyRent: '',
-  preferredCurrency: 'AED',
+  preferredCurrency: DEFAULT_CURRENCY,
   hideExactLocation: false,
   streetAddress: '',
   cityTown: '',
@@ -85,6 +148,25 @@ export const defaultFormState = (): FormState => ({
   totalBuildingSizeSqFt: '',
   numberOfFloors: '',
   numberOfUnitsSuites: '',
+  landType: '',
+  totalLandSize: '',
+  landSizeUnit: '',
+  topography: '',
+  occupancyStatus: '',
+  rentalIncome: '',
+  operatingExpenses: '',
+  parkingAvailability: '',
+  numberOfParkingSpaces: '',
+  elevator: false,
+  loadingDock: false,
+  accessibilityFeatures: [],
+  securityFeatures: [],
+  roadAccess: false,
+  electricityAvailability: false,
+  waterAvailability: false,
+  sewerAvailable: false,
+  internetAvailability: false,
+  backupPower: false,
   leaseMonthToMonth: false,
   leaseSixMonths: false,
   leaseTwelveMonths: false,

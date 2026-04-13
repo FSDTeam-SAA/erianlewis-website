@@ -8,12 +8,15 @@ import { Bookmark, ChevronLeft } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog";
+import { CurrencySelector } from "@/components/shared/CurrencySelector";
+import { useCurrencyPreference } from "@/lib/hooks/useCurrencyPreference";
 
 export function ListingNavbar() {
     const { data: session } = useSession();
     const router = useRouter();
     const pathname = usePathname();
     const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+    const { selectedCurrency, setSelectedCurrency } = useCurrencyPreference();
     const ownerCtaHref = session
         ? "/list-property"
         : `/sign-in?callbackUrl=${encodeURIComponent("/list-property")}`;
@@ -84,9 +87,12 @@ export function ListingNavbar() {
                                 Saved Searches
                             </Link>
                             <span className="text-[15px] text-gray-500">Signed in <span className="font-semibold text-gray-900">{session.user?.name || "Rifat Hossain"}</span></span>
-                            <button className="flex items-center gap-1 text-[15px] text-gray-600 hover:text-black font-medium transition-colors">
-                                USD($) <span className="text-[10px]">▼</span>
-                            </button>
+                            <CurrencySelector
+                                value={selectedCurrency}
+                                onChange={setSelectedCurrency}
+                                buttonClassName="border-none px-0 py-0 text-[15px] text-gray-600 shadow-none hover:bg-transparent hover:text-black"
+                                contentClassName="w-[300px]"
+                            />
                             <Link href="/account" className={getNavLinkClassName("/account")}>My Account</Link>
                             <button
                                 type="button"

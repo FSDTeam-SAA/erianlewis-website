@@ -27,6 +27,7 @@ interface FilterPanelProps {
     categories: FilterOption[];
     islands: FilterOption[];
     amenities: string[];
+    selectedCurrency?: string;
     loading?: boolean;
     error?: string | null;
     onApply: (filters: ListingFiltersState) => void;
@@ -43,6 +44,7 @@ export function FilterPanel({
     categories,
     islands,
     amenities,
+    selectedCurrency = "USD",
     loading = false,
     error = null,
     onApply,
@@ -141,20 +143,20 @@ export function FilterPanel({
 
                     {/* Price Range */}
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-900 mb-3">Price Range</h3>
+                        <h3 className="text-sm font-semibold text-gray-900 mb-3">Price Range ({selectedCurrency})</h3>
                         <div className="flex items-center gap-3">
                             <input
                                 type="text"
                                 value={draft.minPrice}
                                 onChange={(event) => setDraft((prev) => ({ ...prev, minPrice: event.target.value.replace(/[^0-9]/g, "") }))}
-                                placeholder="Min Price"
+                                placeholder={`Min Price (${selectedCurrency})`}
                                 className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 placeholder:text-gray-400 text-gray-800 font-medium transition-all"
                             />
                             <input
                                 type="text"
                                 value={draft.maxPrice}
                                 onChange={(event) => setDraft((prev) => ({ ...prev, maxPrice: event.target.value.replace(/[^0-9]/g, "") }))}
-                                placeholder="Max Price"
+                                placeholder={`Max Price (${selectedCurrency})`}
                                 className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 placeholder:text-gray-400 text-gray-800 font-medium transition-all"
                             />
                         </div>

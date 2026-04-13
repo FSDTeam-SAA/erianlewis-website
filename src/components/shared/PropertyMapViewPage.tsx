@@ -22,6 +22,8 @@ import {
 import { Footer } from "@/components/shared/Footer";
 import { Navbar } from "@/components/shared/Navbar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DEFAULT_CURRENCY, formatConvertedPrice, normalizeCurrencyCode } from "@/lib/currency";
+import { useCurrencyPreference } from "@/lib/hooks/useCurrencyPreference";
 
 type ListingType = "rent" | "buy";
 
@@ -53,6 +55,7 @@ type GoogleMapsApi = {
       ) => {
         remove: () => void;
       };
+      trigger: (instance: unknown, eventName: string) => void;
     };
   };
 };
@@ -132,9 +135,6 @@ const fetchJson = async <T,>(path: string) => {
   return payload.data as T;
 };
 
-const formatCurrencyValue = (value?: number) =>
-  new Intl.NumberFormat("en-US").format(value || 0);
-
 const getListRoute = (listingType: ListingType) =>
   listingType === "buy" ? "/buy" : "/rentals";
 
@@ -144,41 +144,8 @@ const getMapRoute = (listingType: ListingType) =>
 const getDetailsRoute = (listingType: ListingType, id: string) =>
   listingType === "buy" ? `/buy/${id}` : `/rentals/${id}`;
 
-const MAP_STYLES = [
-  {
-    featureType: "poi",
-    stylers: [{ visibility: "off" }],
-  },
-  {
-    featureType: "transit",
-    stylers: [{ visibility: "off" }],
-  },
-  {
-    featureType: "administrative",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#6b7280" }],
-  },
-  {
-    featureType: "road",
-    elementType: "geometry",
-    stylers: [{ color: "#dbe4ef" }],
-  },
-  {
-    featureType: "road",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#7b8794" }],
-  },
-  {
-    featureType: "water",
-    elementType: "geometry",
-    stylers: [{ color: "#8ed8f8" }],
-  },
-  {
-    featureType: "landscape",
-    elementType: "geometry",
-    stylers: [{ color: "#d7f4dc" }],
-  },
-];
+const SELECTED_PROPERTY_ZOOM = 17;
+const DEFAULT_MAP_CENTER = { lat: 25.0343, lng: -77.3963 };
 
 const createMarkerIcon = (isSelected: boolean) => {
   const width = isSelected ? 36 : 24;
@@ -237,7 +204,7 @@ const normalizeProperty = (
     lat,
     lng,
     price: property.price || 0,
-    currency: property.currency || "USD",
+    currency: normalizeCurrencyCode(property.currency || DEFAULT_CURRENCY),
     beds: property.bedrooms || 0,
     baths: property.bathrooms || 0,
     href: getDetailsRoute(listingType, property._id),
@@ -309,16 +276,30 @@ export function PropertyMapViewPage({
   const [mapError, setMapError] = useState<string | null>(null);
   const [autoUpdateOnMove, setAutoUpdateOnMove] = useState(true);
   const [visiblePropertyCount, setVisiblePropertyCount] = useState(0);
+  const { selectedCurrency, rates } = useCurrencyPreference();
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<InstanceType<GoogleMapsApi["maps"]["Map"]> | null>(null);
   const markersRef = useRef<Array<InstanceType<GoogleMapsApi["maps"]["Marker"]>>>([]);
   const listenersRef = useRef<Array<{ remove: () => void }>>([]);
+  const mapPinsQueryString = useMemo(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("focus");
+    params.set("listingType", listingType);
+
+    if (params.get("minPrice") || params.get("maxPrice")) {
+      params.set("filterCurrency", params.get("filterCurrency") || selectedCurrency);
+    } else {
+      params.delete("filterCurrency");
+    }
+
+    return params.toString();
+  }, [listingType, searchParams, selectedCurrency]);
 
   const propertiesQuery = useQuery({
-    queryKey: ["property-map-pins", listingType],
+    queryKey: ["property-map-pins", mapPinsQueryString],
     queryFn: () =>
       fetchJson<MapPinsResponse | MapPinApiItem[]>(
-        `/rental-properties/map-pins?listingType=${listingType}`,
+        `/rental-properties/map-pins?${mapPinsQueryString}`,
       ),
   });
 
@@ -410,28 +391,37 @@ export function PropertyMapViewPage({
         setMapError(null);
 
         const fallbackCenter = {
-          lat: selectedProperty?.lat ?? mappedProperties[0]?.lat ?? 25.0343,
-          lng: selectedProperty?.lng ?? mappedProperties[0]?.lng ?? -77.3963,
+          lat: selectedProperty?.lat ?? mappedProperties[0]?.lat ?? DEFAULT_MAP_CENTER.lat,
+          lng: selectedProperty?.lng ?? mappedProperties[0]?.lng ?? DEFAULT_MAP_CENTER.lng,
         };
 
         if (!mapRef.current) {
           mapRef.current = new googleInstance.maps.Map(mapContainerRef.current, {
             center: fallbackCenter,
-            zoom: mappedProperties.length === 1 ? 14 : 11,
+            zoom: selectedProperty ? SELECTED_PROPERTY_ZOOM : mappedProperties.length === 1 ? 15 : 11,
+            mapTypeId: "roadmap",
             mapTypeControl: false,
             streetViewControl: false,
             fullscreenControl: false,
-            clickableIcons: false,
+            clickableIcons: true,
             gestureHandling: "greedy",
             zoomControl: true,
-            styles: MAP_STYLES,
           });
         }
+
+        googleInstance.maps.event.trigger(mapRef.current, "resize");
+        mapRef.current.setCenter(fallbackCenter);
 
         listenersRef.current.forEach(listener => listener.remove());
         listenersRef.current = [];
 
-        if (mappedProperties.length > 1) {
+        if (selectedProperty?.lat != null && selectedProperty?.lng != null) {
+          mapRef.current.panTo({
+            lat: selectedProperty.lat,
+            lng: selectedProperty.lng,
+          });
+          mapRef.current.setZoom(SELECTED_PROPERTY_ZOOM);
+        } else if (mappedProperties.length > 1) {
           const bounds = new googleInstance.maps.LatLngBounds();
           mappedProperties.forEach(property => {
             bounds.extend({
@@ -442,14 +432,7 @@ export function PropertyMapViewPage({
           mapRef.current.fitBounds(bounds, 120);
         } else {
           mapRef.current.setCenter(fallbackCenter);
-          mapRef.current.setZoom(14);
-        }
-
-        if (selectedProperty?.lat != null && selectedProperty?.lng != null) {
-          mapRef.current.panTo({
-            lat: selectedProperty.lat,
-            lng: selectedProperty.lng,
-          });
+          mapRef.current.setZoom(15);
         }
 
         markersRef.current.forEach(marker => marker.setMap(null));
@@ -712,8 +695,14 @@ export function PropertyMapViewPage({
                                 Price
                               </p>
                               <p className="mt-1 text-[20px] font-bold text-[#2f3640]">
-                                {selectedProperty.currency} {formatCurrencyValue(selectedProperty.price)}
-                                {listingType === "rent" ? "/mo" : ""}
+                                {listingType === "rent" ? "Starting from " : ""}
+                                {formatConvertedPrice(
+                                  selectedProperty.price,
+                                  selectedProperty.currency,
+                                  selectedCurrency,
+                                  rates,
+                                )}
+                                {listingType === "rent" ? "/month" : ""}
                               </p>
                             </div>
                             <Link
@@ -759,8 +748,14 @@ export function PropertyMapViewPage({
                               </span>
                             </div>
                             <p className="mt-3 text-[16px] font-bold text-[#2f3640]">
-                              {selectedProperty.currency} {formatCurrencyValue(selectedProperty.price)}
-                              {listingType === "rent" ? "/mo" : ""}
+                              {listingType === "rent" ? "Starting from " : ""}
+                              {formatConvertedPrice(
+                                selectedProperty.price,
+                                selectedProperty.currency,
+                                selectedCurrency,
+                                rates,
+                              )}
+                              {listingType === "rent" ? "/month" : ""}
                             </p>
                           </div>
                         </div>
@@ -831,8 +826,14 @@ export function PropertyMapViewPage({
                               {listingType === "buy" ? "For Sale" : "For Rent"}
                             </p>
                             <p className="mt-1 text-[18px] font-semibold text-white">
-                              {property.currency} {formatCurrencyValue(property.price)}
-                              {listingType === "rent" ? "/mo" : ""}
+                              {listingType === "rent" ? "Starting from " : ""}
+                              {formatConvertedPrice(
+                                property.price,
+                                property.currency,
+                                selectedCurrency,
+                                rates,
+                              )}
+                              {listingType === "rent" ? "/month" : ""}
                             </p>
                           </div>
                         </div>

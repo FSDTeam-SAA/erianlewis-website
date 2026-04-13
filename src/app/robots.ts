@@ -21,6 +21,8 @@ export default function robots(): MetadataRoute.Robots {
           "/onboarding",
           "/register/cancelled",
           "/register/success",
+          "/subscription-cancel",
+          "/subscription-success",
           "/api/",
         ],
       },

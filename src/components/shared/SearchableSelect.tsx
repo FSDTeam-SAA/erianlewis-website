@@ -95,7 +95,7 @@ export function SearchableSelect({
           />
         </div>
 
-        <ScrollArea className="max-h-64 overflow-hidden">
+        <ScrollArea className="max-h-64 overflow-y-auto overscroll-contain">
           <div className="space-y-1 pr-1">
             {filteredOptions.length ? (
               filteredOptions.map(option => {
