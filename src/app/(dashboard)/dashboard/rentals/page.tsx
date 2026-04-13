@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Suspense, useEffect, useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
 import {
@@ -16,12 +16,20 @@ import {
   RefreshCw,
   Search,
   Settings,
+  Trash2,
   TriangleAlert,
   UserRound,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { LogoutConfirmDialog } from '@/components/shared/LogoutConfirmDialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   Pagination,
   PaginationContent,
@@ -62,6 +70,7 @@ type RentalPropertyItem = {
     preferredCurrency?: string
   }
   location?: {
+    address?: string
     streetNumber?: string
     cityTown?: string
     island?: { _id?: string; name?: string } | string | null
@@ -141,9 +150,13 @@ const getPropertyTypeName = (propertyType?: { _id?: string; name?: string } | st
   typeof propertyType === 'string' ? propertyType : propertyType?.name || 'N/A'
 
 const getLocationLabel = (property: RentalPropertyItem) => {
-  const source = property.location || property.address
+  const source = property.address
   const island = typeof source?.island === 'object' ? source?.island?.name : source?.island
-  return [source?.streetNumber, source?.cityTown, island].filter(Boolean).join(', ') || 'Location not available'
+  return (
+    [source?.streetNumber, source?.cityTown, island].filter(Boolean).join(', ') ||
+    property.location?.address ||
+    'Location not available'
+  )
 }
 
 const getLeaseLabel = (property: RentalPropertyItem) => {
@@ -207,6 +220,7 @@ function DashboardRentalsPageContent() {
   const searchParams = useSearchParams()
   const { data: session, status } = useSession()
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
+  const [propertyToDelete, setPropertyToDelete] = useState<RentalPropertyItem | null>(null)
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '')
   const token = session?.user?.accessToken
   const { selectedCurrency, rates } = useCurrencyPreference()
@@ -286,6 +300,40 @@ function DashboardRentalsPageContent() {
   const islandOptions = (islandsQuery.data?.data?.islands || []).sort((first, second) =>
     first.name.localeCompare(second.name),
   )
+
+  const deletePropertyMutation = useMutation({
+    mutationFn: async (propertyId: string) => {
+      if (!token) {
+        throw new Error('You need to sign in again to delete this property.')
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/rental-properties/${propertyId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+
+      const payload = await response.json()
+
+      if (!response.ok || !payload?.status) {
+        throw new Error(payload?.message || 'Failed to delete rental property')
+      }
+
+      return payload as { status: boolean; message: string; data: null }
+    },
+    onSuccess: async result => {
+      toast.success(result.message || 'Rental property deleted successfully')
+      setPropertyToDelete(null)
+      await rentalsQuery.refetch()
+    },
+    onError: error => {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete rental property')
+    },
+  })
 
   const handleLogout = async () => {
     try {
@@ -750,6 +798,14 @@ function DashboardRentalsPageContent() {
                               >
                                 View
                               </Link>
+                              <button
+                                type="button"
+                                onClick={() => setPropertyToDelete(property)}
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-[8px] border border-[#FECACA] text-[#B42318] transition-colors hover:bg-[#FEF2F2]"
+                                aria-label={`Delete ${property.basicInformation?.propertyTitle || 'property'}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -807,6 +863,57 @@ function DashboardRentalsPageContent() {
         onOpenChange={setLogoutDialogOpen}
         onConfirm={handleLogout}
       />
+
+      <Dialog
+        open={Boolean(propertyToDelete)}
+        onOpenChange={open => {
+          if (!open && !deletePropertyMutation.isPending) {
+            setPropertyToDelete(null)
+          }
+        }}
+      >
+        <DialogContent
+          className="max-w-[520px] rounded-[12px] border border-[#FECACA] bg-white p-0"
+          showCloseButton={!deletePropertyMutation.isPending}
+        >
+          <div className="p-6">
+            <DialogHeader className="text-left">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-[8px] bg-[#FEF2F2]">
+                <Trash2 className="h-6 w-6 text-[#B42318]" />
+              </div>
+              <DialogTitle className="text-xl font-bold text-[#111827]">
+                Delete rental property?
+              </DialogTitle>
+              <DialogDescription className="mt-2 text-sm leading-6 text-[#667085]">
+                {propertyToDelete?.basicInformation?.propertyTitle || 'This property'} will be permanently removed from your rentals.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+
+          <div className="flex flex-col-reverse gap-3 border-t border-[#FEE4E2] bg-[#FFFBFA] px-6 py-4 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              disabled={deletePropertyMutation.isPending}
+              onClick={() => setPropertyToDelete(null)}
+              className="inline-flex h-10 items-center justify-center rounded-[8px] border border-[#D9DBE3] bg-white px-4 text-sm font-semibold text-[#475467] transition-colors hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={deletePropertyMutation.isPending || !propertyToDelete}
+              onClick={() => {
+                if (propertyToDelete) {
+                  deletePropertyMutation.mutate(propertyToDelete._id)
+                }
+              }}
+              className="inline-flex h-10 items-center justify-center rounded-[8px] bg-[#D92D20] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#B42318] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {deletePropertyMutation.isPending ? 'Deleting...' : 'Delete Property'}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   )
 }

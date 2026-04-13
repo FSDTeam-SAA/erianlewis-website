@@ -45,6 +45,8 @@ type PlansApiResponse = {
   }
 }
 
+type SubscriptionPlanAction = "buy" | "upgrade" | "downgrade"
+
 const formatPlanName = (plan?: Partial<SubscriptionPlan> | null) => {
   if (!plan) return "Free Plan"
 
@@ -68,6 +70,16 @@ const formatPlanLimit = (plan?: Partial<SubscriptionPlan> | null) => {
   if (!plan) return "Up to 3 properties"
   if (plan.maxProperties === null) return "Unlimited properties"
   return `Up to ${plan.maxProperties} properties`
+}
+
+const formatDate = (date?: string | null) => {
+  if (!date) return null
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(date))
 }
 
 const getOwnerRoleLabel = (role?: string) => {
@@ -155,14 +167,25 @@ export default function DashboardSettingsContent() {
     },
   })
 
-  const checkoutMutation = useMutation({
-    mutationFn: async (planId: string) => {
+  const planChangeMutation = useMutation({
+    mutationFn: async ({
+      planId,
+      action,
+    }: {
+      planId: string
+      action: SubscriptionPlanAction
+    }) => {
       if (!token) {
         throw new Error("You need to sign in again to continue.")
       }
 
+      const endpoint =
+        action === "buy"
+          ? `/subscription/buy/${planId}`
+          : `/subscription/${action}/${planId}`
+
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/subscription/buy/${planId}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`,
         {
           method: "POST",
           headers: {
@@ -177,18 +200,52 @@ export default function DashboardSettingsContent() {
         throw new Error(result?.message || "Failed to start checkout")
       }
 
-      return result.data as { url?: string }
+      return result as ApiSuccessResponse<{ url?: string; effectiveDate?: string }>
     },
-    onSuccess: data => {
-      if (data.url) {
-        window.location.href = data.url
+    onSuccess: async result => {
+      if (result.data?.url) {
+        window.location.href = result.data.url
         return
       }
 
-      toast.error("Stripe checkout URL was not returned.")
+      toast.success(result.message || "Subscription updated.")
+      await invalidateProfile()
     },
     onError: error => {
-      toast.error(error instanceof Error ? error.message : "Failed to start checkout")
+      toast.error(error instanceof Error ? error.message : "Failed to update subscription")
+    },
+  })
+
+  const cancelSubscriptionMutation = useMutation({
+    mutationFn: async () => {
+      if (!token) {
+        throw new Error("You need to sign in again to continue.")
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/subscription/cancel`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+
+      const result: ApiSuccessResponse<{ effectiveDate?: string }> = await response.json()
+
+      if (!response.ok || !result?.status) {
+        throw new Error(result?.message || "Failed to cancel subscription")
+      }
+
+      return result
+    },
+    onSuccess: async result => {
+      toast.success(result.message || "Subscription cancellation scheduled.")
+      await invalidateProfile()
+    },
+    onError: error => {
+      toast.error(error instanceof Error ? error.message : "Failed to cancel subscription")
     },
   })
 
@@ -225,10 +282,18 @@ export default function DashboardSettingsContent() {
   }
 
   const availablePlans = (plansQuery.data?.data?.items || []).slice().sort((first, second) => {
+    if (first.price !== second.price) {
+      return first.price - second.price
+    }
+
     const firstLimit = first.maxProperties ?? Number.POSITIVE_INFINITY
     const secondLimit = second.maxProperties ?? Number.POSITIVE_INFINITY
     return firstLimit - secondLimit
   })
+  const currentPlanPrice = currentPlan?.price ?? null
+  const pendingSubscriptionAction = profile?.pendingPlan?.action
+  const pendingEffectiveDate = formatDate(profile?.subscriptionExpireDate || profile?.subscription?.endDate)
+  const isSubscriptionBusy = planChangeMutation.isPending || cancelSubscriptionMutation.isPending
 
   if (isLoading) {
     return (
@@ -431,24 +496,56 @@ export default function DashboardSettingsContent() {
                     <p className="mt-2 text-sm text-[#667085]">
                       {formatPlanLimit(currentPlan)}
                     </p>
-                    {profile?.subscription?.endDate ? (
+                    {pendingSubscriptionAction ? (
+                      <p className="mt-2 inline-flex rounded-[8px] bg-[#FFF7ED] px-3 py-1 text-xs font-semibold text-[#C2410C]">
+                        {pendingSubscriptionAction === "cancel"
+                          ? "Cancellation scheduled"
+                          : "Downgrade scheduled"}
+                      </p>
+                    ) : null}
+                    {formatDate(profile?.subscription?.endDate) ? (
                       <p className="mt-1 text-xs text-[#98A2B3]">
-                        Renews until {new Intl.DateTimeFormat("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        }).format(new Date(profile.subscription.endDate))}
+                        Renews until {formatDate(profile?.subscription?.endDate)}
                       </p>
                     ) : null}
                   </div>
 
-                  <div className="text-right">
+                  <div className="space-y-3 text-left sm:text-right">
                     <p className="text-xl font-bold text-[#F6855C]">
                       {formatPlanPrice(currentPlan)}
                     </p>
+                    {currentPlan && profile?.hasActiveSubscription ? (
+                      <button
+                        type="button"
+                        disabled={isSubscriptionBusy || pendingSubscriptionAction === "cancel"}
+                        onClick={() => cancelSubscriptionMutation.mutate()}
+                        className="inline-flex h-10 items-center justify-center rounded-[8px] border border-[#FECACA] bg-white px-4 text-sm font-semibold text-[#B42318] transition-colors hover:bg-[#FEF2F2] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {cancelSubscriptionMutation.isPending
+                          ? "Cancelling..."
+                          : pendingSubscriptionAction === "cancel"
+                            ? "Cancel Scheduled"
+                            : "Cancel Subscription"}
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               </div>
+
+              {pendingSubscriptionAction ? (
+                <div className="mt-4 rounded-[8px] border border-[#FED7AA] bg-[#FFF7ED] px-4 py-3">
+                  <p className="text-sm font-semibold text-[#9A3412]">
+                    {pendingSubscriptionAction === "cancel"
+                      ? "Your subscription will end at the current period."
+                      : "Your new plan will start at the current period end."}
+                  </p>
+                  {pendingEffectiveDate ? (
+                    <p className="mt-1 text-xs text-[#C2410C]">
+                      Effective date: {pendingEffectiveDate}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
 
               {plansQuery.isLoading ? (
                 <div className="mt-4 grid gap-4 lg:grid-cols-3">
@@ -468,12 +565,39 @@ export default function DashboardSettingsContent() {
                     const isCurrentPlan =
                       currentPlan?._id === plan._id ||
                       currentPlan?.name === plan.name
+                    const action: SubscriptionPlanAction =
+                      !currentPlan || currentPlanPrice === null
+                        ? "buy"
+                        : plan.price > currentPlanPrice
+                          ? "upgrade"
+                          : "downgrade"
+                    const isSamePricePlan =
+                      !isCurrentPlan && currentPlanPrice !== null && plan.price === currentPlanPrice
+                    const isPendingDowngradeTarget =
+                      pendingSubscriptionAction === "downgrade" &&
+                      (profile?.pendingPlan?.planId === plan._id ||
+                        (typeof profile?.pendingPlan?.planId === "object" &&
+                          profile.pendingPlan.planId?._id === plan._id))
+                    const isPlanBusy =
+                      planChangeMutation.isPending &&
+                      planChangeMutation.variables?.planId === plan._id
+                    const buttonLabel = isCurrentPlan
+                      ? "Current Plan"
+                      : isPendingDowngradeTarget
+                        ? "Downgrade Scheduled"
+                        : isSamePricePlan
+                          ? "Same Price Plan"
+                          : action === "upgrade"
+                            ? "Upgrade Subscription"
+                            : action === "downgrade"
+                              ? "Downgrade Subscription"
+                              : "Buy Subscription"
 
                     return (
                       <div
                         key={plan._id}
                         className={`rounded-[12px] border p-4 transition-colors ${
-                          isCurrentPlan
+                          isCurrentPlan || isPendingDowngradeTarget
                             ? "border-[#84D6A1] bg-[#F7FFF9]"
                             : "border-[#E5E7EB] bg-white"
                         }`}
@@ -485,7 +609,7 @@ export default function DashboardSettingsContent() {
                           {formatPlanName(plan)}
                         </h3>
                         <p className="mt-2 text-[28px] font-semibold leading-none text-[#F6855C]">
-                          {plan.price === 0 ? "Free" : `$${plan.price}/month`}
+                          {formatPlanPrice(plan)}
                         </p>
                         <p className="mt-3 text-sm text-[#4B5563]">
                           {formatPlanLimit(plan)}
@@ -493,15 +617,20 @@ export default function DashboardSettingsContent() {
 
                         <button
                           type="button"
-                          disabled={isCurrentPlan || checkoutMutation.isPending}
-                          onClick={() => checkoutMutation.mutate(plan._id)}
+                          disabled={
+                            isCurrentPlan ||
+                            isSamePricePlan ||
+                            isPendingDowngradeTarget ||
+                            isSubscriptionBusy
+                          }
+                          onClick={() => planChangeMutation.mutate({ planId: plan._id, action })}
                           className={`mt-5 inline-flex h-10 w-full items-center justify-center rounded-[8px] px-4 text-sm font-semibold transition-colors ${
-                            isCurrentPlan
+                            isCurrentPlan || isSamePricePlan || isPendingDowngradeTarget
                               ? "border border-[#D9DBE3] bg-white text-[#98A2B3]"
                               : "text-white"
                           }`}
                           style={
-                            isCurrentPlan
+                            isCurrentPlan || isSamePricePlan || isPendingDowngradeTarget
                               ? undefined
                               : {
                                   background:
@@ -509,11 +638,7 @@ export default function DashboardSettingsContent() {
                                 }
                           }
                         >
-                          {isCurrentPlan
-                            ? "Current Plan"
-                            : checkoutMutation.isPending
-                              ? "Opening Stripe..."
-                              : "Upgrade Plan"}
+                          {isPlanBusy ? "Working..." : buttonLabel}
                         </button>
                       </div>
                     )
@@ -521,31 +646,21 @@ export default function DashboardSettingsContent() {
                 </div>
               )}
 
-              <div className="mt-4 rounded-[12px] border border-[#E5E7EB] bg-[#FAFBFC] px-4 py-4">
-                <p className="text-sm font-semibold text-[#111827]">Payment</p>
-                <p className="mt-1 text-xs text-[#98A2B3]">Stripe opens in a new window.</p>
-                <button
-                  type="button"
-                  disabled={checkoutMutation.isPending || !availablePlans.length}
-                  onClick={() => {
-                    const targetPlan =
-                      availablePlans.find(plan => plan._id !== currentPlan?._id && plan.price > 0) ||
-                      availablePlans.find(plan => plan._id !== currentPlan?._id) ||
-                      availablePlans[0]
-
-                    if (!targetPlan) {
-                      toast.error("No subscription plan is available right now.")
-                      return
-                    }
-
-                    checkoutMutation.mutate(targetPlan._id)
-                  }}
-                  className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-[8px] bg-[#171717] text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-                >
-                  <CreditCard className="size-4" />
-                  {checkoutMutation.isPending ? "Opening Stripe..." : "Pay with Stripe"}
-                </button>
-              </div>
+              {profile?.stripeCheckoutUrl ? (
+                <div className="mt-4 rounded-[8px] border border-[#E5E7EB] bg-[#FAFBFC] px-4 py-4">
+                  <p className="text-sm font-semibold text-[#111827]">Complete Payment</p>
+                  <p className="mt-1 text-xs text-[#667085]">
+                    Finish checkout to activate your scheduled plan.
+                  </p>
+                  <a
+                    href={profile.stripeCheckoutUrl}
+                    className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-[8px] bg-[#171717] text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                  >
+                    <CreditCard className="size-4" />
+                    Pay with Stripe
+                  </a>
+                </div>
+              ) : null}
             </div>
           </section>
         ) : null}

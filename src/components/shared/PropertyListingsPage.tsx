@@ -76,6 +76,7 @@ interface RentalPropertyApiItem {
     island?: { _id?: string; name?: string } | string | null;
   };
   location?: {
+    address?: string;
     streetNumber?: string;
     cityTown?: string;
     island?: { _id?: string; name?: string } | string | null;
@@ -192,11 +193,11 @@ const getSearchState = (params: URLSearchParams): ListingFiltersState => ({
 const isVideoUrl = (url?: string) => Boolean(url && /\.(mp4|webm|ogg|mov)$/i.test(url));
 
 const buildLocationLabel = (property: RentalPropertyApiItem) => {
-  const source = property.location || property.address;
+  const source = property.address;
   const city = source?.cityTown;
   const island = typeof source?.island === "object" ? source?.island?.name : source?.island;
   const street = source?.streetNumber;
-  return [street, city, island].filter(Boolean).join(", ") || "Location not available";
+  return [street, city, island].filter(Boolean).join(", ") || property.location?.address || "Location not available";
 };
 
 const normalizeProperty = (

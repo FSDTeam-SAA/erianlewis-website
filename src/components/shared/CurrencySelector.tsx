@@ -86,7 +86,7 @@ export function CurrencySelector({
           />
         </div>
 
-        <ScrollArea className="max-h-72 overflow-hidden">
+        <ScrollArea className="max-h-72 overflow-y-auto overscroll-contain">
           <div className="space-y-1 pr-1">
             {filteredOptions.map(option => {
               const isSelected = option.value === selectedCurrency

@@ -47,7 +47,7 @@ interface PropertyDetailsResponse {
   basicInformation?: {
     propertyTitle?: string
     details?: string
-    propertyType?: { _id?: string; name?: string }
+    propertyType?: { _id?: string; name?: string } | string
     monthlyRent?: number
     preferredCurrency?: string
   }
@@ -57,6 +57,7 @@ interface PropertyDetailsResponse {
     island?: { name?: string } | string | null
   }
   location?: {
+    address?: string
     lat?: number | null
     lng?: number | null
   }
@@ -71,6 +72,10 @@ interface PropertyDetailsResponse {
     totalBuildingSizeSqFt?: number
     numberOfFloors?: number
     numberOfUnitsSuites?: number
+    landType?: string
+    totalLandSize?: number
+    landSizeUnit?: string
+    topography?: string
   }
   rentalTerms?: {
     leaseTerm?: LeaseTerm
@@ -79,6 +84,11 @@ interface PropertyDetailsResponse {
       furnished?: boolean
       petFriendly?: boolean
     }
+  }
+  financials?: {
+    occupancyStatus?: string
+    rentalIncome?: number
+    operatingExpenses?: number
   }
   amenities?: {
     amenities?: string[]
@@ -95,8 +105,10 @@ interface PropertyDetailsResponse {
     securityFeatures?: string[]
   }
   utilitiesInfrastructure?: {
+    roadAccess?: boolean
     electricityAvailability?: boolean
     waterAvailability?: boolean
+    sewerAvailable?: boolean
     sewerOrSeptic?: boolean
     internetAvailability?: boolean
     backupPower?: boolean
@@ -134,6 +146,18 @@ const getLeaseTerms = (leaseTerm?: LeaseTerm) => {
   if (leaseTerm.other && leaseTerm.otherText) values.push(leaseTerm.otherText)
   return values.join(', ') || 'N/A'
 }
+
+const getPropertyTypeName = (
+  propertyType?: { _id?: string; name?: string } | string,
+) => (typeof propertyType === 'string' ? propertyType : propertyType?.name || 'N/A')
+
+const getPropertyTypeKey = (
+  propertyType?: { _id?: string; name?: string } | string,
+) =>
+  getPropertyTypeName(propertyType)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z]/g, '')
 
 export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
   const params = useParams<{ id: string }>()
@@ -265,42 +289,127 @@ export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
       getIslandName(property.address?.island),
     ]
       .filter(value => value && value !== 'N/A')
-      .join(', ')
+      .join(', ') || property.location?.address || 'Location not available'
   }, [property])
 
-  const specs = [
-    { label: 'Beds', value: property?.propertyDetails?.bedrooms ?? 0 },
-    { label: 'Baths', value: property?.propertyDetails?.bathrooms ?? 0 },
-    {
-      label: 'Sq Ft',
-      value:
-        property?.propertyDetails?.squareFeet ||
-        property?.propertyDetails?.lotSizeSqFt ||
-        0,
-    },
-    { label: 'Parking', value: property?.propertyDetails?.parkingSpaces ?? 0 },
-    {
-      label: 'Type',
-      value: property?.basicInformation?.propertyType?.name || 'N/A',
-    },
-    { label: 'Island', value: getIslandName(property?.address?.island) },
-  ]
+  const propertyTypeName = getPropertyTypeName(property?.basicInformation?.propertyType)
+  const propertyTypeKey = getPropertyTypeKey(property?.basicInformation?.propertyType)
+  const isApartmentPropertyType = propertyTypeKey === 'apartment'
+  const isLandPropertyType = propertyTypeKey === 'land'
+  const isCommercialPropertyType = propertyTypeKey === 'commercial'
+  const landSizeLabel = property?.propertyDetails?.totalLandSize
+    ? `${property.propertyDetails.totalLandSize} ${property.propertyDetails.landSizeUnit || ''}`.trim()
+    : 'N/A'
 
-  const additionalDetails = [
-    { label: 'Parking Type', value: property?.amenities?.parkingType || 'N/A' },
-    {
-      label: 'Parking Space',
-      value: property?.propertyDetails?.parkingSpaces ?? 0,
-    },
-    {
-      label: 'Parking Availability',
-      value: property?.propertyFeatures?.parkingAvailability || 'N/A',
-    },
-    {
-      label: 'Number of Parking Spaces',
-      value: property?.propertyFeatures?.numberOfParkingSpaces ?? 0,
-    },
-  ]
+  const specs = isLandPropertyType
+    ? [
+        { label: 'Type', value: propertyTypeName },
+        { label: 'Land Type', value: property?.propertyDetails?.landType || 'N/A' },
+        { label: 'Land Size', value: landSizeLabel },
+        { label: 'Topography', value: property?.propertyDetails?.topography || 'N/A' },
+        { label: 'Island', value: getIslandName(property?.address?.island) },
+        { label: 'Views', value: property?.views ?? 0 },
+      ]
+    : isCommercialPropertyType
+      ? [
+          { label: 'Type', value: propertyTypeName },
+          { label: 'Building Size', value: property?.propertyDetails?.totalBuildingSizeSqFt || 0 },
+          { label: 'Floors', value: property?.propertyDetails?.numberOfFloors || 0 },
+          { label: 'Units/Suites', value: property?.propertyDetails?.numberOfUnitsSuites || 0 },
+          { label: 'Parking', value: property?.propertyFeatures?.numberOfParkingSpaces || property?.propertyDetails?.parkingSpaces || 0 },
+          { label: 'Island', value: getIslandName(property?.address?.island) },
+        ]
+      : isApartmentPropertyType
+        ? [
+            { label: 'Type', value: propertyTypeName },
+            { label: 'Units', value: property?.unitDetails?.length || 0 },
+            { label: 'Beds', value: property?.propertyDetails?.bedrooms ?? 0 },
+            { label: 'Baths', value: property?.propertyDetails?.bathrooms ?? 0 },
+            { label: 'Sq Ft', value: property?.propertyDetails?.squareFeet || property?.unitDetails?.[0]?.sqFt || 0 },
+            { label: 'Island', value: getIslandName(property?.address?.island) },
+          ]
+        : [
+            { label: 'Beds', value: property?.propertyDetails?.bedrooms ?? 0 },
+            { label: 'Baths', value: property?.propertyDetails?.bathrooms ?? 0 },
+            {
+              label: 'Sq Ft',
+              value:
+                property?.propertyDetails?.squareFeet ||
+                property?.propertyDetails?.lotSizeSqFt ||
+                0,
+            },
+            { label: 'Parking', value: property?.propertyDetails?.parkingSpaces ?? 0 },
+            { label: 'Type', value: propertyTypeName },
+            { label: 'Island', value: getIslandName(property?.address?.island) },
+          ]
+
+  const rentalDetails = listingType === 'rent'
+    ? [
+        { label: 'Lease Terms', value: getLeaseTerms(property?.rentalTerms?.leaseTerm) },
+        { label: 'Utilities Included', value: formatBoolean(property?.rentalTerms?.additional?.utilitiesIncluded) },
+        { label: 'Furnished', value: formatBoolean(property?.rentalTerms?.additional?.furnished) },
+        { label: 'Pet Friendly', value: formatBoolean(property?.rentalTerms?.additional?.petFriendly) },
+      ]
+    : []
+
+  const categoryDetails = isLandPropertyType
+    ? [
+        { label: 'Land Type', value: property?.propertyDetails?.landType || 'N/A' },
+        { label: 'Total Land Size', value: landSizeLabel },
+        { label: 'Topography', value: property?.propertyDetails?.topography || 'N/A' },
+        { label: 'Road Access', value: formatBoolean(property?.utilitiesInfrastructure?.roadAccess) },
+        { label: 'Electricity Available', value: formatBoolean(property?.utilitiesInfrastructure?.electricityAvailability) },
+        { label: 'Water Available', value: formatBoolean(property?.utilitiesInfrastructure?.waterAvailability) },
+        { label: 'Sewer Available', value: formatBoolean(property?.utilitiesInfrastructure?.sewerAvailable || property?.utilitiesInfrastructure?.sewerOrSeptic) },
+        { label: 'Internet Available', value: formatBoolean(property?.utilitiesInfrastructure?.internetAvailability) },
+      ]
+    : isCommercialPropertyType
+      ? [
+          { label: 'Commercial Property Type', value: property?.propertyDetails?.commercialPropertyType || 'N/A' },
+          { label: 'Total Building Size', value: property?.propertyDetails?.totalBuildingSizeSqFt || 0 },
+          { label: 'Number of Floors', value: property?.propertyDetails?.numberOfFloors || 0 },
+          { label: 'Units/Suites', value: property?.propertyDetails?.numberOfUnitsSuites || 0 },
+          { label: 'Occupancy Status', value: property?.financials?.occupancyStatus || 'N/A' },
+          {
+            label: 'Rental Income',
+            value: property?.financials?.rentalIncome
+              ? formatConvertedPrice(
+                  property.financials.rentalIncome,
+                  property.basicInformation?.preferredCurrency,
+                  selectedCurrency,
+                  rates,
+                )
+              : 'N/A',
+          },
+          {
+            label: 'Operating Expenses',
+            value: property?.financials?.operatingExpenses
+              ? formatConvertedPrice(
+                  property.financials.operatingExpenses,
+                  property.basicInformation?.preferredCurrency,
+                  selectedCurrency,
+                  rates,
+                )
+              : 'N/A',
+          },
+        ]
+      : [
+          { label: 'Bedrooms', value: property?.propertyDetails?.bedrooms ?? 0 },
+          { label: 'Bathrooms', value: property?.propertyDetails?.bathrooms ?? 0 },
+          { label: 'Square Feet', value: property?.propertyDetails?.squareFeet || 0 },
+          { label: 'Lot Size', value: property?.propertyDetails?.lotSizeSqFt || 0 },
+          { label: 'Year Built', value: property?.propertyDetails?.yearBuilt || 'N/A' },
+          { label: 'Parking Spaces', value: property?.propertyDetails?.parkingSpaces ?? 0 },
+        ]
+
+  const additionalDetails = isLandPropertyType
+    ? []
+    : [
+        { label: 'Parking Type', value: property?.amenities?.parkingType || 'N/A' },
+        { label: 'Parking Space', value: property?.propertyDetails?.parkingSpaces ?? 0 },
+        { label: 'Parking Availability', value: property?.propertyFeatures?.parkingAvailability || 'N/A' },
+        { label: 'Number of Parking Spaces', value: property?.propertyFeatures?.numberOfParkingSpaces ?? 0 },
+      ]
 
   const moreDetails = [
     {
@@ -485,49 +594,33 @@ export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
 
               <div className="mt-10">
                 <h2 className="mb-5 text-[16px] font-bold leading-normal text-black">
-                  {listingType === 'rent'
-                    ? 'Rental Details'
-                    : 'Property Details'}
+                  {listingType === 'rent' ? 'Rental Details' : 'Sale Details'}
                 </h2>
                 <div className="grid grid-cols-2 gap-x-5 gap-y-6">
-                  <div>
-                    <p className="text-[12px] font-bold uppercase tracking-wider text-[#9ca3af]">
-                      Lease Terms
-                    </p>
-                    <p className="mt-1.5 text-[14px] font-semibold leading-normal text-black">
-                      {getLeaseTerms(property.rentalTerms?.leaseTerm)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[12px] font-bold uppercase tracking-wider text-[#9ca3af]">
-                      Utilities Included
-                    </p>
-                    <p className="mt-1.5 text-[14px] font-semibold leading-normal text-black">
-                      {formatBoolean(
-                        property.rentalTerms?.additional?.utilitiesIncluded,
-                      )}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[12px] font-bold uppercase tracking-wider text-[#9ca3af]">
-                      Furnished
-                    </p>
-                    <p className="mt-1.5 text-[14px] font-semibold leading-normal text-black">
-                      {formatBoolean(
-                        property.rentalTerms?.additional?.furnished,
-                      )}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[12px] font-bold uppercase tracking-wider text-[#9ca3af]">
-                      Pet Friendly
-                    </p>
-                    <p className="mt-1.5 text-[14px] font-semibold leading-normal text-black">
-                      {formatBoolean(
-                        property.rentalTerms?.additional?.petFriendly,
-                      )}
-                    </p>
-                  </div>
+                  {(rentalDetails.length ? rentalDetails : [
+                    {
+                      label: 'Listing Type',
+                      value: listingType === 'buy' ? 'For Sale' : 'For Rent',
+                    },
+                    {
+                      label: 'Price',
+                      value: formatConvertedPrice(
+                        property.basicInformation?.monthlyRent,
+                        property.basicInformation?.preferredCurrency,
+                        selectedCurrency,
+                        rates,
+                      ),
+                    },
+                  ]).map(item => (
+                    <div key={item.label}>
+                      <p className="text-[12px] font-bold uppercase tracking-wider text-[#9ca3af]">
+                        {item.label}
+                      </p>
+                      <p className="mt-1.5 text-[14px] font-semibold leading-normal text-black">
+                        {item.value}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -584,10 +677,16 @@ export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
 
               <div>
                 <h2 className="mb-5 text-[16px] font-bold leading-normal text-black">
-                  Additional Details
+                  {isLandPropertyType
+                    ? 'Land Details'
+                    : isCommercialPropertyType
+                      ? 'Commercial Details'
+                      : isApartmentPropertyType
+                        ? 'Apartment Details'
+                        : 'Property Details'}
                 </h2>
                 <div className="grid grid-cols-2 gap-x-5 gap-y-6">
-                  {additionalDetails.map(item => (
+                  {categoryDetails.map(item => (
                     <div key={item.label}>
                       <p className="text-[12px] font-bold uppercase tracking-wider text-[#9ca3af]">
                         {item.label}
@@ -599,6 +698,30 @@ export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
                   ))}
                 </div>
               </div>
+
+              {additionalDetails.length ? (
+                <>
+                  <hr className="my-8 border-gray-100" />
+
+                  <div>
+                    <h2 className="mb-5 text-[16px] font-bold leading-normal text-black">
+                      Parking Details
+                    </h2>
+                    <div className="grid grid-cols-2 gap-x-5 gap-y-6">
+                      {additionalDetails.map(item => (
+                        <div key={item.label}>
+                          <p className="text-[12px] font-bold uppercase tracking-wider text-[#9ca3af]">
+                            {item.label}
+                          </p>
+                          <p className="mt-1.5 text-[14px] font-semibold leading-normal text-black">
+                            {item.value}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : null}
 
               <hr className="my-8 border-gray-100" />
 
@@ -621,8 +744,7 @@ export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
               </div>
 
               {property.propertyFeatures?.accessibilityFeatures?.length ||
-              property.propertyFeatures?.securityFeatures?.length ||
-              property.unitDetails?.length ? (
+              property.propertyFeatures?.securityFeatures?.length ? (
                 <>
                   <hr className="my-8 border-gray-100" />
                   <div>

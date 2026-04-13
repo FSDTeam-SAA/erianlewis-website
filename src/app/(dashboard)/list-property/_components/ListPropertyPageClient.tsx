@@ -494,6 +494,7 @@ export default function ListPropertyPageClient() {
       payload.append(
         'location',
         JSON.stringify({
+          address: normalizeLocationQuery(form.streetAddress, form.cityTown),
           lat: Number(nextLat),
           lng: Number(nextLng),
         }),
