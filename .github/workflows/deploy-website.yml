@@ -25,5 +25,5 @@ jobs:
             git pull origin main
             npm ci
             npm run build
-            pm2 restart alora --update-env || pm2 start npm --name alora -- start
+            pm2 restart client --update-env || pm2 start npm --name client -- start
             pm2 save
