@@ -42,7 +42,7 @@ export function HeroSection() {
           </h1>
           <p className="text-[16px] md:text-[20px] text-[#000000] font-[600] mb-12 max-w-2xl mx-auto leading-[1.2] text-center font-sans">
             Luxury homes and rentals across the most beautiful islands in the
-            Caribbean
+            Caribbeann
           </p>
 
           {/* Search Box Container */}
