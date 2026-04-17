@@ -19,9 +19,11 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             set -e
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
             cd /var/www/client
             git pull origin main
             npm ci
             npm run build
-            rm -rf /var/www/html/*
-            cp -r dist/* /var/www/html/
+            pm2 restart alora --update-env || pm2 start npm --name alora -- start
+            pm2 save
