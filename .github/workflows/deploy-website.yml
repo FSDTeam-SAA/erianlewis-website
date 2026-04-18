@@ -1,17 +1,13 @@
 name: Deploy Website
-
 on:
   push:
     branches: [main]
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4 # ✅ dash here
-
-      - name: Deploy Website # ✅ dash here
+      - uses: actions/checkout@v4
+      - name: Deploy Website
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -19,11 +15,10 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             set -e
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+            source ~/.bashrc
             cd /var/www/client
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
             npm ci
             npm run build
-            pm2 restart client --update-env || pm2 start npm --name client -- start
-            pm2 save
+            pm2 restart client || pm2 start npm --name client -- start
