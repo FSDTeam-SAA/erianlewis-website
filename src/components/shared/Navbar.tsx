@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -47,6 +47,14 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    if (variant !== 'overlay') return
+    const onScroll = () => setScrolled(window.scrollY > 10)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [variant])
   const token = session?.user?.accessToken
   const ownerCtaHref = token
     ? ownerNavLink.href
@@ -97,37 +105,37 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
     pathname === href || pathname?.startsWith(`${href}/`)
 
   const getNavLinkClassName = (href: string) =>
-    `text-[15px] font-medium leading-[1.2] transition-colors ${
-      isActiveRoute(href)
-        ? 'text-[#f6855c]'
-        : 'text-[#111827] hover:text-[#f6855c]'
+    `text-[15px] font-medium leading-[1.2] transition-colors ${isActiveRoute(href)
+      ? 'text-[#f6855c]'
+      : 'text-[#111827] hover:text-[#f6855c]'
     }`
 
   const getMobileNavLinkClassName = (href: string) =>
-    `block rounded-2xl px-3 py-2 text-sm font-medium transition-colors ${
-      isActiveRoute(href)
-        ? 'bg-[#fff5f4] text-[#f6855c]'
-        : 'text-[#111827] hover:bg-[#f8fafc]'
+    `block rounded-2xl px-3 py-2 text-sm font-medium transition-colors ${isActiveRoute(href)
+      ? 'bg-[#fff5f4] text-[#f6855c]'
+      : 'text-[#111827] hover:bg-[#f8fafc]'
     }`
 
   return (
     <nav
-      className={
-        variant === 'solid'
-          ? 'sticky inset-x-0 top-0 z-50 border-b border-[#eceef2] bg-white/95 backdrop-blur'
-          : 'absolute inset-x-0 top-0 z-50'
-      }
+      className={[
+        'inset-x-0 top-0 z-50 transition-all duration-300',
+        variant === 'solid' ? 'sticky' : 'fixed',
+        variant === 'solid' || scrolled
+          ? 'border-b border-[#eceef2] bg-white/95 backdrop-blur shadow-sm'
+          : 'border-b border-transparent bg-transparent',
+      ].join(' ')}
     >
-      <div className="mx-auto flex max-w-container items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-container items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
           <Link href="/" className="shrink-0">
             <Image
               src="/logo.png"
               alt="Alora Logo"
-              width={150}
-              height={40}
+              width={180}
+              height={48}
               priority
-              className="h-[100px] object-contain"
+              className="h-[90px] w-auto object-contain transition-all duration-300"
             />
           </Link>
         </div>
@@ -155,11 +163,10 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
             <>
               <Link
                 href="/saved"
-                className={`inline-flex items-center gap-2 text-[15px] font-medium transition-colors ${
-                  isActiveRoute('/saved')
-                    ? 'text-[#f6855c]'
-                    : 'text-[#111827] hover:text-[#f6855c]'
-                }`}
+                className={`inline-flex items-center gap-2 text-[15px] font-medium transition-colors ${isActiveRoute('/saved')
+                  ? 'text-[#f6855c]'
+                  : 'text-[#111827] hover:text-[#f6855c]'
+                  }`}
               >
                 <Bookmark className="h-4 w-4" />
                 Saved Searches
@@ -205,18 +212,16 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
                       >
                         <Link
                           href={item.href}
-                          className={`flex w-full items-center gap-2.5 text-sm font-medium ${
-                            isActiveRoute(item.href)
-                              ? 'text-[#f6855c]'
-                              : 'text-[#131313]'
-                          }`}
+                          className={`flex w-full items-center gap-2.5 text-sm font-medium ${isActiveRoute(item.href)
+                            ? 'text-[#f6855c]'
+                            : 'text-[#131313]'
+                            }`}
                         >
                           <Icon
-                            className={`h-4 w-4 ${
-                              isActiveRoute(item.href)
-                                ? 'text-[#f6855c]'
-                                : 'text-[#6b7280]'
-                            }`}
+                            className={`h-4 w-4 ${isActiveRoute(item.href)
+                              ? 'text-[#f6855c]'
+                              : 'text-[#6b7280]'
+                              }`}
                           />
                           {item.label}
                         </Link>
@@ -271,11 +276,10 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
 
       {mobileMenuOpen ? (
         <div
-          className={`mx-4 rounded-3xl p-4 shadow-[0_18px_40px_rgba(15,23,42,0.14)] backdrop-blur md:hidden ${
-            variant === 'solid'
-              ? 'border border-[#eceef2] bg-white'
-              : 'border border-white/70 bg-white/95'
-          }`}
+          className={`mx-4 rounded-3xl p-4 shadow-[0_18px_40px_rgba(15,23,42,0.14)] backdrop-blur md:hidden ${variant === 'solid'
+            ? 'border border-[#eceef2] bg-white'
+            : 'border border-white/70 bg-white/95'
+            }`}
         >
           <div className="space-y-2">
             {navLinks.map(link => (
@@ -326,19 +330,17 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-2.5 rounded-2xl px-3 py-2 text-sm font-medium transition-colors ${
-                      isActiveRoute(item.href)
-                        ? 'bg-[#fff5f4] text-[#f6855c]'
-                        : 'text-[#111827] hover:bg-[#f8fafc]'
-                    }`}
+                    className={`flex items-center gap-2.5 rounded-2xl px-3 py-2 text-sm font-medium transition-colors ${isActiveRoute(item.href)
+                      ? 'bg-[#fff5f4] text-[#f6855c]'
+                      : 'text-[#111827] hover:bg-[#f8fafc]'
+                      }`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <Icon
-                      className={`h-4 w-4 ${
-                        isActiveRoute(item.href)
-                          ? 'text-[#f6855c]'
-                          : 'text-[#6b7280]'
-                      }`}
+                      className={`h-4 w-4 ${isActiveRoute(item.href)
+                        ? 'text-[#f6855c]'
+                        : 'text-[#6b7280]'
+                        }`}
                     />
                     {item.label}
                   </Link>

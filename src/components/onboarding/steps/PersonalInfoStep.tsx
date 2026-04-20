@@ -18,11 +18,11 @@ interface StepProps {
 }
 
 const countryOptions = [
-  { label: 'United States / Canada (+1)', value: '+1' },
-  { label: 'Bahamas (+1-242)', value: '+1-242' },
-  { label: 'Barbados (+1-246)', value: '+1-246' },
-  { label: 'Jamaica (+1-876)', value: '+1-876' },
-  { label: 'Trinidad and Tobago (+1-868)', value: '+1-868' },
+  { label: '+1', value: '+1' },
+  { label: '+1-242', value: '+1-242' },
+  { label: '+1-246', value: '+1-246' },
+  { label: '+1-876', value: '+1-876' },
+  { label: '+1-868', value: '+1-868' },
 ]
 
 export function PersonalInfoStep({ stepConfig }: StepProps) {
@@ -88,7 +88,7 @@ export function PersonalInfoStep({ stepConfig }: StepProps) {
     <div className="auth-card animate-in w-full p-8 duration-500 fade-in slide-in-from-bottom-4 md:p-10">
       <div className="mb-8 text-center">
         <h2 className="auth-title mb-3">
-          {title || 'Create Your Account'}
+          {(title || 'Create Your Account').replace(/0+$/, '')}
         </h2>
         <p className="auth-subtitle text-[18px]">
           {subtitle || "Let's get started with your Alora account."}
