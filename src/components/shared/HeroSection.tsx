@@ -32,15 +32,14 @@ export function HeroSection() {
           priority
           className="object-cover border-none"
         />
-        {/* Removed black overlay as requested to match the bright figma style */}
       </div>
 
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4 w-full h-full border-none">
-        <div className="w-full max-w-4xl -mt-20 md:-mt-16 border-none">
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4 w-full h-full border-none pb-12">
+        <div className="w-full max-w-4xl border-none">
           <h1 className="text-[36px] md:text-[48px] font-[700] text-[#2C3E50] mb-6 leading-[1.2] text-center font-sans tracking-tight">
             Discover Your <br className="md:hidden" /> Caribbean Paradise
           </h1>
-          <p className="text-[16px] md:text-[20px] text-[#000000] font-[600] mb-12 max-w-2xl mx-auto leading-[1.2] text-center font-sans">
+          <p className="text-[16px] md:text-[20px] text-[#000000] font-[600] mb-12 max-w-2xl mx-auto leading-[1.4] text-center font-sans">
             Luxury homes and rentals across the most beautiful islands in the
             Caribbean
           </p>

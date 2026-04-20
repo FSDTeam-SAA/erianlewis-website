@@ -14,15 +14,15 @@ export function StatCard({ title, value, subtitle, icon: Icon, gradient }: StatC
             style={{ background: gradient }}
             className="relative rounded-2xl p-5 text-white overflow-hidden min-h-[130px] flex flex-col justify-between"
         >
-            <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2">
-                    <Icon size={18} className="opacity-100" />
-                    <span className="text-xs font-medium opacity-90">{title}</span>
+            <div className="flex items-start justify-between relative z-10">
+                <div className="flex items-center gap-2 pr-10">
+                    <Icon size={18} className="shrink-0" />
+                    <span className="text-sm font-semibold">{title}</span>
                 </div>
-                <Icon size={36} className="opacity-20 absolute top-4 right-4" />
+                <Icon size={48} className="opacity-30 absolute top-4 right-4 z-0" />
             </div>
-            <div className="text-4xl font-bold mt-2">{value}</div>
-            <div className="text-xs opacity-60 mt-1">{subtitle}</div>
+            <div className="text-4xl font-extrabold mt-2 relative z-10 drop-shadow-sm">{value}</div>
+            <div className="text-sm font-medium mt-1 relative z-10 pr-2">{subtitle}</div>
         </div>
     )
 }
