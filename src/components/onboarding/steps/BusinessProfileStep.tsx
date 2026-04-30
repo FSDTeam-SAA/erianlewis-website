@@ -8,6 +8,13 @@ import * as z from "zod";
 import api from "@/lib/axios";
 import { useOnboardingStore, OnboardingStep } from "@/lib/stores/onboardingStore";
 import { IslandMultiSelect } from "../IslandMultiSelect";
+import {
+    getStepFieldHelperText,
+    getStepFieldLabel,
+    getStepFieldPlaceholder,
+    isStepFieldEnabled,
+    isStepFieldRequired,
+} from "@/components/onboarding/stepContent";
 
 interface Island {
     _id: string;
@@ -18,18 +25,33 @@ interface StepProps {
     stepConfig: OnboardingStep;
 }
 
-const schema = z.object({
-    businessName: z.string().min(1, "Business name is required"),
-    aboutBusiness: z.string().min(1, "About your business is required"),
-    operatingLocations: z.array(z.string()).default([]),
-});
-
-type BusinessProfileFormInput = z.input<typeof schema>;
-type BusinessProfileValues = z.output<typeof schema>;
-
 export function BusinessProfileStep({ stepConfig }: StepProps) {
     const { formData, setFormData, goNext, goBack } = useOnboardingStore();
     const { title, subtitle } = stepConfig.content;
+    const showBusinessName = isStepFieldEnabled(stepConfig, "businessName");
+    const showAboutBusiness = isStepFieldEnabled(stepConfig, "aboutBusiness");
+    const showOperatingLocations = isStepFieldEnabled(stepConfig, "operatingLocations");
+    const businessNameRequired = isStepFieldRequired(stepConfig, "businessName", true);
+    const aboutBusinessRequired = isStepFieldRequired(stepConfig, "aboutBusiness", true);
+    const operatingLocationsRequired = isStepFieldRequired(stepConfig, "operatingLocations", true);
+
+    const schema = z.object({
+        businessName:
+            showBusinessName && businessNameRequired
+                ? z.string().min(1, "Business name is required")
+                : z.string().optional(),
+        aboutBusiness:
+            showAboutBusiness && aboutBusinessRequired
+                ? z.string().min(1, "About your business is required")
+                : z.string().optional(),
+        operatingLocations:
+            showOperatingLocations && operatingLocationsRequired
+                ? z.array(z.string()).min(1, "Please select at least one operating location")
+                : z.array(z.string()).default([]),
+    });
+
+    type BusinessProfileFormInput = z.input<typeof schema>;
+    type BusinessProfileValues = z.output<typeof schema>;
 
     const {
         data: islands = [],
@@ -82,42 +104,51 @@ export function BusinessProfileStep({ stepConfig }: StepProps) {
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                    <div className="space-y-2">
-                        <label className="auth-label">
-                            Business Name<span className="text-[#E8825A]">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            placeholder="Enter Business name"
-                            {...register("businessName")}
-                            className={`auth-input auth-input-left bg-white text-left ${errors.businessName ? "border-[#f6855c]" : ""}`}
-                        />
-                    </div>
+                    {showBusinessName && (
+                        <div className="space-y-2">
+                            <label className="auth-label">
+                                {getStepFieldLabel(stepConfig, "businessName", "Business Name")}
+                                {isStepFieldRequired(stepConfig, "businessName", true) && <span className="text-[#E8825A]">*</span>}
+                            </label>
+                            <input
+                                type="text"
+                                placeholder={getStepFieldPlaceholder(stepConfig, "businessName", "Enter Business name")}
+                                {...register("businessName")}
+                                className={`auth-input auth-input-left bg-white text-left ${errors.businessName ? "border-[#f6855c]" : ""}`}
+                            />
+                        </div>
+                    )}
 
-                    <div className="space-y-2">
-                        <label className="auth-label">
-                            About Your Business<span className="text-[#E8825A]">*</span>
-                        </label>
-                        <textarea
-                            placeholder="What should clients know about your business?"
-                            {...register("aboutBusiness")}
-                            className={`min-h-[104px] w-full rounded-lg border bg-white px-4 py-4 text-left text-[14px] leading-[120%] text-[#202124] outline-none transition-colors placeholder:text-[#9aa3b2] focus:border-[#8BCCE6] ${errors.aboutBusiness ? "border-[#f6855c]" : "border-[#d7dde7]"}`}
-                        />
-                    </div>
+                    {showAboutBusiness && (
+                        <div className="space-y-2">
+                            <label className="auth-label">
+                                {getStepFieldLabel(stepConfig, "aboutBusiness", "About Your Business")}
+                                {isStepFieldRequired(stepConfig, "aboutBusiness", true) && <span className="text-[#E8825A]">*</span>}
+                            </label>
+                            <textarea
+                                placeholder={getStepFieldPlaceholder(stepConfig, "aboutBusiness", "What should clients know about your business?")}
+                                {...register("aboutBusiness")}
+                                className={`min-h-[104px] w-full rounded-lg border bg-white px-4 py-4 text-left text-[14px] leading-[120%] text-[#202124] outline-none transition-colors placeholder:text-[#9aa3b2] focus:border-[#8BCCE6] ${errors.aboutBusiness ? "border-[#f6855c]" : "border-[#d7dde7]"}`}
+                            />
+                        </div>
+                    )}
 
-                    <div className="space-y-2">
-                        <label className="auth-label">
-                            Operating Location(s)
-                        </label>
-                        <IslandMultiSelect
-                            options={sortedIslands}
-                            value={selectedLocations}
-                            onChange={(next) => setValue("operatingLocations", next, { shouldValidate: true })}
-                            placeholder="Select island"
-                            helperText={islandsFailed ? "Island list could not be loaded from the API right now. You can skip this for now." : "Select the islands you operate in."}
-                            error={errors.operatingLocations?.message}
-                        />
-                    </div>
+                    {showOperatingLocations && (
+                        <div className="space-y-2">
+                            <label className="auth-label">
+                                {getStepFieldLabel(stepConfig, "operatingLocations", "Operating Location(s)")}
+                                {isStepFieldRequired(stepConfig, "operatingLocations", true) && <span className="text-[#E8825A]">*</span>}
+                            </label>
+                            <IslandMultiSelect
+                                options={sortedIslands}
+                                value={selectedLocations}
+                                onChange={(next) => setValue("operatingLocations", next, { shouldValidate: true })}
+                                placeholder={getStepFieldPlaceholder(stepConfig, "operatingLocations", "Select island")}
+                                helperText={islandsFailed ? "Island list could not be loaded from the API right now. You can skip this for now." : getStepFieldHelperText(stepConfig, "operatingLocations", "Select the islands you operate in.")}
+                                error={errors.operatingLocations?.message}
+                            />
+                        </div>
+                    )}
 
                     <div className="flex items-center justify-between pt-2">
                         <button

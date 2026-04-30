@@ -25,7 +25,7 @@ export function CompletionStep({ stepConfig }: StepProps) {
     const { formData, goBack } = useOnboardingStore();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
-    const { title, subtitle } = stepConfig.content;
+    const { title, subtitle, body } = stepConfig.content;
 
     const isPaidRole = formData.role === "LANDLORD" || formData.role === "AGENT";
 
@@ -142,6 +142,7 @@ export function CompletionStep({ stepConfig }: StepProps) {
                 <div className="mb-6">
                     <h2 className="mb-2 text-[28px] font-semibold leading-[120%] text-[#202124]">{title}</h2>
                     <p className="text-[14px] leading-[150%] text-[#5f6368]">{subtitle}</p>
+                    {body && <p className="mt-2 text-[13px] leading-[150%] text-[#7b8595]">{body}</p>}
                 </div>
 
                 <div className="mb-4 rounded-[16px] border border-[#e8edf3] bg-[#f8fafc] p-4">
