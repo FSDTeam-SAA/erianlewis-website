@@ -1,10 +1,19 @@
 import { create } from 'zustand';
 
-// Based on the provided prompt contracts
+export interface OnboardingField {
+    key: string;
+    label: string;
+    placeholder: string;
+    helperText?: string;
+    required: boolean;
+    enabled: boolean;
+}
+
 export interface OnboardingStep {
     stepNumber: number;
     key: string;
     name: string;
+    description?: string;
     enabled: boolean;
     required: boolean;
     visibleForRoles: string[];
@@ -12,7 +21,7 @@ export interface OnboardingStep {
         title: string;
         subtitle: string;
         body: string;
-        fields: { key: string; label: string; placeholder: string; required: boolean; enabled: boolean }[];
+        fields: OnboardingField[];
         roles?: { key: string; label: string; description: string }[];
         entityOptions?: { key: string; label: string; description: string; features: string[] }[];
     };

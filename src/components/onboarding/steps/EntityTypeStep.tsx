@@ -5,6 +5,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useOnboardingStore, OnboardingStep } from "@/lib/stores/onboardingStore";
 import api from "@/lib/axios";
 import { toast } from "sonner";
+import {
+    getStepFieldHelperText,
+    getStepFieldLabel,
+    getStepFieldPlaceholder,
+    isStepFieldEnabled,
+    isStepFieldRequired,
+} from "@/components/onboarding/stepContent";
 
 interface Island {
     _id: string;
@@ -19,6 +26,10 @@ export function EntityTypeStep({ stepConfig }: StepProps) {
     const { formData, setFormData, goNext, goBack } = useOnboardingStore();
     const { title, subtitle, entityOptions } = stepConfig.content;
     const isIndividual = formData.entityType === "individual";
+    const showOperatingLocations = isStepFieldEnabled(stepConfig, "operatingLocations");
+    const showNumberOfProperties = isStepFieldEnabled(stepConfig, "numberOfProperties");
+    const operatingLocationsRequired = isStepFieldRequired(stepConfig, "operatingLocations", true);
+    const numberOfPropertiesRequired = isStepFieldRequired(stepConfig, "numberOfProperties", true);
 
     const [selectedLocations, setSelectedLocations] = useState<string[]>(formData.operatingLocations || []);
     const [properties, setProperties] = useState<number>(formData.numberOfProperties || 1);
@@ -59,12 +70,12 @@ export function EntityTypeStep({ stepConfig }: StepProps) {
         }
 
         if (formData.entityType === "individual") {
-            if (selectedLocations.length === 0) {
+            if (showOperatingLocations && operatingLocationsRequired && selectedLocations.length === 0) {
                 toast.error("Please select at least one operating location");
                 return;
             }
 
-            if (properties < 1) {
+            if (showNumberOfProperties && numberOfPropertiesRequired && properties < 1) {
                 toast.error("Please enter the number of properties");
                 return;
             }
@@ -128,43 +139,56 @@ export function EntityTypeStep({ stepConfig }: StepProps) {
                                     ))}
                                 </div>
 
-                                {isSelected && !isBusiness && (
+                                {isSelected && !isBusiness && (showOperatingLocations || showNumberOfProperties) && (
                                     <div className="mt-4 bg-white rounded-xl border border-gray-100 p-5 shadow-sm space-y-4 cursor-default" onClick={e => e.stopPropagation()}>
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-bold text-gray-700">Operating Location(s)<span className="text-[#E8825A]">*</span></label>
-                                            <p className="text-[10px] text-gray-400 font-medium mb-1">Select the islands you operate in.</p>
-                                            <div className="flex flex-wrap gap-2">
-                                                {sortedIslands.map((island) => {
-                                                    const active = selectedLocations.includes(island._id);
-                                                    return (
-                                                        <button
-                                                            key={island._id}
-                                                            type="button"
-                                                            onClick={() => toggleLocation(island._id)}
-                                                            className={`px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors ${active
-                                                                ? "border-[#8BCCE6] bg-[#F5FBFC] text-gray-900"
-                                                                : "border-gray-200 text-gray-500 hover:border-gray-300"
-                                                                }`}
-                                                        >
-                                                            {island.name}
-                                                        </button>
-                                                    );
-                                                })}
+                                        {showOperatingLocations && (
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-bold text-gray-700">
+                                                    {getStepFieldLabel(stepConfig, "operatingLocations", "Operating Location(s)")}
+                                                    {isStepFieldRequired(stepConfig, "operatingLocations", true) && <span className="text-[#E8825A]">*</span>}
+                                                </label>
+                                                <p className="text-[10px] text-gray-400 font-medium mb-1">
+                                                    {getStepFieldHelperText(stepConfig, "operatingLocations", "Select the islands you operate in.")}
+                                                </p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {sortedIslands.map((island) => {
+                                                        const active = selectedLocations.includes(island._id);
+                                                        return (
+                                                            <button
+                                                                key={island._id}
+                                                                type="button"
+                                                                onClick={() => toggleLocation(island._id)}
+                                                                className={`px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors ${active
+                                                                    ? "border-[#8BCCE6] bg-[#F5FBFC] text-gray-900"
+                                                                    : "border-gray-200 text-gray-500 hover:border-gray-300"
+                                                                    }`}
+                                                            >
+                                                                {island.name}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
 
-                                        <div className="space-y-1.5 pt-2">
-                                            <label className="text-xs font-bold text-gray-700">Number of properties<span className="text-[#E8825A]">*</span></label>
-                                            <input
-                                                type="number"
-                                                value={properties}
-                                                onChange={(e) => setProperties(parseInt(e.target.value) || 0)}
-                                                className="w-full h-10 border border-gray-200 rounded-lg px-3 text-sm outline-none focus:border-[#8BCCE6] text-gray-700"
-                                            />
-                                            <p className="text-[10px] text-gray-400 font-medium mt-1 leading-snug">
-                                                We use this to recommend the right subscription.
-                                            </p>
-                                        </div>
+                                        {showNumberOfProperties && (
+                                            <div className="space-y-1.5 pt-2">
+                                                <label className="text-xs font-bold text-gray-700">
+                                                    {getStepFieldLabel(stepConfig, "numberOfProperties", "Number of Properties")}
+                                                    {isStepFieldRequired(stepConfig, "numberOfProperties", true) && <span className="text-[#E8825A]">*</span>}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    value={properties}
+                                                    onChange={(e) => setProperties(parseInt(e.target.value) || 0)}
+                                                    placeholder={getStepFieldPlaceholder(stepConfig, "numberOfProperties", "e.g., 30")}
+                                                    className="w-full h-10 border border-gray-200 rounded-lg px-3 text-sm outline-none focus:border-[#8BCCE6] text-gray-700"
+                                                />
+                                                <p className="text-[10px] text-gray-400 font-medium mt-1 leading-snug">
+                                                    {getStepFieldHelperText(stepConfig, "numberOfProperties", "We use this to recommend the right subscription.")}
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>

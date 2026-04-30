@@ -7,6 +7,10 @@ import { CreditCard, Loader2, ServerCrash } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/axios";
 import { useOnboardingStore, OnboardingStep } from "@/lib/stores/onboardingStore";
+import {
+    getStepFieldHelperText,
+    getStepFieldLabel,
+} from "@/components/onboarding/stepContent";
 
 interface Plan {
     _id: string;
@@ -36,7 +40,7 @@ const formatPlanName = (plan: Plan) => {
 export function PlanSelectionStep({ stepConfig }: StepProps) {
     const { formData, setFormData, goNext, goBack } = useOnboardingStore();
     const router = useRouter();
-    const { title } = stepConfig.content;
+    const { title, body } = stepConfig.content;
     const [propertyCount, setPropertyCount] = useState(formData.numberOfProperties || 1);
     const [loading, setLoading] = useState(false);
 
@@ -200,7 +204,7 @@ export function PlanSelectionStep({ stepConfig }: StepProps) {
                     <>
                         <div className="mb-6 rounded-[16px] bg-[#f8fafc] p-4">
                             <div className="mb-2 text-[14px] font-medium text-[#202124]">
-                                Number of properties: {propertyCount}
+                                {getStepFieldLabel(stepConfig, "numberOfProperties", "Number of properties")}: {propertyCount}
                             </div>
                             <input
                                 type="range"
@@ -211,7 +215,7 @@ export function PlanSelectionStep({ stepConfig }: StepProps) {
                                 className="h-2 w-full cursor-pointer appearance-none rounded-full bg-transparent accent-[#3d8ed8]"
                             />
                             <p className="mt-2 text-[11px] text-[#7b8595]">
-                                Adjust if needed to see the recommended plan.
+                                {getStepFieldHelperText(stepConfig, "numberOfProperties", body || "Adjust if needed to see the recommended plan.")}
                             </p>
                         </div>
 

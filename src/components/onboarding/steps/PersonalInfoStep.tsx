@@ -10,8 +10,14 @@ import {
   OnboardingStep,
 } from '@/lib/stores/onboardingStore'
 import { Checkbox } from '@/components/ui/checkbox'
-import { toast } from 'sonner'
 import { ChevronDown, Eye, EyeOff } from 'lucide-react'
+import {
+  getStepFieldHelperText,
+  getStepFieldLabel,
+  getStepFieldPlaceholder,
+  isStepFieldEnabled,
+  isStepFieldRequired,
+} from '@/components/onboarding/stepContent'
 
 interface StepProps {
   stepConfig: OnboardingStep
@@ -30,16 +36,46 @@ export function PersonalInfoStep({ stepConfig }: StepProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const { title, subtitle } = stepConfig.content
+  const showFirstName = isStepFieldEnabled(stepConfig, 'firstName')
+  const showLastName = isStepFieldEnabled(stepConfig, 'lastName')
+  const showPhone = isStepFieldEnabled(stepConfig, 'phone')
+  const showEmail = isStepFieldEnabled(stepConfig, 'email')
+  const showPasswordField = isStepFieldEnabled(stepConfig, 'password')
+  const showConfirmPasswordField = isStepFieldEnabled(stepConfig, 'confirmPassword')
+  const firstNameRequired = isStepFieldRequired(stepConfig, 'firstName', true)
+  const lastNameRequired = isStepFieldRequired(stepConfig, 'lastName', true)
+  const emailRequired = isStepFieldRequired(stepConfig, 'email', true)
+  const passwordRequired = isStepFieldRequired(stepConfig, 'password', true)
+  const confirmPasswordRequired = isStepFieldRequired(
+    stepConfig,
+    'confirmPassword',
+    true,
+  )
 
   const schema = z
     .object({
-      firstName: z.string().min(1, 'Please enter your first name'),
-      lastName: z.string().min(1, 'Please enter your last name'),
+      firstName:
+        showFirstName && firstNameRequired
+          ? z.string().min(1, 'Please enter your first name')
+          : z.string().optional(),
+      lastName:
+        showLastName && lastNameRequired
+          ? z.string().min(1, 'Please enter your last name')
+          : z.string().optional(),
       countryCode: z.string().optional(),
       phone: z.string().optional(),
-      email: z.string().email('Invalid email'),
-      password: z.string().min(6, 'Password too short'),
-      confirmPassword: z.string(),
+      email:
+        showEmail && emailRequired
+          ? z.string().min(1, 'Please enter your email').email('Invalid email')
+          : z.string().optional(),
+      password:
+        showPasswordField && passwordRequired
+          ? z.string().min(6, 'Password too short')
+          : z.string().optional(),
+      confirmPassword:
+        showConfirmPasswordField && confirmPasswordRequired
+          ? z.string().min(1, 'Please confirm your password')
+          : z.string().optional(),
       agreePolicy: z
         .boolean()
         .refine(val => val === true, 'You must agree to the Privacy Policy'),
@@ -47,10 +83,16 @@ export function PersonalInfoStep({ stepConfig }: StepProps) {
         .boolean()
         .refine(val => val === true, 'You must agree to the Terms of Service'),
     })
-    .refine(data => data.password === data.confirmPassword, {
-      message: "Passwords don't match",
-      path: ['confirmPassword'],
-    })
+    .refine(
+      data =>
+        !showPasswordField ||
+        !showConfirmPasswordField ||
+        data.password === data.confirmPassword,
+      {
+        message: "Passwords don't match",
+        path: ['confirmPassword'],
+      },
+    )
 
   type FormDataSchema = z.infer<typeof schema>
 
@@ -95,147 +137,181 @@ export function PersonalInfoStep({ stepConfig }: StepProps) {
         </p>
       </div>
 
-      <div className="mb-6">
-        <button
-          type="button"
-          onClick={() =>
-            toast.message(
-              'Google sign up is not configured yet. Please use email and password for now.',
-            )
-          }
-          className="auth-button-secondary w-full"
-        >
-          Sign up with Google
-        </button>
-      </div>
-
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="flex flex-col space-y-1.5">
-            <label className="auth-label">
-              First Name<span className="text-[#E8825A]">*</span>
-            </label>
-            <input
-              type="text"
-              placeholder="Enter your name"
-              {...register('firstName')}
-              className="auth-input"
-            />
+        {(showFirstName || showLastName) && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {showFirstName && (
+              <div className="flex flex-col space-y-1.5">
+                <label className="auth-label">
+                  {getStepFieldLabel(stepConfig, 'firstName', 'First Name')}
+                  {isStepFieldRequired(stepConfig, 'firstName', true) && (
+                    <span className="text-[#E8825A]">*</span>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  placeholder={getStepFieldPlaceholder(
+                    stepConfig,
+                    'firstName',
+                    'Enter your first name',
+                  )}
+                  {...register('firstName')}
+                  className="auth-input"
+                />
+              </div>
+            )}
+            {showLastName && (
+              <div className="flex flex-col space-y-1.5">
+                <label className="auth-label">
+                  {getStepFieldLabel(stepConfig, 'lastName', 'Last Name')}
+                  {isStepFieldRequired(stepConfig, 'lastName', true) && (
+                    <span className="text-[#E8825A]">*</span>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  placeholder={getStepFieldPlaceholder(
+                    stepConfig,
+                    'lastName',
+                    'Enter your last name',
+                  )}
+                  {...register('lastName')}
+                  className="auth-input"
+                />
+              </div>
+            )}
           </div>
-          <div className="flex flex-col space-y-1.5">
-            <label className="auth-label">
-              Last Name<span className="text-[#E8825A]">*</span>
-            </label>
-            <input
-              type="text"
-              placeholder="Enter your last name"
-              {...register('lastName')}
-              className="auth-input"
-            />
-          </div>
-        </div>
+        )}
 
-        <div className="space-y-1.5">
-          <label className="auth-label">
-            Phone Number<span className="text-[#E8825A]">*</span>
-          </label>
-          <div className="flex gap-4">
-            <div className="relative w-[150px] shrink-0">
-              <select
-                {...register('countryCode')}
-                className="h-12 w-full appearance-none rounded-lg border border-[#d7dde7] bg-white px-3 pr-10 text-left text-[14px] font-normal leading-[120%] text-[#202124] outline-none transition-colors focus:border-[#8BCCE6]"
-              >
-                {countryOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#202124]" />
+        {showPhone && (
+          <div className="space-y-1.5">
+            <label className="auth-label">
+              {getStepFieldLabel(stepConfig, 'phone', 'Phone Number')}
+              {isStepFieldRequired(stepConfig, 'phone') && (
+                <span className="text-[#E8825A]">*</span>
+              )}
+            </label>
+            <div className="flex gap-4">
+              <div className="relative w-[150px] shrink-0">
+                <select
+                  {...register('countryCode')}
+                  className="h-12 w-full appearance-none rounded-lg border border-[#d7dde7] bg-white px-3 pr-10 text-left text-[14px] font-normal leading-[120%] text-[#202124] outline-none transition-colors focus:border-[#8BCCE6]"
+                >
+                  {countryOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#202124]" />
+              </div>
+              <input
+                type="tel"
+                placeholder={getStepFieldPlaceholder(stepConfig, 'phone', 'Digits only')}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                {...register('phone', {
+                  onChange: event => {
+                    setValue('phone', event.target.value.replace(/\D/g, ''))
+                  },
+                })}
+                className="auth-input auth-input-left flex-1 bg-white text-left"
+              />
             </div>
-            <input
-              type="tel"
-              placeholder="Digits only"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              {...register('phone', {
-                onChange: event => {
-                  setValue('phone', event.target.value.replace(/\D/g, ''))
-                },
-              })}
-              className="auth-input auth-input-left flex-1 bg-white text-left"
-            />
-          </div>
-          <div className="text-[14px] font-normal leading-[120%] text-[#7b8595]">
-            Select your island/ area code, then enter digits only
-          </div>
-        </div>
-
-        <div className="space-y-1.5 pt-1">
-          <label className="auth-label">
-            Email Address<span className="text-[#E8825A]">*</span>
-          </label>
-          <input
-            type="email"
-            placeholder="you@gmail.com"
-            {...register('email')}
-            className="auth-input"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="auth-label">
-            Password<span className="text-[#E8825A]">*</span>
-          </label>
-          <div className="relative">
-            <input
-              type={showPassword ? 'text' : 'password'}
-              placeholder="••••••••"
-              {...register('password')}
-              className="auth-input pr-12"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5f6368] hover:text-[#202124]"
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-            >
-              {showPassword ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
+            <div className="text-[14px] font-normal leading-[120%] text-[#7b8595]">
+              {getStepFieldHelperText(
+                stepConfig,
+                'phone',
+                'Select your island/ area code, then enter digits only',
               )}
-            </button>
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="space-y-1.5">
-          <label className="auth-label">
-            Confirm Password<span className="text-[#E8825A]">*</span>
-          </label>
-          <div className="relative">
-            <input
-              type={showConfirmPassword ? 'text' : 'password'}
-              placeholder="Re-enter your password"
-              {...register('confirmPassword')}
-              className="auth-input pr-12"
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5f6368] hover:text-[#202124]"
-              aria-label={
-                showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'
-              }
-            >
-              {showConfirmPassword ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
+        {showEmail && (
+          <div className="space-y-1.5 pt-1">
+            <label className="auth-label">
+              {getStepFieldLabel(stepConfig, 'email', 'Email Address')}
+              {isStepFieldRequired(stepConfig, 'email', true) && (
+                <span className="text-[#E8825A]">*</span>
               )}
-            </button>
+            </label>
+            <input
+              type="email"
+              placeholder={getStepFieldPlaceholder(stepConfig, 'email', 'you@gmail.com')}
+              {...register('email')}
+              className="auth-input"
+            />
           </div>
-        </div>
+        )}
+
+        {showPasswordField && (
+          <div className="space-y-1.5">
+            <label className="auth-label">
+              {getStepFieldLabel(stepConfig, 'password', 'Password')}
+              {isStepFieldRequired(stepConfig, 'password', true) && (
+                <span className="text-[#E8825A]">*</span>
+              )}
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder={getStepFieldPlaceholder(stepConfig, 'password', '••••••••')}
+                {...register('password')}
+                className="auth-input pr-12"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5f6368] hover:text-[#202124]"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {showConfirmPasswordField && (
+          <div className="space-y-1.5">
+            <label className="auth-label">
+              {getStepFieldLabel(stepConfig, 'confirmPassword', 'Confirm Password')}
+              {isStepFieldRequired(stepConfig, 'confirmPassword', true) && (
+                <span className="text-[#E8825A]">*</span>
+              )}
+            </label>
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                placeholder={getStepFieldPlaceholder(
+                  stepConfig,
+                  'confirmPassword',
+                  'Re-enter your password',
+                )}
+                {...register('confirmPassword')}
+                className="auth-input pr-12"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5f6368] hover:text-[#202124]"
+                aria-label={
+                  showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'
+                }
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-3 px-1 py-2">
           <input type="hidden" {...register('agreePolicy')} />
