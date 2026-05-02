@@ -31,6 +31,8 @@ interface OnboardingStore {
     // Step tracking
     currentStepIndex: number;
     activeSteps: OnboardingStep[];
+    authProvider: 'local' | 'google';
+    googleTempToken?: string;
 
     // Collected form data
     formData: {
@@ -56,12 +58,15 @@ interface OnboardingStore {
     goBack: () => void;
     setActiveSteps: (steps: OnboardingStep[]) => void;
     setCurrentStepIndex: (index: number) => void;
+    setAuthContext: (data: { authProvider: 'local' | 'google'; googleTempToken?: string }) => void;
     reset: () => void;
 }
 
 const initialState = {
     currentStepIndex: 0,
     activeSteps: [],
+    authProvider: 'local' as const,
+    googleTempToken: undefined,
     formData: {},
 };
 
@@ -84,6 +89,12 @@ export const useOnboardingStore = create<OnboardingStore>((set) => ({
     setActiveSteps: (steps) => set({ activeSteps: steps }),
 
     setCurrentStepIndex: (index) => set({ currentStepIndex: index }),
+
+    setAuthContext: ({ authProvider, googleTempToken }) =>
+        set({
+            authProvider,
+            googleTempToken,
+        }),
 
     reset: () => set(initialState),
 }));

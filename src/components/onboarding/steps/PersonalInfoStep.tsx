@@ -125,6 +125,19 @@ export function PersonalInfoStep({ stepConfig }: StepProps) {
 
   const agreePolicy = watch('agreePolicy')
   const agreeTerms = watch('agreeTerms')
+  const handleGoogleSignUp = () => {
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL
+
+    if (!apiBaseUrl) {
+      return
+    }
+
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem('pending-google-onboarding', '1')
+    }
+
+    window.location.href = `${apiBaseUrl}/auth/google`
+  }
 
   return (
     <div className="auth-card animate-in w-full p-8 duration-500 fade-in slide-in-from-bottom-4 md:p-10">
@@ -138,6 +151,14 @@ export function PersonalInfoStep({ stepConfig }: StepProps) {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <button
+          type="button"
+          onClick={handleGoogleSignUp}
+          className="auth-button-secondary h-12 w-full text-[16px] font-semibold"
+        >
+          Sign up with Google
+        </button>
+
         {(showFirstName || showLastName) && (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {showFirstName && (

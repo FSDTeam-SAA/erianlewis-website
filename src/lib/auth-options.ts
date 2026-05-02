@@ -10,8 +10,30 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        accessToken: { label: "Access Token", type: "text" },
       },
       async authorize(credentials) {
+        if (credentials?.accessToken) {
+          try {
+            const [, payload] = credentials.accessToken.split(".")
+            const decoded = JSON.parse(
+              Buffer.from(payload, "base64url").toString("utf8"),
+            ) as { _id?: string; role?: string }
+
+            return {
+              id: decoded._id || credentials.email || "google-user",
+              name: credentials.email || "Google User",
+              email: credentials.email || "",
+              role: decoded.role || "USER",
+              profileImage: "",
+              accessToken: credentials.accessToken,
+              refreshToken: "",
+            }
+          } catch {
+            throw new Error("Unable to sign in with Google")
+          }
+        }
+
         if (!apiBaseUrl || !credentials?.email || !credentials.password) {
           return null
         }
