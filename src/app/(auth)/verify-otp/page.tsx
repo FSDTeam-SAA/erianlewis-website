@@ -9,6 +9,13 @@ import { useOnboardingStore } from "@/lib/stores/onboardingStore";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
+interface PendingVerificationContext {
+    email: string;
+    password?: string;
+    requiresPayment?: boolean;
+    stripeUrl?: string | null;
+}
+
 export default function VerifyOtpPage() {
     const router = useRouter();
     const { formData, reset } = useOnboardingStore();
@@ -17,12 +24,26 @@ export default function VerifyOtpPage() {
     const [mode, setMode] = useState<"verify" | "reset">("verify");
     const [code, setCode] = useState("");
     const [loading, setLoading] = useState(false);
-    const [resending, setResending] = useState(false);
+    const [verificationContext, setVerificationContext] = useState<PendingVerificationContext | null>(null);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-        setEmail(params.get("email") || "you@gmail.com");
-        setMode(params.get("mode") === "reset" ? "reset" : "verify");
+        const nextEmail = params.get("email") || "you@gmail.com";
+        const nextMode = params.get("mode") === "reset" ? "reset" : "verify";
+
+        setEmail(nextEmail);
+        setMode(nextMode);
+
+        if (nextMode === "verify") {
+            const rawContext = window.sessionStorage.getItem(`pending-verification:${nextEmail}`);
+            if (rawContext) {
+                try {
+                    setVerificationContext(JSON.parse(rawContext) as PendingVerificationContext);
+                } catch {
+                    window.sessionStorage.removeItem(`pending-verification:${nextEmail}`);
+                }
+            }
+        }
     }, []);
 
     const handleVerify = async () => {
@@ -41,14 +62,25 @@ export default function VerifyOtpPage() {
                 return;
             }
 
-            if (formData.email === email && formData.password) {
+            if (verificationContext?.requiresPayment && verificationContext?.stripeUrl) {
+                window.sessionStorage.removeItem(`pending-verification:${email}`);
+                window.location.href = verificationContext.stripeUrl;
+                return;
+            }
+
+            const passwordToUse =
+                verificationContext?.password ||
+                (formData.email === email ? formData.password : "");
+
+            if (passwordToUse) {
                 const result = await signIn("credentials", {
                     email,
-                    password: formData.password,
+                    password: passwordToUse,
                     redirect: false,
                     callbackUrl: "/",
                 });
 
+                window.sessionStorage.removeItem(`pending-verification:${email}`);
                 reset();
 
                 if (!result?.error) {
@@ -58,23 +90,23 @@ export default function VerifyOtpPage() {
             }
 
             router.push(`/sign-in?verified=1&email=${encodeURIComponent(email)}`);
-        } catch {
-            toast.error("Invalid code. Please try again.");
+        } catch (error: unknown) {
+            const message =
+                typeof error === "object" &&
+                    error !== null &&
+                    "response" in error &&
+                    typeof error.response === "object" &&
+                    error.response !== null &&
+                    "data" in error.response &&
+                    typeof error.response.data === "object" &&
+                    error.response.data !== null &&
+                    "message" in error.response.data
+                    ? String(error.response.data.message)
+                    : "Invalid code. Please try again.";
+
+            toast.error(message);
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleResend = async () => {
-        setResending(true);
-        try {
-            await api.post("/auth/forget-password", { email });
-            toast.success("New code sent.");
-            setCode("");
-        } catch {
-            toast.error("Failed to resend code.");
-        } finally {
-            setResending(false);
         }
     };
 
@@ -96,10 +128,6 @@ export default function VerifyOtpPage() {
                     We sent a 6 digit code to {email}
                 </div>
 
-                <div className="rounded-xl bg-[#eefbf2] px-4 py-3 text-xs font-medium text-[#46a964]">
-                    We sent a 6 digit code to your gmail.
-                </div>
-
                 <div className="space-y-2 pt-2">
                     <label className="auth-label text-[14px]">Verification code</label>
                     <input
@@ -112,22 +140,22 @@ export default function VerifyOtpPage() {
                     />
                 </div>
 
-                <div className="flex items-center gap-3 pt-2">
+                <div className="pt-2">
                     <button
                         type="button"
                         onClick={handleVerify}
                         disabled={loading || code.length !== 6}
-                        className="auth-button-primary h-10 flex-1 text-[12px]"
+                        className="auth-button-primary h-10 w-full text-[12px]"
                     >
-                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : mode === "reset" ? "Verify code" : "Verify & go home"}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleResend}
-                        disabled={resending}
-                        className="auth-button-secondary h-10 flex-1 text-[12px]"
-                    >
-                        {resending ? "Sending..." : "Resend code"}
+                        {loading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : mode === "reset" ? (
+                            "Verify code"
+                        ) : verificationContext?.requiresPayment ? (
+                            "Verify & continue to payment"
+                        ) : (
+                            "Verify & go home"
+                        )}
                     </button>
                 </div>
 
@@ -145,7 +173,9 @@ export default function VerifyOtpPage() {
                     <p className="mt-4 text-xs text-[#8a93a3]">
                         {mode === "reset"
                             ? "After verification, you can set a new password."
-                            : "After verification, you&apos;ll go straight to your dashboard."}
+                            : verificationContext?.requiresPayment
+                                ? "After verification, you'll continue to Stripe checkout."
+                                : "After verification, you'll go straight to your dashboard."}
                     </p>
                 </div>
             </div>

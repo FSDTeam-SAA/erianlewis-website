@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useOnboardingStore, OnboardingStep } from "@/lib/stores/onboardingStore";
 import { StepProgress } from "./StepProgress";
 
@@ -17,16 +17,26 @@ interface OnboardingWizardProps {
 }
 
 export function OnboardingWizard({ allSteps }: OnboardingWizardProps) {
-    const { currentStepIndex, activeSteps, setActiveSteps, formData } = useOnboardingStore();
+    const {
+        currentStepIndex,
+        activeSteps,
+        setActiveSteps,
+        setCurrentStepIndex,
+        formData,
+        authProvider,
+    } = useOnboardingStore();
 
     // Dynamic step re-calculation based on selected role and entity type state changes
-    useEffect(() => {
+    const filteredSteps = useMemo(() => {
         const role = formData.role || "USER"; // default assumes lowest/entry role
         const entityType = formData.entityType;
 
-        const filteredSteps = allSteps.filter(step => {
+        return allSteps.filter(step => {
             // visibleForRoles: [] = show for all roles
             if (step.visibleForRoles && step.visibleForRoles.length > 0 && !step.visibleForRoles.includes(role)) {
+                return false;
+            }
+            if (step.key === "personal_information" && authProvider === "google") {
                 return false;
             }
             if (step.key === "completion" && ["LANDLORD", "AGENT"].includes(role)) {
@@ -41,9 +51,21 @@ export function OnboardingWizard({ allSteps }: OnboardingWizardProps) {
             }
             return true;
         });
+    }, [allSteps, formData.role, formData.entityType, authProvider]);
 
-        setActiveSteps(filteredSteps);
-    }, [allSteps, formData.role, formData.entityType, setActiveSteps]);
+    useEffect(() => {
+        const hasSameSteps =
+            activeSteps.length === filteredSteps.length &&
+            activeSteps.every((step, index) => step.key === filteredSteps[index]?.key);
+
+        if (!hasSameSteps) {
+            setActiveSteps(filteredSteps);
+        }
+
+        if (filteredSteps.length > 0 && currentStepIndex > filteredSteps.length - 1) {
+            setCurrentStepIndex(filteredSteps.length - 1);
+        }
+    }, [activeSteps, filteredSteps, currentStepIndex, setActiveSteps, setCurrentStepIndex]);
 
     if (activeSteps.length === 0) return null;
 

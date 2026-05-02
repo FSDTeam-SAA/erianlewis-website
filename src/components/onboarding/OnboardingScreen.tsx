@@ -1,11 +1,12 @@
 "use client";
 
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/axios";
 import { OnboardingWizard } from "./OnboardingWizard";
-import { OnboardingStep } from "@/lib/stores/onboardingStore";
+import { OnboardingStep, useOnboardingStore } from "@/lib/stores/onboardingStore";
 
 interface OnboardingResponse {
     status: boolean;
@@ -14,7 +15,22 @@ interface OnboardingResponse {
     };
 }
 
-export function OnboardingScreen() {
+interface OnboardingScreenProps {
+    googleTempToken?: string;
+}
+
+export function OnboardingScreen({ googleTempToken }: OnboardingScreenProps) {
+    const { setAuthContext } = useOnboardingStore();
+
+    useEffect(() => {
+        if (googleTempToken) {
+            setAuthContext({ authProvider: "google", googleTempToken });
+            return;
+        }
+
+        setAuthContext({ authProvider: "local", googleTempToken: undefined });
+    }, [googleTempToken, setAuthContext]);
+
     const { data, isLoading, isError } = useQuery<OnboardingResponse>({
         queryKey: ["onboarding-config"],
         queryFn: async () => {

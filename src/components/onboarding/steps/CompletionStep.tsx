@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { CreditCard, Loader2 } from "lucide-react";
+import { signIn } from "next-auth/react";
 import { toast } from "sonner";
 import api from "@/lib/axios";
 import { useOnboardingStore, OnboardingStep } from "@/lib/stores/onboardingStore";
@@ -22,7 +23,7 @@ interface Plan {
 }
 
 export function CompletionStep({ stepConfig }: StepProps) {
-    const { formData, goBack } = useOnboardingStore();
+    const { formData, goBack, authProvider, googleTempToken, reset } = useOnboardingStore();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const { title, subtitle, body } = stepConfig.content;
@@ -102,20 +103,94 @@ export function CompletionStep({ stepConfig }: StepProps) {
         };
     };
 
+    const buildGooglePayload = () => {
+        if (formData.role === "LANDLORD" || formData.role === "AGENT") {
+            if (formData.entityType === "individual") {
+                return {
+                    tempToken: googleTempToken,
+                    role: formData.role,
+                    entityType: formData.entityType,
+                    individual: {
+                        operatingLocations: formData.operatingLocations || [],
+                        numberOfProperties: formData.numberOfProperties,
+                    },
+                    planId: formData.planId,
+                };
+            }
+
+            return {
+                tempToken: googleTempToken,
+                role: formData.role,
+                entityType: formData.entityType,
+                business: {
+                    businessName: formData.businessName,
+                    aboutBusiness: formData.aboutBusiness,
+                    operatingLocations: formData.operatingLocations || [],
+                    numberOfProperties: formData.numberOfProperties,
+                },
+                planId: formData.planId,
+            };
+        }
+
+        return {
+            tempToken: googleTempToken,
+            role: formData.role || "USER",
+        };
+    };
+
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            const res = await api.post("/auth/register", buildPayload());
-            const responseData = res.data?.data;
+            if (authProvider === "google") {
+                const res = await api.post("/auth/register/complete-google", buildGooglePayload());
+                const responseData = res.data?.data;
 
-            if (responseData?.requiresPayment && responseData?.stripeUrl) {
-                window.location.href = responseData.stripeUrl;
+                if (responseData?.requiresPayment && responseData?.stripeUrl) {
+                    reset();
+                    window.location.href = responseData.stripeUrl;
+                    return;
+                }
+
+                if (responseData?.accessToken) {
+                    const result = await signIn("credentials", {
+                        accessToken: responseData.accessToken,
+                        email: formData.email || "",
+                        redirect: false,
+                        callbackUrl: "/",
+                    });
+
+                    reset();
+
+                    if (!result?.error) {
+                        router.push(result?.url || "/");
+                        return;
+                    }
+                }
+
+                toast.success("Google sign up completed successfully.");
+                router.push("/sign-in");
                 return;
             }
 
-            toast.success("Account created successfully!");
-            const query = new URLSearchParams({ email: formData.email || "", registered: "1" });
-            router.push(`/sign-in?${query.toString()}`);
+            const res = await api.post("/auth/register", buildPayload());
+            const responseData = res.data?.data;
+            const email = formData.email || "";
+
+            if (typeof window !== "undefined" && email) {
+                window.sessionStorage.setItem(
+                    `pending-verification:${email}`,
+                    JSON.stringify({
+                        email,
+                        password: formData.password || "",
+                        requiresPayment: Boolean(responseData?.requiresPayment),
+                        stripeUrl: responseData?.stripeUrl || null,
+                    })
+                );
+            }
+
+            toast.success("Account created successfully. Please verify your email.");
+            const query = new URLSearchParams({ email, mode: "verify", source: "onboarding" });
+            router.push(`/verify-otp?${query.toString()}`);
         } catch (error: unknown) {
             const message =
                 typeof error === "object" &&
@@ -180,7 +255,9 @@ export function CompletionStep({ stepConfig }: StepProps) {
 
                 {!isPaidRole && (
                     <div className="mb-5 rounded-[16px] border border-[#e8edf3] bg-[#f8fafc] p-4 text-sm text-[#5f6368]">
-                        We&apos;ll create your account and take you straight to sign in next.
+                        {authProvider === "google"
+                            ? "We will finish your Google sign up and take you to your dashboard next."
+                            : "We will create your account and take you straight to sign in next."}
                     </div>
                 )}
 

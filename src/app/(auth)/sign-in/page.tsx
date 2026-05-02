@@ -23,6 +23,9 @@ export default function SignInPage() {
         if (params.get("registered") === "1") {
             toast.success("Account created successfully. Please sign in.");
         }
+        if (params.get("verified") === "1") {
+            toast.success("Email verified successfully. Please sign in.");
+        }
         if (params.get("emailUpdated") === "1") {
             toast.success("Email updated successfully. Please sign in with your new email.");
         }
@@ -53,6 +56,17 @@ export default function SignInPage() {
 
         router.push(result?.url || callbackUrl);
         router.refresh();
+    };
+
+    const handleGoogleSignIn = () => {
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+        if (!apiBaseUrl) {
+            toast.error("Google sign in is unavailable right now.");
+            return;
+        }
+
+        window.location.href = `${apiBaseUrl}/auth/google`;
     };
 
     return (
@@ -115,6 +129,16 @@ export default function SignInPage() {
                         className="auth-button-primary w-full"
                     >
                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign In"}
+                    </button>
+                </div>
+
+                <div className="pt-1">
+                    <button
+                        type="button"
+                        onClick={handleGoogleSignIn}
+                        className="auth-button-secondary w-full"
+                    >
+                        Sign in with Google
                     </button>
                 </div>
 
