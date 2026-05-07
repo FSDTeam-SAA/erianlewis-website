@@ -66,6 +66,10 @@ export default function SignInPage() {
             return;
         }
 
+        if (typeof window !== "undefined") {
+            window.sessionStorage.removeItem("pending-google-onboarding");
+        }
+
         window.location.href = `${apiBaseUrl}/auth/google`;
     };
 

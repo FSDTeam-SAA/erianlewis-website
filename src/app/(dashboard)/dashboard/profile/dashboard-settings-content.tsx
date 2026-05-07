@@ -116,7 +116,7 @@ export default function DashboardSettingsContent() {
   })
 
   const profile = data?.data
-  const signedInEmail = profile?.email || session?.user?.email || "example@gmail.com"
+  const signedInEmail = profile?.email || session?.user?.email || session?.user?.name || "your account"
   const currentPlan =
     profile?.subscription?.planId && typeof profile.subscription.planId === "object"
       ? profile.subscription.planId

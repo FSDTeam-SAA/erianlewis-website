@@ -13,7 +13,10 @@ import { LogoutConfirmDialog } from "@/components/shared/LogoutConfirmDialog"
 export const AccountOverviewCard = () => {
   const session = useSession();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
-  const userEmail = session?.data?.user?.email || "example@gmail.com"
+  const signedInIdentity =
+    session?.data?.user?.email ||
+    session?.data?.user?.name ||
+    "your account"
 
   const handleLogout = async () => {
     try {
@@ -31,7 +34,7 @@ export const AccountOverviewCard = () => {
       <div className="space-y-5">
         <div className="space-y-1">
           <h3 className="text-lg md:text-xl lg:text-2xl leading-normal font-bold text-black">Account</h3>
-          <p className="text-sm md:text-base font-normal text-[#262626] leading-normal">Signed in as <span className="font-bold">{userEmail}</span></p>
+          <p className="text-sm md:text-base font-normal text-[#262626] leading-normal">Signed in as <span className="font-bold">{signedInIdentity}</span></p>
         </div>
 
         <div className="bg-white flex flex-col gap-3 rounded-lg border border-[#ececf1] px-3 py-4 sm:flex-row sm:items-center sm:justify-between shadow-[1px_1px_4px_0px_#00000040]">
