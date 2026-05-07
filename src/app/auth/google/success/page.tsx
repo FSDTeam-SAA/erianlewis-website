@@ -14,6 +14,10 @@ export default function GoogleSuccessPage() {
         const run = async () => {
             const params = new URLSearchParams(window.location.search);
             const token = params.get("token");
+            const callbackUrl = params.get("callbackUrl") || "/";
+            const isPendingOnboarding =
+                typeof window !== "undefined" &&
+                window.sessionStorage.getItem("pending-google-onboarding") === "1";
 
             if (!token) {
                 toast.error("Google sign in failed. Please try again.");
@@ -21,10 +25,16 @@ export default function GoogleSuccessPage() {
                 return;
             }
 
+            if (isPendingOnboarding) {
+                window.sessionStorage.removeItem("pending-google-onboarding");
+                router.replace(`/register/complete?tempToken=${encodeURIComponent(token)}`);
+                return;
+            }
+
             const result = await signIn("credentials", {
                 accessToken: token,
                 redirect: false,
-                callbackUrl: "/",
+                callbackUrl,
             });
 
             if (result?.error) {
