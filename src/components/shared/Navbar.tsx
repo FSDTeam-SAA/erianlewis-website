@@ -140,8 +140,8 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
           </Link>
         </div>
 
-        <div className="hidden items-center gap-4 md:flex">
-          <div className="hidden items-center gap-7 xl:flex">
+        <div className="hidden items-center gap-3 lg:flex xl:gap-4">
+          <div className="hidden items-center gap-5 lg:flex xl:gap-7">
             {navLinks.map(link => (
               <Link
                 key={link.href}
@@ -169,7 +169,8 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
                   }`}
               >
                 <Bookmark className="h-4 w-4" />
-                Saved Searches
+                <span className="hidden xl:inline">Saved Searches</span>
+                <span className="xl:hidden">Saved</span>
               </Link>
 
               <DropdownMenu
@@ -244,7 +245,7 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
             <>
               <Link
                 href="/sign-in"
-                className="rounded-xl px-6 py-3 font-semibold text-white shadow-md transition-transform hover:-translate-y-0.5 hover:opacity-90"
+                className="rounded-xl px-5 py-3 font-semibold text-white shadow-md transition-transform hover:-translate-y-0.5 hover:opacity-90 xl:px-6"
                 style={{
                   background:
                     'linear-gradient(90.99deg, #8BCCE6 2.49%, #F6855C 99.73%)',
@@ -260,7 +261,7 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
           type="button"
           variant="outline"
           size="icon-sm"
-          className="border-white/70 bg-white/90 md:hidden"
+          className="border-white/70 bg-white/90 lg:hidden"
           onClick={() => setMobileMenuOpen(current => !current)}
           aria-label={
             mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'
@@ -276,7 +277,7 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
 
       {mobileMenuOpen ? (
         <div
-          className={`mx-4 rounded-3xl p-4 shadow-[0_18px_40px_rgba(15,23,42,0.14)] backdrop-blur md:hidden ${variant === 'solid'
+          className={`mx-4 rounded-3xl p-4 shadow-[0_18px_40px_rgba(15,23,42,0.14)] backdrop-blur lg:hidden ${variant === 'solid'
             ? 'border border-[#eceef2] bg-white'
             : 'border border-white/70 bg-white/95'
             }`}
