@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useOnboardingStore, OnboardingStep } from "@/lib/stores/onboardingStore";
 import api from "@/lib/axios";
 import { toast } from "sonner";
+import { IslandMultiSelect } from "../IslandMultiSelect";
 import {
     getStepFieldHelperText,
     getStepFieldLabel,
@@ -34,7 +35,10 @@ export function EntityTypeStep({ stepConfig }: StepProps) {
     const [selectedLocations, setSelectedLocations] = useState<string[]>(formData.operatingLocations || []);
     const [properties, setProperties] = useState<number>(formData.numberOfProperties || 1);
 
-    const { data: islands = [] } = useQuery({
+    const {
+        data: islands = [],
+        isError: islandsFailed,
+    } = useQuery({
         queryKey: ["public-islands"],
         queryFn: async () => {
             const res = await api.get("/islands", { params: { limit: 100 } });
@@ -53,14 +57,6 @@ export function EntityTypeStep({ stepConfig }: StepProps) {
             operatingLocations: entityKey === "business" ? [] : formData.operatingLocations,
             numberOfProperties: entityKey === "business" ? undefined : formData.numberOfProperties,
         });
-    };
-
-    const toggleLocation = (locationId: string) => {
-        setSelectedLocations((current) =>
-            current.includes(locationId)
-                ? current.filter((id) => id !== locationId)
-                : [...current, locationId]
-        );
     };
 
     const handleContinue = () => {
@@ -147,27 +143,17 @@ export function EntityTypeStep({ stepConfig }: StepProps) {
                                                     {getStepFieldLabel(stepConfig, "operatingLocations", "Operating Location(s)")}
                                                     {isStepFieldRequired(stepConfig, "operatingLocations", true) && <span className="text-[#E8825A]">*</span>}
                                                 </label>
-                                                <p className="text-[10px] text-gray-400 font-medium mb-1">
-                                                    {getStepFieldHelperText(stepConfig, "operatingLocations", "Select the islands you operate in.")}
-                                                </p>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {sortedIslands.map((island) => {
-                                                        const active = selectedLocations.includes(island._id);
-                                                        return (
-                                                            <button
-                                                                key={island._id}
-                                                                type="button"
-                                                                onClick={() => toggleLocation(island._id)}
-                                                                className={`px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors ${active
-                                                                    ? "border-[#8BCCE6] bg-[#F5FBFC] text-gray-900"
-                                                                    : "border-gray-200 text-gray-500 hover:border-gray-300"
-                                                                    }`}
-                                                            >
-                                                                {island.name}
-                                                            </button>
-                                                        );
-                                                    })}
-                                                </div>
+                                                <IslandMultiSelect
+                                                    options={sortedIslands}
+                                                    value={selectedLocations}
+                                                    onChange={setSelectedLocations}
+                                                    placeholder={getStepFieldPlaceholder(stepConfig, "operatingLocations", "Select island")}
+                                                    helperText={
+                                                        islandsFailed
+                                                            ? "Island list could not be loaded from the API right now. You can try again in a moment."
+                                                            : getStepFieldHelperText(stepConfig, "operatingLocations", "Select the islands you operate in.")
+                                                    }
+                                                />
                                             </div>
                                         )}
 

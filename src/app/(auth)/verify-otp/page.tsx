@@ -16,6 +16,8 @@ interface PendingVerificationContext {
     stripeUrl?: string | null;
 }
 
+const getPostAuthPath = (role?: string) => (role === "USER" ? "/account" : "/dashboard");
+
 export default function VerifyOtpPage() {
     const router = useRouter();
     const { formData, reset } = useOnboardingStore();
@@ -54,7 +56,8 @@ export default function VerifyOtpPage() {
 
         setLoading(true);
         try {
-            await api.post("/auth/verify-code", { email, otp: code });
+            const response = await api.post("/auth/verify-code", { email, otp: code });
+            const responseData = response.data?.data;
             toast.success(mode === "reset" ? "Code verified successfully!" : "Verified successfully!");
 
             if (mode === "reset") {
@@ -68,23 +71,43 @@ export default function VerifyOtpPage() {
                 return;
             }
 
-            const passwordToUse =
-                verificationContext?.password ||
-                (formData.email === email ? formData.password : "");
-
-            if (passwordToUse) {
+            if (responseData?.accessToken) {
+                const callbackUrl = getPostAuthPath(responseData?.user?.role);
                 const result = await signIn("credentials", {
+                    accessToken: responseData.accessToken,
+                    refreshToken: responseData.refreshToken || "",
                     email,
-                    password: passwordToUse,
                     redirect: false,
-                    callbackUrl: "/",
+                    callbackUrl,
                 });
 
                 window.sessionStorage.removeItem(`pending-verification:${email}`);
                 reset();
 
                 if (!result?.error) {
-                    router.push(result?.url || "/");
+                    router.push(result?.url || callbackUrl);
+                    return;
+                }
+            }
+
+            const passwordToUse =
+                verificationContext?.password ||
+                (formData.email === email ? formData.password : "");
+
+            if (passwordToUse) {
+                const callbackUrl = getPostAuthPath(responseData?.user?.role);
+                const result = await signIn("credentials", {
+                    email,
+                    password: passwordToUse,
+                    redirect: false,
+                    callbackUrl,
+                });
+
+                window.sessionStorage.removeItem(`pending-verification:${email}`);
+                reset();
+
+                if (!result?.error) {
+                    router.push(result?.url || callbackUrl);
                     return;
                 }
             }

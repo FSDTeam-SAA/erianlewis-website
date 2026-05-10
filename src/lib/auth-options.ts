@@ -11,6 +11,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
         accessToken: { label: "Access Token", type: "text" },
+        refreshToken: { label: "Refresh Token", type: "text" },
       },
       async authorize(credentials) {
         if (credentials?.accessToken) {
@@ -27,7 +28,7 @@ export const authOptions: NextAuthOptions = {
               role: decoded.role || "USER",
               profileImage: "",
               accessToken: credentials.accessToken,
-              refreshToken: "",
+              refreshToken: credentials.refreshToken || "",
             }
           } catch {
             throw new Error("Unable to sign in with Google")
