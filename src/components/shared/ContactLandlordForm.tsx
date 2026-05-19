@@ -43,11 +43,6 @@ export function ContactLandlordForm({ onScheduleClick, propertyId, ownerEmail, o
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        if (!session?.user) {
-            redirectToSignIn();
-            return;
-        }
-
         if (!formData.fullName || !formData.email || !formData.message) {
             toast.error("Please complete the required fields");
             return;
@@ -109,8 +104,8 @@ export function ContactLandlordForm({ onScheduleClick, propertyId, ownerEmail, o
     };
 
     return (
-        <div className="border border-gray-100 rounded-2xl p-6 shadow-sm bg-white sticky top-6">
-            <h3 className="text-lg font-extrabold text-gray-900 mb-5">Contact Landlord</h3>
+        <div className="border border-gray-100 rounded-2xl p-4 shadow-sm bg-white sticky top-6">
+            <h3 className="text-lg font-extrabold text-gray-900 mb-4">Contact Landlord</h3>
 
             <form onSubmit={handleSubmit}>
                 {/* Full Name */}
@@ -119,7 +114,7 @@ export function ContactLandlordForm({ onScheduleClick, propertyId, ownerEmail, o
                     value={formData.fullName}
                     onChange={(event) => setFormData((prev) => ({ ...prev, fullName: event.target.value }))}
                     placeholder="John Doe"
-                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-[14px] font-medium text-gray-800 mb-4 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all placeholder:font-normal"
+                    className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-[14px] font-medium text-gray-800 mb-3 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all placeholder:font-normal"
                 />
 
                 {/* Email */}
@@ -129,7 +124,7 @@ export function ContactLandlordForm({ onScheduleClick, propertyId, ownerEmail, o
                     value={formData.email}
                     onChange={(event) => setFormData((prev) => ({ ...prev, email: event.target.value }))}
                     placeholder="john@example.com"
-                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-[14px] font-medium text-gray-800 mb-4 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all placeholder:font-normal"
+                    className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-[14px] font-medium text-gray-800 mb-3 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all placeholder:font-normal"
                 />
 
                 {/* Phone */}
@@ -141,7 +136,7 @@ export function ContactLandlordForm({ onScheduleClick, propertyId, ownerEmail, o
                     value={formData.phone}
                     onChange={(event) => setFormData((prev) => ({ ...prev, phone: event.target.value.replace(/\D/g, "") }))}
                     placeholder="5551234567"
-                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-[14px] font-medium text-gray-800 mb-4 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all placeholder:font-normal"
+                    className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-[14px] font-medium text-gray-800 mb-3 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all placeholder:font-normal"
                 />
 
                 {/* Message */}
@@ -151,14 +146,14 @@ export function ContactLandlordForm({ onScheduleClick, propertyId, ownerEmail, o
                     onChange={(event) => setFormData((prev) => ({ ...prev, message: event.target.value }))}
                     placeholder="I am interested in this property..."
                     rows={3}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-[14px] font-medium text-gray-800 mb-5 outline-none resize-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all placeholder:font-normal"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-[14px] font-medium text-gray-800 mb-4 outline-none resize-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all placeholder:font-normal"
                 />
 
                 {/* Request Information - gradient button */}
                 <button
                     type="submit"
                     style={{ background: 'linear-gradient(90.99deg, #8BCCE6 2.49%, #F6855C 99.73%)' }}
-                    className="w-full text-white py-3.5 rounded-xl text-[15px] font-bold mb-4 shadow-md hover:opacity-90 transition-opacity tracking-wide"
+                    className="w-full text-white py-3 rounded-xl text-[15px] font-bold mb-3 shadow-md hover:opacity-90 transition-opacity tracking-wide"
                     disabled={loading}
                 >
                     {loading ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : "Request Information"}
@@ -166,11 +161,11 @@ export function ContactLandlordForm({ onScheduleClick, propertyId, ownerEmail, o
             </form>
 
             {/* Call + Email buttons */}
-            <div className="flex gap-3 mb-4">
+            <div className="flex gap-3 mb-3">
                 <button
                     type="button"
                     onClick={handleWhatsApp}
-                    className="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 text-[14px] font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                    className="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2 text-[14px] font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                 >
                     <Phone size={16} className="text-gray-500" /> WhatsApp
                 </button>
@@ -188,7 +183,7 @@ export function ContactLandlordForm({ onScheduleClick, propertyId, ownerEmail, o
                         }
                         window.location.href = `mailto:${ownerEmail}`;
                     }}
-                    className="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 text-[14px] font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                    className="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2 text-[14px] font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                 >
                     <Mail size={16} className="text-gray-500" /> Email
                 </button>
@@ -199,7 +194,7 @@ export function ContactLandlordForm({ onScheduleClick, propertyId, ownerEmail, o
                 type="button"
                 onClick={handleScheduleViewing}
                 style={{ background: 'linear-gradient(90.99deg, #8BCCE6 2.49%, #F6855C 99.73%)' }}
-                className="w-full text-white py-3.5 rounded-xl text-[15px] font-bold shadow-md hover:opacity-90 transition-opacity tracking-wide"
+                className="w-full text-white py-3 rounded-xl text-[15px] font-bold shadow-md hover:opacity-90 transition-opacity tracking-wide"
             >
                 Schedule Viewing
             </button>
