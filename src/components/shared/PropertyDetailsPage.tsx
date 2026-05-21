@@ -167,6 +167,8 @@ export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
   const token = session?.user?.accessToken
   const { selectedCurrency, rates } = useCurrencyPreference()
+  const shareUrl =
+    typeof window !== 'undefined' ? window.location.href : ''
 
   const propertyQuery = useQuery({
     queryKey: ['rental-property-single', params?.id],
@@ -193,6 +195,36 @@ export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
   })
 
   const property = propertyQuery.data
+
+  const handleShare = async () => {
+    try {
+      const shareTitle =
+        property?.basicInformation?.propertyTitle || 'Property listing'
+      const shareText = `Check out this ${listingType === 'buy' ? 'property for sale' : 'rental property'} on Alora.`
+
+      if (navigator.share) {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        })
+        return
+      }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl)
+        toast.success('Listing link copied to clipboard.')
+        return
+      }
+
+      toast.error('Sharing is not supported in this browser.')
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return
+      }
+      toast.error('Unable to share this listing right now.')
+    }
+  }
 
   const favoriteQuery = useQuery({
     queryKey: ['favorite-property', params?.id, token],
@@ -436,9 +468,16 @@ export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
     },
   ]
 
-  const googleMapEmbed =
+  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+  const hasCoords =
     property?.location?.lat != null && property?.location?.lng != null
-      ? `https://www.google.com/maps?q=${property.location.lat},${property.location.lng}&z=14&output=embed`
+
+  const googleMapEmbed = googleMapsApiKey
+    ? hasCoords
+      ? `https://www.google.com/maps/embed/v1/place?key=${googleMapsApiKey}&q=${property.location!.lat},${property.location!.lng}&zoom=14`
+      : `https://www.google.com/maps/embed/v1/place?key=${googleMapsApiKey}&q=${encodeURIComponent(locationLabel || 'Bahamas')}&zoom=12`
+    : hasCoords
+      ? `https://www.google.com/maps?q=${property.location!.lat},${property.location!.lng}&z=14&output=embed`
       : `https://www.google.com/maps?q=${encodeURIComponent(locationLabel || 'Bahamas')}&z=12&output=embed`
 
   const googleMapsLink =
@@ -529,7 +568,11 @@ export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
               </Link>
             </div>
             <div className="flex items-center gap-3">
-              <button className="flex items-center justify-center gap-1.5 rounded-lg border border-[#e6e6eb] px-3.5 py-2 text-[13px] font-medium text-[#1f2937] shadow-sm transition-colors hover:bg-[#fafafa]">
+              <button
+                type="button"
+                onClick={handleShare}
+                className="flex items-center justify-center gap-1.5 rounded-lg border border-[#e6e6eb] px-3.5 py-2 text-[13px] font-medium text-[#1f2937] shadow-sm transition-colors hover:bg-[#fafafa]"
+              >
                 <Share2 size={16} className="text-gray-500" /> Share
               </button>
               <button
