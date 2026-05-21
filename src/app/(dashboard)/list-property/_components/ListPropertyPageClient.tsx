@@ -26,6 +26,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { DEFAULT_CURRENCY } from '@/lib/currency'
+import { geocodeAddress, getIslandCenter } from '@/lib/googleMaps'
 import {
   AMENITY_OPTIONS,
   ACCESSIBILITY_FEATURE_OPTIONS,
@@ -373,47 +374,64 @@ export default function ListPropertyPageClient() {
       selectedIslandLabel,
     )
 
-    if (!fullQuery) {
+    if (!fullQuery && !selectedIslandLabel) {
       throw new Error(
         'Enter street, city, and island before setting the map pin.',
       )
     }
 
-    const fallbackQueries = uniqueQueries([
-      fullQuery,
-      normalizeLocationQuery(form.streetAddress, form.cityTown, selectedIslandLabel, 'Caribbean'),
-      normalizeLocationQuery(form.cityTown, selectedIslandLabel),
-      normalizeLocationQuery(form.cityTown, selectedIslandLabel, 'Caribbean'),
-      normalizeLocationQuery(form.streetAddress, selectedIslandLabel),
-      normalizeLocationQuery(selectedIslandLabel, 'Caribbean'),
-      normalizeLocationQuery(form.cityTown, 'Caribbean'),
-    ])
-
-    for (const query of fallbackQueries) {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`,
-        {
-          headers: {
-            Accept: 'application/json',
-          },
-        },
-      )
-
-      if (!response.ok) {
-        continue
-      }
-
-      const results = (await response.json()) as Array<{
-        lat?: string
-        lon?: string
-      }>
-      const firstResult = results[0]
-
-      if (firstResult?.lat && firstResult?.lon) {
-        return {
-          lat: firstResult.lat,
-          lng: firstResult.lon,
+    // ── Tier 1: Google Maps Geocoder (most accurate) ──────────────────────
+    if (fullQuery) {
+      const googleQueries = uniqueQueries([
+        fullQuery,
+        normalizeLocationQuery(form.streetAddress, form.cityTown, selectedIslandLabel, 'Bahamas'),
+        normalizeLocationQuery(form.cityTown, selectedIslandLabel, 'Bahamas'),
+        normalizeLocationQuery(selectedIslandLabel, 'Bahamas'),
+      ])
+      for (const query of googleQueries) {
+        try {
+          const coords = await geocodeAddress(query)
+          return coords
+        } catch {
+          // try next query
         }
+      }
+    }
+
+    // ── Tier 2: Nominatim OpenStreetMap ───────────────────────────────────
+    if (fullQuery) {
+      const nominatimQueries = uniqueQueries([
+        fullQuery,
+        normalizeLocationQuery(form.streetAddress, form.cityTown, selectedIslandLabel, 'Caribbean'),
+        normalizeLocationQuery(form.cityTown, selectedIslandLabel),
+        normalizeLocationQuery(form.cityTown, selectedIslandLabel, 'Caribbean'),
+        normalizeLocationQuery(form.streetAddress, selectedIslandLabel),
+        normalizeLocationQuery(selectedIslandLabel, 'Caribbean'),
+        normalizeLocationQuery(form.cityTown, 'Caribbean'),
+      ])
+      for (const query of nominatimQueries) {
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`,
+            { headers: { Accept: 'application/json' } },
+          )
+          if (!response.ok) continue
+          const results = (await response.json()) as Array<{ lat?: string; lon?: string }>
+          const firstResult = results[0]
+          if (firstResult?.lat && firstResult?.lon) {
+            return { lat: firstResult.lat, lng: firstResult.lon }
+          }
+        } catch {
+          // try next query
+        }
+      }
+    }
+
+    // ── Tier 3: Island centre coordinates ─────────────────────────────────
+    if (selectedIslandLabel) {
+      const islandCenter = getIslandCenter(selectedIslandLabel)
+      if (islandCenter) {
+        return islandCenter
       }
     }
 

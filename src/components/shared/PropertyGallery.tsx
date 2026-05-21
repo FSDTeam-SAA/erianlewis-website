@@ -19,7 +19,7 @@ export function PropertyGallery({ images, totalCount }: PropertyGalleryProps) {
   return (
     <div>
       {/* Main image */}
-      <div className="relative h-[440px] w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm group md:h-[480px]">
+      <div className="relative h-[260px] sm:h-[380px] md:h-[480px] lg:h-[560px] w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm group">
         {images.length > 0 && activeMedia ? (
           isVideo ? (
             <video
@@ -33,6 +33,8 @@ export function PropertyGallery({ images, totalCount }: PropertyGalleryProps) {
             <Image
               src={activeMedia}
               fill
+              priority
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 1200px"
               alt="Property Image"
               className="object-cover group-hover:scale-105 transition-transform duration-700"
             />

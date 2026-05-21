@@ -34,6 +34,7 @@ const navLinks = [
 ]
 
 const ownerNavLink = { href: '/list-property', label: 'List Your Property' }
+const LISTING_ALLOWED_ROLES = new Set(['LANDLORD', 'AGENT'])
 
 const signedInLinks = [
   { href: '/account', label: 'My Account', icon: UserCircle2 },
@@ -59,6 +60,7 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
   const ownerCtaHref = token
     ? ownerNavLink.href
     : `/sign-in?callbackUrl=${encodeURIComponent(ownerNavLink.href)}`
+  const sessionRole = (session?.user?.role || '').toUpperCase()
 
   const { data: profile } = useQuery<UserProfileApiResponse>({
     queryKey: ['navbar-profile'],
@@ -87,6 +89,9 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
 
   const profileImage =
     profile?.data?.profileImage || '/assets/images/no-user.jpg'
+  const profileRole = (profile?.data?.role || '').toUpperCase()
+  const resolvedRole = profileRole || sessionRole
+  const canListProperty = Boolean(token) && LISTING_ALLOWED_ROLES.has(resolvedRole)
 
   const handleLogout = async () => {
     try {
@@ -151,12 +156,14 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
                 {link.label}
               </Link>
             ))}
-            <Link
-              href={ownerCtaHref}
-              className={getNavLinkClassName(ownerNavLink.href)}
-            >
-              {ownerNavLink.label}
-            </Link>
+            {canListProperty ? (
+              <Link
+                href={ownerCtaHref}
+                className={getNavLinkClassName(ownerNavLink.href)}
+              >
+                {ownerNavLink.label}
+              </Link>
+            ) : null}
           </div>
 
           {token ? (
@@ -293,13 +300,15 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
                 {link.label}
               </Link>
             ))}
-            <Link
-              href={ownerCtaHref}
-              className={getMobileNavLinkClassName(ownerNavLink.href)}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              {ownerNavLink.label}
-            </Link>
+            {canListProperty ? (
+              <Link
+                href={ownerCtaHref}
+                className={getMobileNavLinkClassName(ownerNavLink.href)}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {ownerNavLink.label}
+              </Link>
+            ) : null}
           </div>
 
           <div className="my-4 h-px bg-[#eceef2]" />

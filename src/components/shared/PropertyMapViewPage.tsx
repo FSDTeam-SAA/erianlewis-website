@@ -24,48 +24,10 @@ import { Navbar } from "@/components/shared/Navbar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DEFAULT_CURRENCY, formatConvertedPrice, normalizeCurrencyCode } from "@/lib/currency";
 import { useCurrencyPreference } from "@/lib/hooks/useCurrencyPreference";
+import { loadGoogleMapsApi, type GoogleMapsApi } from "@/lib/googleMaps";
 
 type ListingType = "rent" | "buy";
 
-type GoogleMapsApi = {
-  maps: {
-    Map: new (element: HTMLElement, options: Record<string, unknown>) => {
-      panTo: (position: { lat: number; lng: number }) => void;
-      setCenter: (position: { lat: number; lng: number }) => void;
-      setZoom: (zoom: number) => void;
-      fitBounds: (bounds: { extend: (position: { lat: number; lng: number }) => void }, padding?: number) => void;
-      getBounds: () => {
-        contains: (position: { lat: number; lng: number }) => boolean;
-      } | undefined;
-    };
-    Marker: new (options: Record<string, unknown>) => {
-      setMap: (map: unknown) => void;
-      addListener: (eventName: string, handler: () => void) => void;
-    };
-    Size: new (width: number, height: number) => unknown;
-    Point: new (x: number, y: number) => unknown;
-    LatLngBounds: new () => {
-      extend: (position: { lat: number; lng: number }) => void;
-    };
-    event: {
-      addListener: (
-        instance: unknown,
-        eventName: string,
-        handler: () => void,
-      ) => {
-        remove: () => void;
-      };
-      trigger: (instance: unknown, eventName: string) => void;
-    };
-  };
-};
-
-declare global {
-  interface Window {
-    google?: GoogleMapsApi;
-    __googleMapsLoaderPromise?: Promise<GoogleMapsApi>;
-  }
-}
 
 interface PropertyMapViewPageProps {
   listingType: ListingType;
@@ -115,7 +77,6 @@ interface MapProperty {
   href: string;
 }
 
-const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
 const fetchJson = async <T,>(path: string) => {
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${path}`, {
@@ -211,61 +172,7 @@ const normalizeProperty = (
   };
 };
 
-const loadGoogleMapsApi = () => {
-  if (typeof window === "undefined") {
-    return Promise.reject(new Error("Google Maps can only load in the browser."));
-  }
 
-  if (window.google?.maps) {
-    return Promise.resolve(window.google);
-  }
-
-  if (!googleMapsApiKey) {
-    return Promise.reject(
-      new Error("Missing NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in your .env file."),
-    );
-  }
-
-  if (window.__googleMapsLoaderPromise) {
-    return window.__googleMapsLoaderPromise;
-  }
-
-  window.__googleMapsLoaderPromise = new Promise<GoogleMapsApi>((resolve, reject) => {
-    const existingScript = document.querySelector<HTMLScriptElement>(
-      'script[data-google-maps-loader="true"]',
-    );
-
-    const handleLoad = () => {
-      if (window.google?.maps) {
-        resolve(window.google);
-      } else {
-        reject(new Error("Google Maps failed to initialize."));
-      }
-    };
-
-    if (existingScript) {
-      existingScript.addEventListener("load", handleLoad, { once: true });
-      existingScript.addEventListener(
-        "error",
-        () => reject(new Error("Failed to load the Google Maps script.")),
-        { once: true },
-      );
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}`;
-    script.async = true;
-    script.defer = true;
-    script.dataset.googleMapsLoader = "true";
-    script.onload = handleLoad;
-    script.onerror = () =>
-      reject(new Error("Failed to load the Google Maps script."));
-    document.head.appendChild(script);
-  });
-
-  return window.__googleMapsLoaderPromise;
-};
 
 export function PropertyMapViewPage({
   listingType,
@@ -608,7 +515,7 @@ export function PropertyMapViewPage({
                           Google Map couldn&apos;t load
                         </h3>
                         <p className="mt-2 text-sm text-[#667085]">{mapError}</p>
-                        {!googleMapsApiKey ? (
+                        {!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (
                           <p className="mt-2 text-xs text-[#98A2B3]">
                             Add `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_key_here` to `.env`, then restart the app.
                           </p>

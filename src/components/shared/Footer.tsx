@@ -7,6 +7,8 @@ import { useSession } from 'next-auth/react'
 export function Footer() {
   const { data: session } = useSession()
   const currentYear = new Date().getFullYear()
+  const role = (session?.user?.role || '').toUpperCase()
+  const canListProperty = Boolean(session) && (role === 'LANDLORD' || role === 'AGENT')
   const ownerCtaHref = session
     ? '/list-property'
     : `/sign-in?callbackUrl=${encodeURIComponent('/list-property')}`
@@ -50,12 +52,14 @@ export function Footer() {
         <div className="flex flex-col gap-4">
           <h4 className="font-semibold text-lg">For Landlords</h4>
           <div className="flex flex-col gap-3">
-            <Link
-              href={ownerCtaHref}
-              className="text-gray-400 hover:text-white transition-colors text-sm"
-            >
-              List Property
-            </Link>
+            {canListProperty ? (
+              <Link
+                href={ownerCtaHref}
+                className="text-gray-400 hover:text-white transition-colors text-sm"
+              >
+                List Property
+              </Link>
+            ) : null}
             <Link
               href={session ? '/dashboard' : '/sign-in?callbackUrl=%2Fdashboard'}
               className="text-gray-400 hover:text-white transition-colors text-sm"
@@ -94,16 +98,18 @@ export function Footer() {
         © {currentYear} Alora. All rights reserved.
       </div>
 
-      <Link
-        href={ownerCtaHref}
-        className="fixed bottom-6 right-6 text-white px-6 py-3.5 rounded-full font-semibold shadow-xl hover:opacity-90 transition-transform hover:-translate-y-1 z-50 text-sm"
-        style={{
-          background:
-            'linear-gradient(90.99deg, #8BCCE6 2.49%, #F6855C 99.73%)',
-        }}
-      >
-        List Your Property
-      </Link>
+      {canListProperty ? (
+        <Link
+          href={ownerCtaHref}
+          className="fixed bottom-6 right-6 text-white px-6 py-3.5 rounded-full font-semibold shadow-xl hover:opacity-90 transition-transform hover:-translate-y-1 z-50 text-sm"
+          style={{
+            background:
+              'linear-gradient(90.99deg, #8BCCE6 2.49%, #F6855C 99.73%)',
+          }}
+        >
+          List Your Property
+        </Link>
+      ) : null}
     </footer>
   )
 }
