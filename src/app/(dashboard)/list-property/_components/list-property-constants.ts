@@ -191,14 +191,14 @@ export const toNumber = (value: string) => {
 
 export const buildGoogleMapsUrl = (lat?: string, lng?: string, query?: string) => {
   if (lat && lng) {
-    return `https://www.google.com/maps?q=${encodeURIComponent(`${lat},${lng}`)}&z=15&output=embed`
+    return `https://maps.google.com/maps?ll=${encodeURIComponent(`${lat},${lng}`)}&z=19&t=m&output=embed`
   }
 
   if (query?.trim()) {
-    return `https://www.google.com/maps?q=${encodeURIComponent(query)}&z=13&output=embed`
+    return `https://maps.google.com/maps?q=${encodeURIComponent(`${query}, Bahamas`)}&z=17&t=m&output=embed`
   }
 
-  return 'https://www.google.com/maps?q=Caribbean&z=4&output=embed'
+  return 'https://maps.google.com/maps?q=Bahamas&z=7&t=m&output=embed'
 }
 
 export const normalizeLocationQuery = (...parts: Array<string | undefined>) =>
