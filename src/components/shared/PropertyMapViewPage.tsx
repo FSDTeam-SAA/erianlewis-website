@@ -105,7 +105,7 @@ const getMapRoute = (listingType: ListingType) =>
 const getDetailsRoute = (listingType: ListingType, id: string) =>
   listingType === "buy" ? `/buy/${id}` : `/rentals/${id}`;
 
-const SELECTED_PROPERTY_ZOOM = 17;
+const SELECTED_PROPERTY_ZOOM = 19;
 const DEFAULT_MAP_CENTER = { lat: 25.0343, lng: -77.3963 };
 
 const createMarkerIcon = (isSelected: boolean) => {
@@ -305,7 +305,7 @@ export function PropertyMapViewPage({
         if (!mapRef.current) {
           mapRef.current = new googleInstance.maps.Map(mapContainerRef.current, {
             center: fallbackCenter,
-            zoom: selectedProperty ? SELECTED_PROPERTY_ZOOM : mappedProperties.length === 1 ? 15 : 11,
+            zoom: selectedProperty ? SELECTED_PROPERTY_ZOOM : mappedProperties.length === 1 ? 17 : 13,
             mapTypeId: "roadmap",
             mapTypeControl: false,
             streetViewControl: false,
@@ -339,7 +339,7 @@ export function PropertyMapViewPage({
           mapRef.current.fitBounds(bounds, 120);
         } else {
           mapRef.current.setCenter(fallbackCenter);
-          mapRef.current.setZoom(15);
+          mapRef.current.setZoom(17);
         }
 
         markersRef.current.forEach(marker => marker.setMap(null));

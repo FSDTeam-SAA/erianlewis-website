@@ -474,11 +474,11 @@ export function PropertyDetailsPage({ listingType }: PropertyDetailsPageProps) {
 
   const googleMapEmbed = googleMapsApiKey
     ? hasCoords
-      ? `https://www.google.com/maps/embed/v1/place?key=${googleMapsApiKey}&q=${property.location!.lat},${property.location!.lng}&zoom=14`
-      : `https://www.google.com/maps/embed/v1/place?key=${googleMapsApiKey}&q=${encodeURIComponent(locationLabel || 'Bahamas')}&zoom=12`
+      ? `https://www.google.com/maps/embed/v1/place?key=${googleMapsApiKey}&q=${property.location!.lat},${property.location!.lng}&zoom=19&maptype=roadmap`
+      : `https://www.google.com/maps/embed/v1/place?key=${googleMapsApiKey}&q=${encodeURIComponent(locationLabel || 'Bahamas')}&zoom=17&maptype=roadmap`
     : hasCoords
-      ? `https://www.google.com/maps?q=${property.location!.lat},${property.location!.lng}&z=14&output=embed`
-      : `https://www.google.com/maps?q=${encodeURIComponent(locationLabel || 'Bahamas')}&z=12&output=embed`
+      ? `https://www.google.com/maps?q=${property.location!.lat},${property.location!.lng}&z=19&t=m&output=embed`
+      : `https://www.google.com/maps?q=${encodeURIComponent(locationLabel || 'Bahamas')}&z=17&t=m&output=embed`
 
   const googleMapsLink =
     property?.location?.lat != null && property?.location?.lng != null
