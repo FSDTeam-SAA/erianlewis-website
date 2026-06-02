@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -32,7 +33,8 @@ const countryOptions = [
 ]
 
 export function PersonalInfoStep({ stepConfig }: StepProps) {
-  const { formData, setFormData, goNext, goBack } = useOnboardingStore()
+  const router = useRouter()
+  const { currentStepIndex, formData, setFormData, goNext, goBack } = useOnboardingStore()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const { title, subtitle } = stepConfig.content
@@ -354,6 +356,8 @@ export function PersonalInfoStep({ stepConfig }: StepProps) {
               I agree to the{' '}
               <Link
                 href="/support/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-[#202124] underline underline-offset-2 hover:text-[#E8825A]"
               >
                 Privacy Policy
@@ -378,6 +382,8 @@ export function PersonalInfoStep({ stepConfig }: StepProps) {
               I agree to the{' '}
               <Link
                 href="/support/terms"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-[#202124] underline underline-offset-2 hover:text-[#E8825A]"
               >
                 Terms of Service
@@ -396,7 +402,14 @@ export function PersonalInfoStep({ stepConfig }: StepProps) {
         <div className="flex items-center justify-between pt-2">
           <button
             type="button"
-            onClick={goBack}
+            onClick={() => {
+              if (currentStepIndex === 0) {
+                router.push('/sign-in')
+                return
+              }
+
+              goBack()
+            }}
             className="auth-button-secondary h-10 px-6"
           >
             Back
