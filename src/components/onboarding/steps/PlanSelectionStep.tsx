@@ -287,7 +287,7 @@ export function PlanSelectionStep({ stepConfig }: StepProps) {
                                 max={50}
                                 value={propertyCount}
                                 onChange={(e) => setPropertyCount(Number(e.target.value))}
-                                className="h-2 w-full cursor-pointer appearance-none rounded-full bg-transparent accent-[#3d8ed8]"
+                                className="auth-range"
                             />
                             <p className="mt-2 text-[11px] text-[#7b8595]">
                                 {getStepFieldHelperText(stepConfig, "numberOfProperties", body || "Adjust if needed to see the recommended plan.")}
@@ -341,7 +341,7 @@ export function PlanSelectionStep({ stepConfig }: StepProps) {
                                     </button>
                                 </div>
 
-                                <div className="mb-5 rounded-[10px] bg-[#fff7f2] px-4 py-3 text-center text-[11px] text-[#f6855c]">
+                                <div className="mb-5 rounded-[10px] border border-[#fde3d7] bg-[#fff7f2] px-4 py-3 text-center text-[13px] font-medium leading-5 text-[#f6855c]">
                                     Please complete payment to continue
                                 </div>
                             </>
