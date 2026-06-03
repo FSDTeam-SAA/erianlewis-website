@@ -12,7 +12,6 @@ import {
   BedDouble,
   Building2,
   CarFront,
-  Check,
   ExternalLink,
   MapPin,
   RefreshCw,
@@ -181,7 +180,7 @@ export function PropertyMapViewPage({
   const searchParams = useSearchParams();
   const [selectedPropertyId, setSelectedPropertyId] = useState("");
   const [mapError, setMapError] = useState<string | null>(null);
-  const [autoUpdateOnMove, setAutoUpdateOnMove] = useState(true);
+  const [autoUpdateOnMove] = useState(true);
   const [visiblePropertyCount, setVisiblePropertyCount] = useState(0);
   const { selectedCurrency, rates } = useCurrencyPreference();
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -524,28 +523,9 @@ export function PropertyMapViewPage({
                     </div>
                   ) : null}
 
-                  <div className="pointer-events-none absolute left-3 right-3 top-3 z-10 flex items-start justify-between gap-3 sm:left-5 sm:right-5 sm:top-5">
-                    <div className="pointer-events-auto inline-flex items-center gap-3 rounded-2xl border border-[#d9dee7] bg-white/95 px-4 py-3 text-[15px] font-medium text-[#4b5563] shadow-[0_14px_40px_rgba(15,23,42,0.12)] backdrop-blur">
-                      <button
-                        type="button"
-                        onClick={() => setAutoUpdateOnMove(current => !current)}
-                        className={`flex h-5 w-5 items-center justify-center rounded-md border transition-colors ${
-                          autoUpdateOnMove
-                            ? "border-[#4b5563] bg-[#4b5563] text-white"
-                            : "border-[#cdd5df] bg-white text-transparent"
-                        }`}
-                        aria-pressed={autoUpdateOnMove}
-                        aria-label="Toggle map updates while moving"
-                      >
-                        <Check className="h-3.5 w-3.5" />
-                      </button>
-                      <span>Update map as it moves</span>
-                    </div>
 
-                    <div className="hidden h-14 w-14 rounded-full border border-[#d9dee7] bg-white/95 shadow-[0_14px_40px_rgba(15,23,42,0.12)] backdrop-blur md:block" />
-                  </div>
 
-                  <div className="pointer-events-none absolute left-1/2 top-5 z-10 -translate-x-1/2">
+                  <div className="pointer-events-none absolute left-1/2 top-5 z-10 hidden -translate-x-1/2 md:block">
                     <div className="rounded-2xl border border-[#d9dee7] bg-white/95 px-5 py-4 text-center shadow-[0_14px_40px_rgba(15,23,42,0.12)] backdrop-blur">
                       <p className="text-[15px] font-semibold text-[#555f6d]">
                         Showing {visiblePropertyCount} of {mappedProperties.length} properties
