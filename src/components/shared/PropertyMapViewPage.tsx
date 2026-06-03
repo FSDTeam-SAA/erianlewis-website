@@ -598,23 +598,33 @@ export function PropertyMapViewPage({
 
                           <div className="mt-3 flex items-center justify-between gap-3 rounded-[16px] bg-[#f8fafc] px-4 py-3">
                             <div>
-                              <p className="text-[12px] font-medium uppercase tracking-[0.1em] text-[#8b94a1]">
+                              <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-[#8b94a1]">
                                 Price
                               </p>
-                              <p className="mt-1 text-[20px] font-bold text-[#2f3640]">
-                                {listingType === "rent" ? "Starting from " : ""}
-                                {formatConvertedPrice(
-                                  selectedProperty.price,
-                                  selectedProperty.currency,
-                                  selectedCurrency,
-                                  rates,
-                                )}
-                                {listingType === "rent" ? "/month" : ""}
+                              <p className="mt-1 text-[17px] font-semibold leading-tight text-[#2f3640]">
+                                {listingType === "rent" ? (
+                                  <span className="text-[11px] font-medium text-[#667085]">
+                                    Starting from{" "}
+                                  </span>
+                                ) : null}
+                                <span className="text-[17px] font-semibold text-[#2f3640]">
+                                  {formatConvertedPrice(
+                                    selectedProperty.price,
+                                    selectedProperty.currency,
+                                    selectedCurrency,
+                                    rates,
+                                  )}
+                                </span>
+                                {listingType === "rent" ? (
+                                  <span className="text-[11px] font-medium text-[#667085]">
+                                    /month
+                                  </span>
+                                ) : null}
                               </p>
                             </div>
                             <Link
                               href={selectedProperty.href}
-                              className="inline-flex h-11 items-center justify-center rounded-full bg-[#2f3640] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#1f2937]"
+                              className="inline-flex h-9 items-center justify-center rounded-full bg-[#2f3640] px-4 text-[12px] font-semibold text-white transition-colors hover:bg-[#1f2937]"
                             >
                               View details
                             </Link>
@@ -654,15 +664,25 @@ export function PropertyMapViewPage({
                                 {selectedProperty.baths}
                               </span>
                             </div>
-                            <p className="mt-3 text-[16px] font-bold text-[#2f3640]">
-                              {listingType === "rent" ? "Starting from " : ""}
-                              {formatConvertedPrice(
-                                selectedProperty.price,
-                                selectedProperty.currency,
-                                selectedCurrency,
-                                rates,
-                              )}
-                              {listingType === "rent" ? "/month" : ""}
+                            <p className="mt-3 text-[15px] font-semibold leading-tight text-[#2f3640]">
+                              {listingType === "rent" ? (
+                                <span className="text-[11px] font-medium text-[#667085]">
+                                  Starting from{" "}
+                                </span>
+                              ) : null}
+                              <span className="text-[15px] font-semibold text-[#2f3640]">
+                                {formatConvertedPrice(
+                                  selectedProperty.price,
+                                  selectedProperty.currency,
+                                  selectedCurrency,
+                                  rates,
+                                )}
+                              </span>
+                              {listingType === "rent" ? (
+                                <span className="text-[11px] font-medium text-[#667085]">
+                                  /month
+                                </span>
+                              ) : null}
                             </p>
                           </div>
                         </div>
@@ -678,7 +698,7 @@ export function PropertyMapViewPage({
                           </a>
                           <Link
                             href={selectedProperty.href}
-                            className="inline-flex h-11 flex-1 items-center justify-center rounded-full bg-[#2f3640] text-sm font-semibold text-white transition-colors hover:bg-[#1f2937]"
+                            className="inline-flex h-9 flex-1 items-center justify-center rounded-full bg-[#2f3640] text-[12px] font-semibold text-white transition-colors hover:bg-[#1f2937]"
                           >
                             View details
                           </Link>
@@ -766,19 +786,42 @@ export function PropertyMapViewPage({
                             </span>
                           </div>
 
-                          <div className="mt-4 flex items-center gap-3 text-[13px] font-medium text-[#475467]">
-                            <span className="inline-flex items-center gap-1.5">
-                              <BedDouble className="h-4 w-4" />
-                              {property.beds}
+                        <div className="mt-4 flex items-center gap-3 text-[13px] font-medium text-[#475467]">
+                          <span className="inline-flex items-center gap-1.5">
+                            <BedDouble className="h-4 w-4" />
+                            {property.beds}
                             </span>
                             <span className="inline-flex items-center gap-1.5">
                               <Bath className="h-4 w-4" />
                               {property.baths}
                             </span>
-                            <span className="inline-flex items-center gap-1.5 text-[#ef1d4f]">
-                              <MapPin className="h-4 w-4" />
-                              Pin
-                            </span>
+                          <span className="inline-flex items-center gap-1.5 text-[#ef1d4f]">
+                            <MapPin className="h-4 w-4" />
+                            Pin
+                          </span>
+                        </div>
+
+                          <div className="mt-4 flex items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                router.push(property.href);
+                              }}
+                              className="inline-flex h-10 flex-1 items-center justify-center rounded-full bg-[#2f3640] text-sm font-semibold text-white transition-colors hover:bg-[#1f2937]"
+                            >
+                              View details
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleFocusProperty(property.id);
+                              }}
+                              className="inline-flex h-10 items-center justify-center rounded-full border border-[#dfe5ec] px-4 text-sm font-medium text-[#475467] transition-colors hover:bg-[#f9fafb]"
+                            >
+                              Focus pin
+                            </button>
                           </div>
                         </div>
                       </button>

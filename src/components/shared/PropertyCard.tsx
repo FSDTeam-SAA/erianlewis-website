@@ -26,10 +26,11 @@ export interface PropertyCardProps {
     rawPrice?: number;
     basePrice?: number;
     baseCurrency?: string;
+    onScheduleViewing?: (propertyId: string) => void;
 }
 
 export function PropertyCard({
-    id, image, title, location, parking, rating, reviewCount, amenities, price, currency, isVideo, beds, baths, areaSqft, listingType, basePrice, baseCurrency
+    id, image, title, location, parking, rating, reviewCount, amenities, price, currency, isVideo, beds, baths, areaSqft, listingType, basePrice, baseCurrency, onScheduleViewing
 }: PropertyCardProps) {
     const pathname = usePathname();
     const { selectedCurrency, rates } = useCurrencyPreference();
@@ -118,12 +119,27 @@ export function PropertyCard({
                     </div>
                 </div>
 
-                <div
-                    style={{ background: "linear-gradient(90.99deg, #8BCCE6 2.49%, #F6855C 99.73%)" }}
-                    className="mt-4 flex h-10 items-center justify-center rounded-xl text-[13px] font-semibold text-white"
-                >
-                    {isBuy ? "View Property" : "Schedule Viewing"}
-                </div>
+                {isBuy ? (
+                    <div
+                        style={{ background: "linear-gradient(90.99deg, #8BCCE6 2.49%, #F6855C 99.73%)" }}
+                        className="mt-4 flex h-10 items-center justify-center rounded-xl text-[13px] font-semibold text-white"
+                    >
+                        View Property
+                    </div>
+                ) : (
+                    <button
+                        type="button"
+                        onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onScheduleViewing?.(id);
+                        }}
+                        style={{ background: "linear-gradient(90.99deg, #8BCCE6 2.49%, #F6855C 99.73%)" }}
+                        className="mt-4 flex h-10 w-full items-center justify-center rounded-xl text-[13px] font-semibold text-white"
+                    >
+                        Schedule Viewing
+                    </button>
+                )}
             </div>
         </Link>
     );

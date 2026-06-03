@@ -49,6 +49,7 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
   const [menuOpen, setMenuOpen] = useState(false)
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [profileImageError, setProfileImageError] = useState(false)
 
   useEffect(() => {
     if (variant !== 'overlay') return
@@ -56,6 +57,7 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [variant])
+
   const token = session?.user?.accessToken
   const ownerCtaHref = token
     ? ownerNavLink.href
@@ -87,11 +89,20 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
     ? `${profile.data.firstName} ${profile.data.lastName ?? ''}`.trim()
     : session?.user?.name || 'Guest'
 
-  const profileImage =
-    profile?.data?.profileImage || '/assets/images/no-user.jpg'
+  const fallbackProfileImage = '/assets/images/default-profile.svg'
+  const profileImage = profile?.data?.profileImage || fallbackProfileImage
+
+  useEffect(() => {
+    setProfileImageError(false)
+  }, [profileImage])
+
   const profileRole = (profile?.data?.role || '').toUpperCase()
   const resolvedRole = profileRole || sessionRole
   const canListProperty = Boolean(token) && LISTING_ALLOWED_ROLES.has(resolvedRole)
+  const signedInMenuLinks =
+    resolvedRole === 'USER'
+      ? signedInLinks.filter(item => item.href !== '/dashboard')
+      : signedInLinks
 
   const handleLogout = async () => {
     try {
@@ -187,11 +198,16 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
               >
                 <DropdownMenuTrigger className="outline-none">
                   <Image
-                    src={profileImage}
+                    src={profileImageError ? fallbackProfileImage : profileImage}
                     alt="User profile"
                     width={56}
                     height={56}
                     className="h-12 w-12 rounded-full border border-white/70 object-cover shadow-[0_10px_25px_rgba(15,23,42,0.14)]"
+                    onError={() => {
+                      if (profileImage !== fallbackProfileImage) {
+                        setProfileImageError(true)
+                      }
+                    }}
                   />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
@@ -210,7 +226,7 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
                     </p>
                   </div>
 
-                  {signedInLinks.map(item => {
+                  {signedInMenuLinks.map(item => {
                     const Icon = item.icon
 
                     return (
@@ -317,11 +333,16 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
             <div className="space-y-2">
               <div className="flex items-center gap-3 rounded-2xl bg-[#f8fafc] px-3 py-3">
                 <Image
-                  src={profileImage}
+                  src={profileImageError ? fallbackProfileImage : profileImage}
                   alt="User profile"
                   width={44}
                   height={44}
                   className="h-11 w-11 rounded-full object-cover"
+                  onError={() => {
+                    if (profileImage !== fallbackProfileImage) {
+                      setProfileImageError(true)
+                    }
+                  }}
                 />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-[#111827]">
@@ -333,7 +354,7 @@ export function Navbar({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' 
                 </div>
               </div>
 
-              {signedInLinks.map(item => {
+              {signedInMenuLinks.map(item => {
                 const Icon = item.icon
 
                 return (

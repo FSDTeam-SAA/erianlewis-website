@@ -48,7 +48,7 @@ export const ProfileSettingsCard = () => {
         />
 
         <div className="grid gap-4 lg:grid-cols-2 bg-white rounded-[16px] shadow-[0px_1px_4px_0px_#00000040] px-6 py-4 ">
-          <ChangePasswordSection token={token} />
+          <ChangePasswordSection token={token} currentEmail={profile?.email} />
           <ChangeEmailSection
             currentEmail={profile?.email ?? ""}
             token={token}

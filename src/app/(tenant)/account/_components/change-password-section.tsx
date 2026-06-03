@@ -1,10 +1,12 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
 import { Eye, EyeOff } from "lucide-react"
+import { signOut } from "next-auth/react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -34,9 +36,10 @@ type ChangePasswordValues = z.infer<typeof changePasswordSchema>
 
 type ChangePasswordSectionProps = {
   token?: string
+  currentEmail?: string
 }
 
-export const ChangePasswordSection = ({ token }: ChangePasswordSectionProps) => {
+export const ChangePasswordSection = ({ token, currentEmail }: ChangePasswordSectionProps) => {
   const [showField, setShowField] = useState<Record<PasswordField, boolean>>({
     currentPassword: false,
     newPassword: false,
@@ -77,6 +80,13 @@ export const ChangePasswordSection = ({ token }: ChangePasswordSectionProps) => 
     onSuccess: result => {
       toast.success(result.message || "Password changed successfully")
       form.reset()
+      const nextSignInUrl = new URLSearchParams({ passwordChanged: "1" })
+      if (currentEmail) {
+        nextSignInUrl.set("email", currentEmail)
+      }
+      void signOut({
+        callbackUrl: `/sign-in?${nextSignInUrl.toString()}`,
+      })
     },
     onError: error => {
       toast.error(error instanceof Error ? error.message : "Failed to change password")
@@ -141,14 +151,12 @@ export const ChangePasswordSection = ({ token }: ChangePasswordSectionProps) => 
             <AccountGradientButton type="submit" className="w-full" disabled={isPending}>
               {isPending ? "Updating..." : "Update Password"}
             </AccountGradientButton>
-            <button
-              type="button"
+            <Link
+              href={currentEmail ? `/forgot-password?email=${encodeURIComponent(currentEmail)}` : "/forgot-password"}
               className={plainActionClassName}
-              onClick={() => toast.message("Forgot password flow is not connected yet.")}
-              disabled={isPending}
             >
               Forgot Password
-            </button>
+            </Link>
           </div>
         </form>
       </Form>

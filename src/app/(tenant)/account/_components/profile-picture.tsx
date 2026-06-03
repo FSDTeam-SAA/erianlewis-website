@@ -17,7 +17,7 @@ type ProfilePictureProps = {
   onProfileUpdated: () => Promise<void> | void
 }
 
-const fallbackImage = "/assets/images/no-user.jpeg"
+const fallbackImage = "/assets/images/default-profile.svg"
 const userMeQueryKey = ["user-me"] as const
 
 const getRoleLabel = (role?: string) => {
@@ -38,10 +38,12 @@ const getRoleLabel = (role?: string) => {
 const  ProfilePicture = ({ profile, token, onProfileUpdated }: ProfilePictureProps) => {
   const queryClient = useQueryClient()
   const [profileImage, setProfileImage] = useState(profile?.profileImage || fallbackImage)
+  const [imageError, setImageError] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setProfileImage(profile?.profileImage || fallbackImage)
+    setImageError(false)
   }, [profile?.profileImage])
 
   const { mutate, isPending } = useMutation({
@@ -102,13 +104,21 @@ const  ProfilePicture = ({ profile, token, onProfileUpdated }: ProfilePicturePro
       <div className="flex flex-col items-center gap-3">
         <div className="relative w-fit rounded-full border-4 border-[#F7F8F8] bg-cover bg-center bg-no-repeat shadow-[0_4px_15px_rgba(0,0,0,0.10)]">
           <div className="relative">
-            <div className="relative h-24 w-24 overflow-hidden rounded-full border">
+            <div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border bg-[#F3F4F6]">
               <Image
-                src={profileImage}
+                src={imageError ? fallbackImage : profileImage}
                 alt="Profile"
                 width={128}
                 height={128}
                 className="h-full w-full object-cover"
+                onError={() => {
+                  if (profileImage !== fallbackImage) {
+                    setProfileImage(fallbackImage)
+                    return
+                  }
+
+                  setImageError(true)
+                }}
               />
             </div>
 
