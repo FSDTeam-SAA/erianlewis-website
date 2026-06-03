@@ -83,6 +83,9 @@ export function BrowseByCategory() {
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: fetchDashboardStats,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnReconnect: 'always',
   })
 
   const categories = useMemo(() => {

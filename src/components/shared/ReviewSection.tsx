@@ -30,6 +30,14 @@ interface ReviewResponse {
     totalReviews: number;
 }
 
+interface ReviewEligibilityResponse {
+    canReview: boolean;
+    reason?: string;
+    reviewed?: boolean;
+    appointmentFound?: boolean;
+    appointmentStatus?: string;
+}
+
 const renderStars = (rating: number, size = 15) =>
     [1, 2, 3, 4, 5].map((i) => (
         <Star key={i} size={size} className={i <= Math.round(rating) ? "text-yellow-400 fill-yellow-400" : "text-gray-200"} />
@@ -40,6 +48,7 @@ export function ReviewSection({ propertyId }: ReviewSectionProps) {
     const [rating, setRating] = useState(5);
     const [comment, setComment] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const accessToken = session?.user?.accessToken;
 
     const reviewsQuery = useQuery({
         queryKey: ["property-reviews", propertyId],
@@ -61,13 +70,62 @@ export function ReviewSection({ propertyId }: ReviewSectionProps) {
         },
     });
 
+    const eligibilityQuery = useQuery({
+        queryKey: ["property-review-eligibility", propertyId, accessToken],
+        queryFn: async () => {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/reviews/eligibility/${propertyId}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                cache: "no-store",
+            });
+
+            const payload = await response.json();
+            if (!response.ok || !payload?.status) {
+                throw new Error(payload?.message || "Failed to check review eligibility");
+            }
+
+            return payload.data as ReviewEligibilityResponse;
+        },
+        enabled: Boolean(accessToken && propertyId),
+    });
+
     const averageLabel = useMemo(() => {
         return Number(reviewsQuery.data?.avgRating || 0).toFixed(1);
     }, [reviewsQuery.data?.avgRating]);
 
+    const reviewEligibilityMessage = useMemo(() => {
+        if (!accessToken) {
+            return "Sign in to leave a review";
+        }
+
+        if (eligibilityQuery.isLoading) {
+            return "Checking review eligibility...";
+        }
+
+        if (eligibilityQuery.isError) {
+            return "Unable to verify review eligibility right now.";
+        }
+
+        if (eligibilityQuery.data?.canReview) {
+            return "";
+        }
+
+        return eligibilityQuery.data?.reason || "You can’t leave a review yet.";
+    }, [accessToken, eligibilityQuery.data?.canReview, eligibilityQuery.data?.reason, eligibilityQuery.isError, eligibilityQuery.isLoading]);
+
+    const canLeaveReview = Boolean(accessToken && eligibilityQuery.data?.canReview);
+
     const handleSubmit = async () => {
-        if (!session?.user?.accessToken) {
+        if (!accessToken) {
             toast.error("Please sign in to leave a review");
+            return;
+        }
+
+        if (!canLeaveReview) {
+            toast.error(reviewEligibilityMessage || "You can’t leave a review yet.");
             return;
         }
 
@@ -77,7 +135,7 @@ export function ReviewSection({ propertyId }: ReviewSectionProps) {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${session.user.accessToken}`,
+                    Authorization: `Bearer ${accessToken}`,
                 },
                 body: JSON.stringify({
                     propertyId,
@@ -133,8 +191,8 @@ export function ReviewSection({ propertyId }: ReviewSectionProps) {
 
                     <div className="mb-6 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                         <p className="mb-3 text-[13px] font-bold text-gray-700">Leave a review</p>
-                        {!session?.user?.accessToken ? (
-                            <p className="text-[12px] font-medium text-gray-400">Sign in to leave a review</p>
+                        {!accessToken || !canLeaveReview ? (
+                            <p className="text-[12px] font-medium text-gray-400">{reviewEligibilityMessage}</p>
                         ) : (
                             <>
                                 <div className="mb-3 flex gap-1">
@@ -154,7 +212,7 @@ export function ReviewSection({ propertyId }: ReviewSectionProps) {
                                 <button
                                     type="button"
                                     onClick={handleSubmit}
-                                    disabled={submitting}
+                                    disabled={submitting || !canLeaveReview}
                                     className="inline-flex items-center justify-center rounded-xl bg-[#202124] px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
                                 >
                                     {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit review"}

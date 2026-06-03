@@ -21,6 +21,7 @@ import { Navbar } from "@/components/shared/Navbar";
 import { CurrencySelector } from "@/components/shared/CurrencySelector";
 import { FilterPanel, type ListingFiltersState } from "@/components/shared/FilterPanel";
 import { PropertyCard, PropertyCardSkeleton, type PropertyCardProps } from "@/components/shared/PropertyCard";
+import { ScheduleViewingModal } from "@/components/shared/ScheduleViewingModal";
 import { SortDropdown, type SortOption } from "@/components/shared/SortDropdown";
 import { Skeleton } from "@/components/ui/skeleton";
 import { convertCurrencyAmount, DEFAULT_CURRENCY, formatNumberValue, normalizeCurrencyCode } from "@/lib/currency";
@@ -271,6 +272,7 @@ export function PropertyListingsPage({ listingType }: PropertyListingsPageProps)
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchInput, setSearchInput] = useState(searchParams.get("search") || "");
   const [sort, setSort] = useState<SortOption>("Newest Listings");
+  const [scheduleViewingProperty, setScheduleViewingProperty] = useState<{ id: string; title: string } | null>(null);
   const token = session?.user?.accessToken;
   const { selectedCurrency, setSelectedCurrency, rates } = useCurrencyPreference();
 
@@ -374,7 +376,8 @@ export function PropertyListingsPage({ listingType }: PropertyListingsPageProps)
   };
 
   const clearFilters = () => {
-    router.push(createNextUrl({ ...DEFAULT_FILTERS, search: searchInput, page: 1 }));
+    setSearchInput("");
+    router.push(createNextUrl({ ...DEFAULT_FILTERS, search: null, page: 1 }));
   };
 
   const currentSavedSearchFilters = useMemo(() => {
@@ -723,7 +726,19 @@ export function PropertyListingsPage({ listingType }: PropertyListingsPageProps)
           <>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {normalizedProperties.map((property) => (
-                <PropertyCard key={property.id} {...property} />
+                <PropertyCard
+                  key={property.id}
+                  {...property}
+                  onScheduleViewing={
+                    listingType === "rent"
+                      ? (propertyId) =>
+                          setScheduleViewingProperty({
+                            id: propertyId,
+                            title: property.title,
+                          })
+                      : undefined
+                  }
+                />
               ))}
             </div>
 
@@ -787,6 +802,13 @@ export function PropertyListingsPage({ listingType }: PropertyListingsPageProps)
         error={metadataError instanceof Error ? metadataError.message : null}
         onApply={applyFilters}
         onClear={clearFilters}
+      />
+
+      <ScheduleViewingModal
+        isOpen={Boolean(scheduleViewingProperty)}
+        onClose={() => setScheduleViewingProperty(null)}
+        propertyId={scheduleViewingProperty?.id || ""}
+        propertyTitle={scheduleViewingProperty?.title}
       />
     </main>
   );

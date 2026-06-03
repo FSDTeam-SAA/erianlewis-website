@@ -49,6 +49,18 @@ export function CompletionStep({ stepConfig }: StepProps) {
         [formData.planId, plans]
     );
 
+    const planSummary = useMemo(() => {
+        if (selectedPlan) {
+            return `${selectedPlan.price === 0 ? "Free" : `$${selectedPlan.price}/${selectedPlan.billingCycle.toLowerCase()}`} • ${selectedPlan.maxProperties === null ? "Unlimited properties" : `Up to ${selectedPlan.maxProperties} properties`}`;
+        }
+
+        if (isPaidRole) {
+            return "Please go back and choose a subscription plan before finishing registration.";
+        }
+
+        return "This account type does not require a subscription plan.";
+    }, [isPaidRole, selectedPlan]);
+
     const buildPayload = () => {
         const phone = formData.phone
             ? `${formData.countryCode || "+1"} ${formData.phone}`.trim()
@@ -224,11 +236,7 @@ export function CompletionStep({ stepConfig }: StepProps) {
                     <div className="mb-1 text-[14px] font-medium text-[#202124]">
                         {selectedPlan?.name || "Selected plan"}
                     </div>
-                    <div className="text-[12px] text-[#5f6368]">
-                        {selectedPlan
-                            ? `${selectedPlan.price === 0 ? "Free" : `$${selectedPlan.price}/${selectedPlan.billingCycle.toLowerCase()}`} • ${selectedPlan.maxProperties === null ? "Unlimited properties" : `Up to ${selectedPlan.maxProperties} properties`}`
-                            : "Your selected subscription will be applied after registration."}
-                    </div>
+                    <div className="text-[12px] text-[#5f6368]">{planSummary}</div>
                 </div>
 
                 {isPaidRole && (
