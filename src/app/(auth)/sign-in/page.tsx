@@ -32,7 +32,16 @@ export default function SignInPage() {
         if (params.get("deleted") === "1") {
             toast.success("Your account has been deleted.");
         }
-    }, []);
+        if (params.get("googleCancelled") === "1") {
+            window.sessionStorage.removeItem("pending-google-onboarding");
+            toast.info("Google sign-up cancelled.");
+            router.replace("/sign-in");
+        }
+        if (params.get("googleError") === "1") {
+            toast.error("Google sign-in failed. Please try again.");
+            router.replace("/sign-in");
+        }
+    }, [router]);
 
     const handleCredentialSignIn = async () => {
         if (!email || !password) {
