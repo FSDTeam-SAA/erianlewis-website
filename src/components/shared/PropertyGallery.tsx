@@ -169,7 +169,7 @@ export function PropertyGallery({ images, totalCount }: PropertyGalleryProps) {
       </div>
 
       <Dialog open={viewerOpen} onOpenChange={setViewerOpen}>
-        <DialogContent className="max-w-[1100px] rounded-[28px] border border-white/80 bg-[#0f172a] p-0 text-white shadow-[0_30px_90px_rgba(15,23,42,0.5)]">
+        <DialogContent className="sm:max-w-[1100px] rounded-[28px] border border-white/80 bg-[#0f172a] p-0 text-white shadow-[0_30px_90px_rgba(15,23,42,0.5)]">
           <div className="p-4 sm:p-6">
             <DialogHeader className="mb-4">
               <DialogTitle className="text-xl font-semibold text-white">
