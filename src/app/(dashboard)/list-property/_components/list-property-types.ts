@@ -28,6 +28,7 @@ export type RentalPropertyResponse = {
   message: string
   data: {
     _id: string
+    status?: 'active' | 'draft' | 'disabled'
     listingType?: 'rent' | 'buy'
     basicInformation?: {
       propertyTitle?: string

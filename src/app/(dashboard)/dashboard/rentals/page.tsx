@@ -43,7 +43,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -300,6 +299,12 @@ function DashboardRentalsPageContent() {
   const islandOptions = (islandsQuery.data?.data?.islands || []).sort((first, second) =>
     first.name.localeCompare(second.name),
   )
+  const selectedTypeLabel =
+    categoryOptions.find(option => option._id === selectedType)?.name || 'All Types'
+  const selectedIslandLabel =
+    islandOptions.find(option => option._id === selectedIsland)?.name || 'All Islands'
+  const selectedStatusLabel =
+    statusOptions.find(option => option.value === selectedStatus)?.label || 'All Status'
 
   const deletePropertyMutation = useMutation({
     mutationFn: async (propertyId: string) => {
@@ -550,7 +555,7 @@ function DashboardRentalsPageContent() {
                     onKeyDown={event => {
                       if (event.key === 'Enter') handleSearch()
                     }}
-                    placeholder="Search rentals..."
+                    placeholder="Search by title, island, or location..."
                     className="w-full bg-transparent text-sm outline-none"
                   />
                 </div>
@@ -567,7 +572,7 @@ function DashboardRentalsPageContent() {
                   }
                 >
                   <SelectTrigger className="h-11 w-full rounded-[8px] border-[#D9DBE3] bg-white px-3 text-sm text-[#111827]">
-                    <SelectValue placeholder="All Islands" />
+                    <span className="min-w-0 truncate text-left">{selectedIslandLabel}</span>
                   </SelectTrigger>
                   <SelectContent
                     align="start"
@@ -594,7 +599,7 @@ function DashboardRentalsPageContent() {
                   }
                 >
                   <SelectTrigger className="h-11 w-full rounded-[8px] border-[#D9DBE3] bg-white px-3 text-sm text-[#111827]">
-                    <SelectValue placeholder="All Types" />
+                    <span className="min-w-0 truncate text-left">{selectedTypeLabel}</span>
                   </SelectTrigger>
                   <SelectContent
                     align="start"
@@ -602,7 +607,7 @@ function DashboardRentalsPageContent() {
                   >
                     <SelectItem value={ALL_FILTER_VALUE}>All Types</SelectItem>
                     {categoryOptions.map(option => (
-                      <SelectItem key={option._id} value={option.name}>
+                      <SelectItem key={option._id} value={option._id}>
                         {option.name}
                       </SelectItem>
                     ))}
@@ -621,7 +626,7 @@ function DashboardRentalsPageContent() {
                   }
                 >
                   <SelectTrigger className="h-11 w-full rounded-[8px] border-[#D9DBE3] bg-white px-3 text-sm text-[#111827]">
-                    <SelectValue placeholder="All Status" />
+                    <span className="min-w-0 truncate text-left">{selectedStatusLabel}</span>
                   </SelectTrigger>
                   <SelectContent
                     align="start"
@@ -729,7 +734,7 @@ function DashboardRentalsPageContent() {
                 </div>
               ) : (
                 <>
-                  <Table>
+                  <Table className="min-w-[1100px]">
                     <TableHeader>
                       <TableRow className="border-b border-[#EEF2F6] hover:bg-transparent">
                         <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#98A2B3]">Property</TableHead>
@@ -739,15 +744,15 @@ function DashboardRentalsPageContent() {
                         <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#98A2B3]">Lease</TableHead>
                         <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#98A2B3]">Updated</TableHead>
                         <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#98A2B3]">Status</TableHead>
-                        <TableHead className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.12em] text-[#98A2B3]">Action</TableHead>
+                        <TableHead className="sticky right-0 z-10 bg-white px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.12em] text-[#98A2B3] shadow-[-12px_0_16px_-16px_rgba(15,23,42,0.18)]">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {properties.map(property => (
                         <TableRow key={property._id} className="border-b border-[#F2F4F7]">
                           <TableCell className="px-4 py-4 align-top">
-                            <div className="min-w-[220px]">
-                              <p className="font-semibold text-[#111827]">
+                            <div className="max-w-[320px]">
+                              <p className="truncate font-semibold text-[#111827]">
                                 {property.basicInformation?.propertyTitle || 'Untitled property'}
                               </p>
                               <p className="mt-1 max-w-[260px] truncate text-sm text-[#667085]">
@@ -784,7 +789,7 @@ function DashboardRentalsPageContent() {
                               {property.status || 'Unknown'}
                             </span>
                           </TableCell>
-                          <TableCell className="px-4 py-4 text-right">
+                          <TableCell className="sticky right-0 z-10 bg-white px-4 py-4 text-right shadow-[-12px_0_16px_-16px_rgba(15,23,42,0.18)]">
                             <div className="flex justify-end gap-2">
                               <Link
                                 href={`/list-property?id=${property._id}`}

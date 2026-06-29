@@ -30,6 +30,7 @@ import { geocodeAddress, getIslandCenter } from '@/lib/googleMaps'
 import {
   AMENITY_OPTIONS,
   ACCESSIBILITY_FEATURE_OPTIONS,
+  countWords,
   buildGoogleMapsUrl,
   cardClassName,
   COMMERCIAL_PROPERTY_TYPE_OPTIONS,
@@ -42,10 +43,13 @@ import {
   OCCUPANCY_STATUS_OPTIONS,
   PARKING_OPTIONS,
   PARKING_AVAILABILITY_OPTIONS,
+  MAX_PROPERTY_DETAILS_WORDS,
   SECURITY_FEATURE_OPTIONS,
+  limitWords,
   toNumber,
   TOPOGRAPHY_OPTIONS,
   uniqueQueries,
+  YEAR_OPTIONS,
   UNIT_TYPE_OPTIONS,
 } from './list-property-constants'
 import type {
@@ -186,6 +190,11 @@ export default function ListPropertyPageClient() {
     [form.island, islandOptions],
   )
 
+  const detailsWordCount = useMemo(
+    () => countWords(form.details),
+    [form.details],
+  )
+
   const currentListingType =
     isEditMode && propertyQuery.data?.data?.listingType
       ? propertyQuery.data.data.listingType
@@ -231,6 +240,15 @@ export default function ListPropertyPageClient() {
     () => buildGoogleMapsUrl(form.lat, form.lng, mapQuery),
     [form.lat, form.lng, mapQuery],
   )
+
+  const isDraftListing = propertyQuery.data?.data?.status === 'draft'
+  const primarySubmitLabel = isEditMode
+    ? isDraftListing
+      ? 'Publish Changes'
+      : 'Save Changes'
+    : isSaleMode
+      ? 'Publish Listing'
+      : 'Publish Listing'
 
   useEffect(() => {
     if (!propertyQuery.data?.data || !isEditMode) {
@@ -441,7 +459,7 @@ export default function ListPropertyPageClient() {
   }
 
   const createListingMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (submitStatus: 'draft' | 'active' = 'active') => {
       if (!token) {
         throw new Error('You need to sign in again to continue.')
       }
@@ -449,10 +467,10 @@ export default function ListPropertyPageClient() {
       if (!form.propertyTitle.trim())
         throw new Error('Property title is required.')
       if (!form.propertyType) throw new Error('Property type is required.')
-      if (!isApartmentPropertyType && !form.monthlyRent.trim()) {
+      if (submitStatus === 'active' && !isApartmentPropertyType && !form.monthlyRent.trim()) {
         throw new Error(isSaleMode ? 'Sale price is required.' : 'Monthly rent is required.')
       }
-      if (isApartmentPropertyType && !apartmentBaseRent) {
+      if (submitStatus === 'active' && isApartmentPropertyType && !apartmentBaseRent) {
         throw new Error('At least one apartment unit base rent is required.')
       }
       if (!form.preferredCurrency)
@@ -461,7 +479,7 @@ export default function ListPropertyPageClient() {
         throw new Error('Street address is required.')
       if (!form.cityTown.trim()) throw new Error('City or town is required.')
       if (!form.island) throw new Error('Island is required.')
-      if (!selectedFiles.length && !existingPhotoUrls.length)
+      if (submitStatus === 'active' && !selectedFiles.length && !existingPhotoUrls.length)
         throw new Error('At least one photo is required.')
 
       let nextLat = form.lat
@@ -618,7 +636,12 @@ export default function ListPropertyPageClient() {
                 })),
         ),
       )
+      payload.append('status', submitStatus)
       payload.append('listingType', currentListingType)
+
+      if (isEditMode && existingPhotoUrls.length) {
+        payload.append('retainedPhotoUrls', JSON.stringify(existingPhotoUrls))
+      }
 
       selectedFiles.forEach(file => {
         payload.append('photos', file)
@@ -673,6 +696,15 @@ export default function ListPropertyPageClient() {
     }))
   }
 
+  const resetMapPin = () => {
+    setForm(current => ({
+      ...current,
+      lat: '',
+      lng: '',
+      mapConfirmed: false,
+    }))
+  }
+
   const handleMapPin = async () => {
     try {
       setIsResolvingMap(true)
@@ -695,6 +727,10 @@ export default function ListPropertyPageClient() {
     setSelectedFiles(current =>
       current.filter((_, itemIndex) => itemIndex !== index),
     )
+  }
+
+  const removeExistingPhoto = (photoUrl: string) => {
+    setExistingPhotoUrls(current => current.filter(item => item !== photoUrl))
   }
 
   const loadingScreen =
@@ -897,22 +933,27 @@ export default function ListPropertyPageClient() {
               />
             </div>
 
-            <div className="grid gap-2">
-              <label className="text-sm font-semibold text-[#344054]">
-                Details
-              </label>
-              <Textarea
-                value={form.details}
-                onChange={event =>
-                  setForm(current => ({
-                    ...current,
-                    details: event.target.value,
-                  }))
-                }
-                placeholder="Describe your property..."
-                className="min-h-[120px] rounded-[8px] border-[#D9DBE3]"
-              />
-            </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-semibold text-[#344054]">
+                  Details
+                </label>
+                <Textarea
+                  value={form.details}
+                  onChange={event =>
+                    setForm(current => ({
+                      ...current,
+                      details: limitWords(event.target.value, MAX_PROPERTY_DETAILS_WORDS),
+                    }))
+                  }
+                  placeholder="Describe your property..."
+                  className="min-h-[120px] rounded-[8px] border-[#D9DBE3]"
+                  maxLength={16000}
+                />
+                <div className="flex items-center justify-between text-xs text-[#667085]">
+                  <span>{detailsWordCount}/{MAX_PROPERTY_DETAILS_WORDS} words</span>
+                  <span>Keep it concise and specific.</span>
+                </div>
+              </div>
 
             <div className="grid gap-4 md:grid-cols-3">
               <div className="grid gap-2">
@@ -1037,6 +1078,9 @@ export default function ListPropertyPageClient() {
                     setForm(current => ({
                       ...current,
                       streetAddress: event.target.value,
+                      lat: '',
+                      lng: '',
+                      mapConfirmed: false,
                     }))
                   }
                   placeholder="123 main street"
@@ -1059,6 +1103,9 @@ export default function ListPropertyPageClient() {
                       setForm(current => ({
                         ...current,
                         cityTown: event.target.value,
+                        lat: '',
+                        lng: '',
+                        mapConfirmed: false,
                       }))
                     }
                     placeholder="e.g. The valley"
@@ -1073,7 +1120,13 @@ export default function ListPropertyPageClient() {
                   <SearchableSelect
                     value={form.island}
                     onChange={value =>
-                      setForm(current => ({ ...current, island: value }))
+                      setForm(current => ({
+                        ...current,
+                        island: value,
+                        lat: '',
+                        lng: '',
+                        mapConfirmed: false,
+                      }))
                     }
                     options={islandOptions}
                     placeholder="Select Island"
@@ -1114,12 +1167,7 @@ export default function ListPropertyPageClient() {
                     variant="outline"
                     size="lg"
                     onClick={() =>
-                      setForm(current => ({
-                        ...current,
-                        lat: '',
-                        lng: '',
-                        mapConfirmed: false,
-                      }))
+                      resetMapPin()
                     }
                     className="h-10 rounded-[8px] border-[#D9DBE3] bg-white px-4 text-sm text-[#475467]"
                   >
@@ -1676,7 +1724,6 @@ export default function ListPropertyPageClient() {
                     ['Bathrooms', 'bathrooms'],
                     ['Square Feet', 'squareFeet'],
                     ['Lot Size (sq ft)', 'lotSizeSqFt'],
-                    ['Year Built', 'yearBuilt'],
                     ['Parking Spaces', 'parkingSpaces'],
                   ].map(([label, key]) => (
                     <div key={key} className="grid gap-2">
@@ -1698,6 +1745,24 @@ export default function ListPropertyPageClient() {
                       />
                     </div>
                   ))}
+
+                  <div className="grid gap-2">
+                    <label className="text-sm font-semibold text-[#344054]">
+                      Year Built
+                    </label>
+                    <SearchableSelect
+                      value={form.yearBuilt}
+                      onChange={value =>
+                        setForm(current => ({
+                          ...current,
+                          yearBuilt: value,
+                        }))
+                      }
+                      options={YEAR_OPTIONS}
+                      placeholder="Select year built"
+                      searchPlaceholder="Search year..."
+                    />
+                  </div>
                 </div>
               </section>
             )}
@@ -1923,7 +1988,7 @@ export default function ListPropertyPageClient() {
                 {existingPhotoUrls.map((photoUrl, index) => (
                   <div
                     key={`${photoUrl}-${index}`}
-                    className="overflow-hidden rounded-[12px] border border-[#E5E7EB] bg-white"
+                    className="relative overflow-hidden rounded-[12px] border border-[#E5E7EB] bg-white"
                   >
                     <Image
                       src={photoUrl}
@@ -1933,6 +1998,14 @@ export default function ListPropertyPageClient() {
                       height={320}
                       unoptimized
                     />
+                    <button
+                      type="button"
+                      onClick={() => removeExistingPhoto(photoUrl)}
+                      className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white"
+                      aria-label={`Remove existing photo ${index + 1}`}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -1999,7 +2072,15 @@ export default function ListPropertyPageClient() {
           </Button>
           <button
             type="button"
-            onClick={() => createListingMutation.mutate()}
+            onClick={() => createListingMutation.mutate('draft')}
+            disabled={createListingMutation.isPending}
+            className="inline-flex h-11 items-center justify-center rounded-[8px] border border-[#D9DBE3] bg-white px-6 text-sm font-semibold text-[#475467] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {createListingMutation.isPending ? 'Saving Draft...' : 'Save as Draft'}
+          </button>
+          <button
+            type="button"
+            onClick={() => createListingMutation.mutate('active')}
             disabled={createListingMutation.isPending}
             className="inline-flex h-11 items-center justify-center rounded-[8px] px-6 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
             style={{
@@ -2010,12 +2091,12 @@ export default function ListPropertyPageClient() {
             {createListingMutation.isPending
               ? isEditMode
                 ? 'Saving Changes...'
-                : 'Creating Listing...'
+                : 'Publishing Listing...'
               : isEditMode
-                ? 'Save Changes'
+                ? primarySubmitLabel
                 : isSaleMode
-                  ? 'Create Sale Listing'
-                  : 'Create Rental Listing'}
+                  ? 'Publish Sale Listing'
+                  : 'Publish Rental Listing'}
           </button>
         </div>
         </div>
