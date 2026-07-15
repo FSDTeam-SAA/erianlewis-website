@@ -51,6 +51,16 @@ export const UNIT_TYPE_OPTIONS = [
   'Penthouse',
 ]
 
+const CURRENT_YEAR = new Date().getFullYear()
+
+export const YEAR_OPTIONS: SearchableSelectOption[] = [
+  { label: 'Select year built', value: '' },
+  ...Array.from({ length: CURRENT_YEAR - 1899 }, (_, index) => {
+    const year = String(CURRENT_YEAR - index)
+    return { label: year, value: year }
+  }),
+]
+
 export const LAND_TYPE_OPTIONS: SearchableSelectOption[] = [
   { label: 'Select land type', value: '' },
   { label: 'Residential', value: 'Residential' },
@@ -181,6 +191,24 @@ export const defaultFormState = (): FormState => ({
   propertyTaxAnnual: '',
   unitDetails: defaultUnitDetails(),
 })
+
+export const MAX_PROPERTY_DETAILS_WORDS = 2000
+
+export const countWords = (value: string) =>
+  value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length
+
+export const limitWords = (value: string, maxWords = MAX_PROPERTY_DETAILS_WORDS) => {
+  const words = value.trim().split(/\s+/).filter(Boolean)
+
+  if (words.length <= maxWords) {
+    return value
+  }
+
+  return words.slice(0, maxWords).join(' ')
+}
 
 export const toNumber = (value: string) => {
   if (!value.trim()) return 0

@@ -159,4 +159,25 @@
   .auth-range::-moz-range-thumb {
     @apply h-5 w-5 rounded-full border-2 border-white bg-[#3d8ed8] shadow-[0_4px_12px_rgba(61,142,216,0.35)];
   }
+
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 204, 230, 0.85) rgba(217, 228, 240, 0.75);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(217, 228, 240, 0.75);
+    border-radius: 999px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(139, 204, 230, 0.95);
+    border-radius: 999px;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+  }
 }

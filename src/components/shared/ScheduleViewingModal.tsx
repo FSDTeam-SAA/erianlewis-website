@@ -272,7 +272,7 @@ export function ScheduleViewingModal({
         onClick={handleClose}
       />
 
-      <div className="fixed inset-x-4 top-1/2 z-50 w-auto max-w-[calc(100vw-32px)] -translate-y-1/2 rounded-3xl border border-[#e8edf3] bg-white p-6 shadow-[0_24px_60px_rgba(15,23,42,0.16)] max-h-[calc(100vh-32px)] overflow-y-auto md:left-1/2 md:right-auto md:w-[520px] md:-translate-x-1/2">
+      <div className="fixed inset-x-4 top-4 z-50 w-auto max-w-[calc(100vw-32px)] rounded-3xl border border-[#e8edf3] bg-white p-6 shadow-[0_24px_60px_rgba(15,23,42,0.16)] max-h-[calc(100vh-32px)] overflow-y-auto md:left-1/2 md:top-1/2 md:right-auto md:w-[520px] md:-translate-x-1/2 md:-translate-y-1/2">
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h3 className="text-[18px] font-extrabold tracking-tight text-[#111827]">

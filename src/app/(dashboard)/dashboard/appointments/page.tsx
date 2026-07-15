@@ -1288,7 +1288,7 @@ function DashboardAppointmentsPageContent() {
       </div>
 
       <Dialog open={appointmentDialogOpen} onOpenChange={setAppointmentDialogOpen}>
-        <DialogContent className="max-w-[560px] rounded-[12px] border border-[#E5E7EB] bg-white p-0" showCloseButton={false}>
+        <DialogContent className="max-w-[560px] max-h-[calc(100vh-2rem)] overflow-y-auto rounded-[12px] border border-[#E5E7EB] bg-white p-0 top-4 -translate-y-0 md:top-1/2 md:-translate-y-1/2" showCloseButton={false}>
           <div className="p-5">
             <DialogHeader className="relative pr-10">
               <button
